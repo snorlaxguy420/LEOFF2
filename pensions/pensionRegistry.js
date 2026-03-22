@@ -37,7 +37,7 @@
  * This module must remain fully isolated.
  * DO NOT modify LEOFF 2 logic when adding new pension systems.
  */
-import { calculateLEOFF2 } from "./leoff2/leoff2Engine.js";
+import { calculateLEOFF2 } from "./LEOFF2/leoff2Engine.js";
 import { calculatePERS2 } from "./pers2/pers2Engine.js";
 
 /*

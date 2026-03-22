@@ -944,15 +944,19 @@ RESPONSIVE
 
 #tooltip {
 
-    position: absolute;
-    background: rgba(0,0,0,0.85);
-    color: white;
-    padding: 6px 10px;
-    font-size: 12px;
-    border-radius: 4px;
+    position: fixed;
+    background: #FAE2C6;
+    color: #2A2A2A;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 6px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
+    z-index: 9999;
+    border: 1px solid rgba(0,0,0,0.15);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.18);
 
 }
 
@@ -1110,6 +1114,18 @@ EDIT INPUT BUTTON
     background: var(--coffee-dark);
     transform: translateY(-1px);
 
+}
+
+.dashboard-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.dashboard-chart-header h3 {
+    margin: 0;
 }
 
 @media (max-width: 900px) {

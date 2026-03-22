@@ -12,6 +12,8 @@ import {
 import { buildPensionIncomeSources } from "./simulatorShared.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 
+let comparisonChartMode = "bar";
+
 function totalPortfolio(result) {
     if (!result?.portfolios) return 0;
 
@@ -307,6 +309,27 @@ function renderPlanningLeverSection({
 
 function formatPercent(value) {
     return `${Math.round((value || 0) * 100)}%`;
+}
+
+function syncComparisonChartToggleUi() {
+    const toggleBtn = document.getElementById("comparisonChartToggleBtn");
+
+    if (!toggleBtn) {
+        return;
+    }
+
+    toggleBtn.textContent =
+        comparisonChartMode === "bar"
+            ? "Line Chart"
+            : "Bar Chart";
+}
+
+function clearTimelineLegend() {
+    const legend = document.getElementById("timelineLegend");
+
+    if (legend) {
+        legend.innerHTML = "";
+    }
 }
 
 function renderRecommendedAgeOverview({
@@ -620,15 +643,25 @@ document.addEventListener("DOMContentLoaded", () => {
         const totalAssets = portfolioAssets + realEstateAssets;
         const totalDebts = mortgageDebts;
         const netWorth = totalAssets - totalDebts;
+        const comparisonChartModeForScreen = comparisonChartMode;
+
+        if (comparisonChartModeForScreen === "bar") {
+            clearTimelineLegend();
+        }
 
         renderProjectionChart({
             canvasId: "comparisonChart",
             results,
             dataset: "incomeVsExpenses",
-            mode: "bar",
+            mode: comparisonChartModeForScreen,
             incomeSources: currentIncomeSources,
             expenseColor: "#DB2B39",
-            yScaleMultiplier: 1.25
+            yScaleMultiplier:
+                comparisonChartModeForScreen === "line"
+                    ? 1.15
+                    : 1.25,
+            tooltipId: "tooltip",
+            legendId: "timelineLegend"
         });
 
         renderProjectionChart({
@@ -752,6 +785,8 @@ document.addEventListener("DOMContentLoaded", () => {
         baselineAnalysis.earliestRetirementAge ??
         baseInputs.retireAge;
     const slider = document.getElementById("retirementAgeSlider");
+    const comparisonChartToggleBtn =
+        document.getElementById("comparisonChartToggleBtn");
 
     if (slider) {
         slider.min = String(50);
@@ -765,6 +800,24 @@ document.addEventListener("DOMContentLoaded", () => {
         slider.addEventListener("input", () => {
             const retireAge =
                 parseInt(slider.value, 10) || initialRecommendedAge;
+            renderDashboardForAge(retireAge);
+        });
+    }
+
+    if (comparisonChartToggleBtn) {
+        syncComparisonChartToggleUi();
+        comparisonChartToggleBtn.addEventListener("click", () => {
+            comparisonChartMode =
+                comparisonChartMode === "bar"
+                    ? "line"
+                    : "bar";
+
+            syncComparisonChartToggleUi();
+
+            const retireAge =
+                parseInt(slider?.value || String(initialRecommendedAge), 10) ||
+                initialRecommendedAge;
+
             renderDashboardForAge(retireAge);
         });
     }

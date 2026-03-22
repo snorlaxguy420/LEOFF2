@@ -245,11 +245,17 @@ depletion in the same planning flow as the simulator.
 
   <div class="timeline-panel">
 
-      <h3>Income vs Expense Timeline</h3>
+      <div class="dashboard-chart-header">
+          <h3>Income vs Expense Timeline</h3>
+          <button id="comparisonChartToggleBtn" class="report-action-secondary" type="button">
+              Line Chart
+          </button>
+      </div>
 
       <div class="chart-scroll-shell dashboard-screen-chart">
       <canvas id="comparisonChart" width="1000" height="450"></canvas>
       </div>
+      <div id="timelineLegend"></div>
 
       <div class="print-chart-stack">
           <div class="print-chart-block">
@@ -351,7 +357,7 @@ depletion in the same planning flow as the simulator.
 
 </footer>
 
-<div id="tooltip"></div>
+<div id="tooltip" class="chart-tooltip"></div>
 
 <script type="module" src="/ui/dashboardLoader.js"></script>
 </body>

@@ -2,10 +2,40 @@ import { renderChart } from "./chartRenderer.js";
 import { renderIncomeTimeline } from "./incomeTimelineRenderer.js";
 
 const BASE_COLOR_BANK = [
-    "#38220F", "#6B4F3A", "#967259", "#CBDFBD", "#A3B18A",
-    "#5C7C8A", "#BC6C25", "#7F5539", "#606C38", "#8C5E58",
-    "#4A6F8A", "#9C6644", "#EEE1B3"
+    "#1F4D3A",
+    "#3F7C85",
+    "#B46A3C",
+    "#1E2F44",
+    "#6A8F6B",
+    "#7F5539",
+    "#4E6A84",
+    "#8C6A4A",
+    "#58735C",
+    "#C08A4D",
+    "#7B5E57",
+    "#6F8B95"
 ];
+
+const NAMED_INCOME_COLORS = {
+    "LEOFF Pension": "#1F4D3A",
+    "PERS Plan 2 Pension": "#2E5F49",
+    "Social Security": "#3F7C85",
+    "LEOFF Lump Sum": "#B46A3C",
+    "Rental Income": "#6B4F3A",
+    "Portfolio Assets": "#1E2F44",
+    "Real Estate Value": "#6A8F6B"
+};
+
+const ACCOUNT_TYPE_COLORS = {
+    "401k": "#606C38",
+    "roth_401k": "#7A8F45",
+    "traditional_ira": "#8C5E58",
+    "roth_ira": "#C08A4D",
+    "457b": "#4E6A84",
+    "403b": "#7B5E57",
+    "401a": "#967259",
+    "tsp": "#58735C"
+};
 
 function hashString(value = "") {
     let hash = 0;
@@ -20,6 +50,34 @@ function hashString(value = "") {
 function generateFallbackColor(seedLabel) {
     const hue = hashString(seedLabel) % 360;
     return `hsl(${hue}, 48%, 42%)`;
+}
+
+function resolveIncomeColor({ name, source }) {
+    if (NAMED_INCOME_COLORS[name]) {
+        return NAMED_INCOME_COLORS[name];
+    }
+
+    if (source?.accountType && ACCOUNT_TYPE_COLORS[source.accountType]) {
+        return ACCOUNT_TYPE_COLORS[source.accountType];
+    }
+
+    if (source?.taxCategory === "social_security" || name.includes("Social Security")) {
+        return "#3F7C85";
+    }
+
+    if (name.includes("Pension")) {
+        return "#1F4D3A";
+    }
+
+    if (name.includes("Lump Sum")) {
+        return "#B46A3C";
+    }
+
+    if (name.includes("Rental")) {
+        return "#6B4F3A";
+    }
+
+    return null;
 }
 
 function collectBreakdownNames(results) {
@@ -54,7 +112,7 @@ function buildDefaultIncomeColors({
         );
     }
 
-    const orderedNames = [];
+    const orderedSources = [];
     const seenNames = new Set();
 
     incomeSources.forEach(source => {
@@ -63,20 +121,28 @@ function buildDefaultIncomeColors({
         }
 
         seenNames.add(source.name);
-        orderedNames.push(source.name);
+        orderedSources.push({
+            name: source.name,
+            source
+        });
     });
 
     collectBreakdownNames(results).forEach(name => {
         if (!seenNames.has(name)) {
             seenNames.add(name);
-            orderedNames.push(name);
+            orderedSources.push({
+                name,
+                source: null
+            });
         }
     });
 
     return Object.fromEntries(
-        orderedNames.map((name, index) => [
+        orderedSources.map(({ name, source }, index) => [
             name,
-            BASE_COLOR_BANK[index] || generateFallbackColor(name)
+            resolveIncomeColor({ name, source }) ||
+            BASE_COLOR_BANK[index] ||
+            generateFallbackColor(name)
         ])
     );
 }
@@ -283,7 +349,6 @@ export function renderProjectionChart({
         }),
         ...(incomeColors || {})
     };
-
     if (mode === "line") {
         renderIncomeTimeline({
             canvasId,

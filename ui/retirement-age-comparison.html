@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOFF Retirement Age Comparison Tool | Compare Pension by Retirement Age</title>
+<meta name="description" content="Compare LEOFF retirement ages side by side and see service credit, monthly pension, annual pension, percentage of FAS, bridge years, and lifetime pension value in one Washington-focused tool.">
+<meta name="keywords" content="LEOFF retirement age comparison tool, LEOFF pension comparison, compare retirement ages LEOFF, Washington LEOFF retirement age, LEOFF percentage of FAS, LEOFF bridge years">
+<meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leoffhelper.com/retirement-age-comparison">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="LEOFF Retirement Age Comparison Tool | Compare Pension by Retirement Age">
+<meta property="og:description" content="Compare LEOFF retirement ages side by side and see service credit, pension percentage of FAS, bridge years, and lifetime pension value in one Washington-focused tool.">
+<meta property="og:url" content="https://leoffhelper.com/retirement-age-comparison">
+<meta property="og:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEOFF Retirement Age Comparison Tool | Compare Pension by Retirement Age">
+<meta name="twitter:description" content="Compare LEOFF retirement ages side by side and see service credit, pension percentage of FAS, bridge years, and lifetime pension value in one Washington-focused tool.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "LEOFF Retirement Age Comparison Tool",
+  "url": "https://leoffhelper.com/retirement-age-comparison",
+  "description": "Compare LEOFF retirement ages side by side and see service credit, monthly pension, annual pension, percentage of FAS, bridge years, and lifetime pension value in one Washington-focused tool."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "LEOFF Retirement Age Comparison Tool",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "url": "https://leoffhelper.com/retirement-age-comparison",
+  "description": "A Washington-focused LEOFF retirement age comparison tool that compares service credit, percentage of final average salary, bridge years, and pension value by retirement age.",
+  "publisher": {
+    "@type": "Organization",
+    "name": "LEOFF Helper",
+    "url": "https://leoffhelper.com/"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://leoffhelper.com/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Retirement Age Comparison Tool",
+      "item": "https://leoffhelper.com/retirement-age-comparison"
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="/ui/simulator-dashboard.css">
+<link rel="stylesheet" href="/ui/retirement-age-comparison.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<div class="simbg-section">
+<main class="comparison-shell">
+
+<section class="comparison-hero">
+<div class="comparison-kicker">Phase 7 Tool</div>
+<h1>Retirement Age Comparison Tool</h1>
+<p>
+Compare retirement ages side by side and see what changes in monthly pension,
+salary, service credit, Social Security timing, and the economic value of
+working longer.
+</p>
+<p>
+This page is built for Washington LEOFF members who want to compare retirement
+age tradeoffs before moving into the full
+<a href="/ui/simulator.html">retirement calculator</a>
+or reviewing a plan in the
+<a href="/ui/retirementDashboard.html">retirement dashboard</a>.
+</p>
+</section>
+
+<section class="comparison-grid">
+<section class="comparison-form-card">
+<h2>Scenario Inputs</h2>
+
+<div class="form-grid">
+<label>
+Birth Year
+<input id="cmpBirthYear" type="number" value="1981">
+</label>
+
+<label>
+Compare Ages
+<input id="cmpRetirementAges" type="text" value="53, 55, 57, 60">
+</label>
+
+<label>
+LEOFF Start Year
+<input id="cmpLeoffStartYear" type="number" value="2001">
+</label>
+
+<label>
+Final Average Salary
+<input id="cmpFas" type="number" value="110000">
+</label>
+
+<label>
+Pension COLA (%)
+<input id="cmpCola" type="number" value="2">
+</label>
+
+<label>
+Benefit Enhancement
+<select id="cmpBenefitEnhancement">
+<option value="tiered_multiplier" selected>Tiered Multiplier</option>
+<option value="lump_sum">2% Pension + Lump Sum</option>
+</select>
+</label>
+
+<label>
+Lifetime Value Age
+<input id="cmpLifetimeValueAge" type="number" value="90">
+</label>
+
+<label>
+Social Security Claim Age
+<input id="cmpSsClaimAge" type="number" value="67">
+</label>
+</div>
+
+<div class="comparison-actions">
+<button id="runComparisonBtn" class="primary-btn" type="button">Compare Ages</button>
+</div>
+</section>
+
+<aside class="comparison-summary-card">
+<h2>What This Tool Shows</h2>
+<ul class="comparison-summary-list">
+<li>Monthly pension change by retirement age</li>
+<li>Service credit and pension multiplier effect by retirement age</li>
+<li>Additional salary earned from working longer</li>
+<li>Social Security timing and shorter bridge periods</li>
+<li>Estimated lifetime pension value through a target age</li>
+</ul>
+
+<div class="comparison-note">
+<strong>Why it matters</strong>
+<p>
+This focuses on the financial power of working longer: more salary years, more
+service credit, a larger pension multiplier, and less time to bridge before Social
+Security starts.
+</p>
+</div>
+
+<div class="comparison-note comparison-note-formula">
+<strong>Tiered multiplier math used here</strong>
+<p>
+Base pension = FAS x service years x 2.0%
+</p>
+<p>
+If `Tiered Multiplier` is selected, the tool adds:
+0.5% x FAS for each service year above 15, up to 25 years total.
+</p>
+<p>
+That means the bonus applies only to service years 16 through 25.
+</p>
+</div>
+
+<div class="comparison-note">
+<strong>Go deeper</strong>
+<p>
+Learn more in
+<a href="/ui/articles/article-leoff-tiered-vs-lump-sum.html">LEOFF 2 Tiered Multiplier vs Lump Sum</a>,
+<a href="/ui/articles/article-early-retirement-bridge-years.html">Early Retirement Bridge Years</a>,
+and
+<a href="/ui/articles/article-leoff-retirement.html">How to Think About a Secure Retirement as a LEOFF 2 Member</a>.
+</p>
+</div>
+</aside>
+</section>
+
+<section class="comparison-results-card">
+<div class="panel-header">
+<h2>Age Comparison</h2>
+<div class="comparison-header-actions">
+<button id="copyComparisonBtn" class="secondary-btn" type="button">Copy Summary</button>
+<button id="printComparisonBtn" class="secondary-btn" type="button">Print</button>
+</div>
+</div>
+<div id="comparisonTakeaway" class="comparison-takeaway">
+Enter inputs and run the comparison to see the biggest tradeoff.
+</div>
+<div id="comparisonStatus" class="comparison-status">Enter inputs and run the comparison.</div>
+<div class="comparison-table-wrap">
+<table class="comparison-table">
+<thead>
+<tr>
+<th>Retire Age</th>
+<th>Service Credit</th>
+<th>Final Average Salary</th>
+<th>Monthly Pension</th>
+<th>Annual Pension</th>
+<th class="comparison-tooltip-label" title="% of FAS = annual pension divided by final average salary. Example: $55,000 pension on $110,000 FAS = 50.0%.">% of FAS</th>
+<th class="comparison-tooltip-label" title="Bridge Years - The years between LEOFF retirement and Social Security.">Bridge Years</th>
+<th>Extra Salary Earned</th>
+<th class="comparison-tooltip-label" title="Cumulative pension paid through the selected Lifetime Value Age. This is not discounted present value.">Lifetime Pension Value</th>
+</tr>
+</thead>
+<tbody id="comparisonTableBody">
+<tr>
+<td colspan="10">No comparison has been run yet.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="comparison-seo-grid">
+<article class="comparison-seo-card">
+<h2>What this LEOFF retirement age comparison tool measures</h2>
+<p>
+This tool compares retirement ages side by side using LEOFF-specific pension
+inputs: birth year, LEOFF start year, final average salary, benefit
+enhancement choice, and Social Security claim age. It highlights service
+credit, annual pension, monthly pension, percentage of FAS, bridge years, and
+lifetime pension value through your selected target age.
+</p>
+</article>
+
+<article class="comparison-seo-card">
+<h2>Why comparing retirement ages matters for LEOFF members</h2>
+<p>
+For many Washington LEOFF members, the real decision is not just whether
+retirement is possible. It is whether waiting a few more years materially
+changes pension value, percentage of FAS, and the number of years before Social
+Security begins. This page is designed to make those tradeoffs visible quickly.
+</p>
+</article>
+
+<article class="comparison-seo-card">
+<h2>When to use this tool versus the full calculator</h2>
+<p>
+Use this comparison page when you want a clean side-by-side pension timing
+view. Use the full <a href="/ui/simulator.html">retirement calculator</a> when
+you want to bring in expenses, assets, withdrawals, and risk. Then use the
+<a href="/ui/retirementDashboard.html">retirement dashboard</a> to review the
+broader plan by retirement age.
+</p>
+</article>
+</section>
+
+</main>
+</div>
+
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="mailto:leoffhelper@gmail.com">Contact Us</a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+<h4>Subscribe for Retirement Tips</h4>
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+</div>
+</div>
+
+<div class="footer-bottom">
+<p>© 2026 LEOFF Helper - Educational use only</p>
+</div>
+</footer>
+
+<script type="module" src="/ui/retirement-age-comparison.js"></script>
+</body>
+</html>

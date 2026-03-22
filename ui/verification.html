@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOFF Helper Verification</title>
+<style>
+body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    margin: 24px;
+    color: #1E2F44;
+}
+
+h1, h2 {
+    color: #1F4D3A;
+}
+
+ul {
+    padding-left: 20px;
+}
+
+#smokeTestHost {
+    position: absolute;
+    left: -9999px;
+    width: 1280px;
+    height: 900px;
+    overflow: hidden;
+}
+
+#smokeTestFrame {
+    width: 1280px;
+    height: 900px;
+    border: 0;
+}
+</style>
+</head>
+<body>
+<h1>Verification</h1>
+<h2>Browser Smoke Tests</h2>
+<ul id="smokeTestOutput"></ul>
+<h2>Engine Verification</h2>
+<ul id="verificationOutput"></ul>
+<div id="profileModuleContainer"></div>
+<div id="assetTypeContainer"></div>
+<div id="debtTypeContainer"></div>
+<input id="retireAge" type="number">
+<input id="lifeExpectancy" type="number">
+<input id="serviceYears" type="number">
+<input id="fas" type="number">
+<input id="cola" type="number">
+<select id="leoffBenefitEnhancement"><option value="tiered_multiplier">Tiered Multiplier</option><option value="lump_sum">2% Pension + Lump Sum</option></select>
+<select id="survivorOption"><option value="none">None</option><option value="50%">50%</option></select>
+<input id="survivorAge" type="number">
+<input id="ssBirthYear" type="number">
+<input id="ssClaimAge" type="number">
+<input id="ssCola" type="number">
+<select id="ssMode">
+<option value="fraBenefit">Benefit at FRA</option>
+<option value="benefit62">Benefit at 62</option>
+<option value="benefit70">Benefit at 70</option>
+</select>
+<input id="ssFraBenefit" type="number">
+<input id="ssBenefit62" type="number">
+<input id="ssBenefit70" type="number">
+<input id="expenseHousing" type="number">
+<input id="expenseGroceries" type="number">
+<input id="expenseBills" type="number">
+<input id="expenseAuto" type="number">
+<input id="expenseHealthcare" type="number">
+<input id="expenseInsurance" type="number">
+<input id="expenseOther" type="number">
+<input id="goodsServicesInflation" type="number">
+<input id="housingInflation" type="number">
+<input id="healthcareInflation" type="number">
+<input id="realToggle" type="checkbox">
+<input id="marketFirstToggle" type="checkbox">
+<div id="tooltip"></div>
+<div id="timelineLegend"></div>
+<canvas id="verificationChart" width="900" height="320" style="width:900px;height:320px;"></canvas>
+<div id="smokeTestHost">
+<iframe id="smokeTestFrame" title="Smoke Test Frame"></iframe>
+</div>
+<script type="module" src="/ui/verificationRunner.js"></script>
+</body>
+</html>

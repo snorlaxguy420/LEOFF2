@@ -1,0 +1,166 @@
+:root{
+
+--pnw-evergreen:#1F4D3A;
+--pnw-navy:#1E2F44;
+--pnw-river:#3F7C85;
+--pnw-moss:#6A8F6B;
+
+--sand-bg:#F4F1EA;
+--panel-light:#F0ECE5;
+
+--compass-copper:#B46A3C;
+
+--text-dark:#2A2A2A;
+
+}
+
+/* ===============================
+FAQ ACCORDION
+=============================== */
+
+.faq-item{
+margin-bottom:16px;
+}
+
+.faq-question{
+
+width:100%;
+text-align:left;
+
+background:white;
+
+border:none;
+outline:none;
+
+font-size:18px;
+font-weight:600;
+
+padding:18px 20px;
+
+border-radius:10px;
+
+cursor:pointer;
+
+box-shadow:0 6px 18px rgba(0,0,0,.06);
+
+display:flex;
+justify-content:space-between;
+align-items:center;
+
+}
+
+.faq-question:hover{
+background:var(--panel-light);
+}
+
+.faq-icon{
+font-size:20px;
+color:var(--pnw-river);
+transition:transform .25s ease;
+}
+
+.faq-item.active .faq-icon{
+transform:rotate(45deg);
+}
+
+.faq-answer{
+
+max-height:0;
+overflow:hidden;
+
+transition:max-height .35s ease;
+
+background:white;
+
+border-radius:0 0 10px 10px;
+
+box-shadow:0 8px 18px rgba(0,0,0,.05);
+
+padding:0 20px;
+
+}
+
+.faq-answer-inner{
+padding:18px 0 22px 0;
+}
+/* ===============================
+FAQ SEARCH
+=============================== */
+
+.faq-search-wrap{
+
+max-width:520px;
+margin:20px 0 30px 0;
+
+}
+
+.faq-search-input{
+
+width:100%;
+
+padding:14px 16px;
+
+border-radius:8px;
+
+border:1px solid rgba(0,0,0,.15);
+
+font-size:16px;
+
+background:white;
+
+box-shadow:0 4px 12px rgba(0,0,0,.05);
+
+}
+
+.faq-search-input:focus{
+
+outline:none;
+
+border-color:var(--pnw-river);
+
+box-shadow:0 0 0 2px rgba(63,124,133,.15);
+
+}
+
+/* ===============================
+FAQ SECTION NAV
+=============================== */
+
+.faq-anchors{
+
+display:flex;
+flex-wrap:wrap;
+
+gap:12px;
+
+margin:20px 0 25px 0;
+
+}
+
+.faq-anchors a{
+
+background:white;
+
+padding:8px 14px;
+
+border-radius:20px;
+
+font-size:14px;
+
+text-decoration:none;
+
+color:var(--pnw-evergreen);
+
+border:1px solid rgba(0,0,0,.08);
+
+box-shadow:0 3px 10px rgba(0,0,0,.04);
+
+transition:.15s;
+
+}
+
+.faq-anchors a:hover{
+
+background:var(--panel-light);
+
+}

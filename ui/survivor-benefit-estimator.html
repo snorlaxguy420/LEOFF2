@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOFF Survivor Benefit Estimator | Compare Survivor Pension Options</title>
+<meta name="description" content="Estimate LEOFF survivor option tradeoffs with an age-gap-based comparison of single life, 50%, 66.67%, and 100% survivor benefits.">
+<meta name="keywords" content="LEOFF survivor benefit estimator, LEOFF survivor options, 50% 66.67% 100% survivor pension, Washington survivor pension comparison">
+<meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leoffhelper.com/survivor-benefit-estimator">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="LEOFF Survivor Benefit Estimator | Compare Survivor Pension Options">
+<meta property="og:description" content="Estimate LEOFF survivor option tradeoffs with an age-gap-based comparison of single life, 50%, 66.67%, and 100% survivor benefits.">
+<meta property="og:url" content="https://leoffhelper.com/survivor-benefit-estimator">
+<meta property="og:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEOFF Survivor Benefit Estimator | Compare Survivor Pension Options">
+<meta name="twitter:description" content="Estimate LEOFF survivor option tradeoffs with an age-gap-based comparison of single life, 50%, 66.67%, and 100% survivor benefits.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "LEOFF Survivor Benefit Estimator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "url": "https://leoffhelper.com/survivor-benefit-estimator",
+  "description": "A Washington-focused LEOFF survivor option estimator that compares single life, 50%, 66.67%, and 100% survivor pension tradeoffs."
+}
+</script>
+<link rel="stylesheet" href="/ui/simulator-dashboard.css">
+<link rel="stylesheet" href="/ui/survivor-benefit-estimator.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<div class="simbg-section">
+<main class="survivor-shell">
+
+<section class="survivor-hero">
+<div class="survivor-kicker">Phase 7 Tool</div>
+<h1>Survivor Benefit Estimator</h1>
+<p>
+Compare the tradeoff between more pension while you are alive and more pension
+protection for your spouse after your death. This tool is built to make the
+math more visible, not to predict when anyone will die.
+</p>
+</section>
+
+<section class="survivor-grid">
+<section class="survivor-form-card">
+<h2>Estimator Inputs</h2>
+
+<div class="form-grid">
+<label>
+Retirement Age
+<input id="survRetirementAge" type="number" value="53" min="50" max="75">
+</label>
+
+<label>
+Service Credit Years
+<input id="survServiceYears" type="number" value="25" min="0" max="50" step="0.1">
+</label>
+
+<label>
+Final Average Salary
+<input id="survFas" type="number" value="144000" min="0" step="1000">
+</label>
+
+<label>
+Pension COLA (%)
+<input id="survCola" type="number" value="2" min="0" max="3" step="0.1">
+</label>
+
+<label>
+Benefit Enhancement
+<select id="survBenefitEnhancement">
+<option value="tiered_multiplier" selected>Tiered Multiplier</option>
+<option value="lump_sum">2% Pension + Lump Sum</option>
+</select>
+</label>
+
+<label>
+Spouse / Survivor Age
+<input id="survSpouseAge" type="number" value="48" min="18" max="100">
+</label>
+
+<label>
+Survivor Years After Death
+<input id="survSurvivorYears" type="number" value="10" min="1" max="40">
+</label>
+</div>
+
+<div class="survivor-actions">
+<button id="runSurvivorEstimatorBtn" class="primary-btn" type="button">Compare Survivor Options</button>
+</div>
+</section>
+
+<aside class="survivor-summary-card">
+<h2>How To Read This</h2>
+<ul class="survivor-summary-list">
+<li>Your monthly pension is what you keep while you are alive.</li>
+<li>Survivor monthly pension is what your spouse would keep after your death.</li>
+<li>The death-age table assumes the survivor still needs the pension for the selected number of years after your death.</li>
+<li>Single life usually maximizes current income. Higher survivor percentages usually protect the household more if you die earlier.</li>
+</ul>
+
+<div class="survivor-note">
+<strong>Estimator basis</strong>
+<p>
+The joint-option reductions here are estimated from sampled Washington DRS
+outputs across spouse age gaps from 10 years younger to 10 years older. We
+scale those reductions to your single-life pension and interpolate between age
+gaps.
+</p>
+</div>
+
+<div class="survivor-note">
+<strong>What this is not</strong>
+<p>
+This is not a mortality prediction model and it is not a replacement for an
+official DRS quote. It is a decision aid designed to help you feel the tradeoff
+range more clearly.
+</p>
+</div>
+
+<div class="survivor-note">
+<strong>Go deeper</strong>
+<p>
+Read
+<a href="/ui/articles/article-survivor-options-household-income.html">Survivor Options, Spouses, and the Income Your Household Keeps</a>
+and compare retirement timing in the
+<a href="/ui/retirement-age-comparison.html">Retirement Age Comparison Tool</a>.
+</p>
+</div>
+</aside>
+</section>
+
+<section class="survivor-results-card" id="survivorPrintCard">
+<div class="panel-header">
+<h2>Survivor Option Comparison</h2>
+<div class="survivor-header-actions">
+<button id="copySurvivorSummaryBtn" class="secondary-btn" type="button">Copy Summary</button>
+<button id="printSurvivorEstimatorBtn" class="secondary-btn" type="button">Print</button>
+</div>
+</div>
+
+<div id="survivorTakeaway" class="survivor-takeaway">
+Run the estimator to compare current pension, survivor pension, and death-age tradeoffs.
+</div>
+
+<div id="survivorStatus" class="survivor-status">Enter inputs and run the estimator.</div>
+
+<div id="survivorDecisionCards" class="survivor-decision-cards">
+<article class="survivor-decision-card">
+<div class="survivor-decision-label">Highest Income Now</div>
+<div class="survivor-decision-value">Run the estimator</div>
+<p>See which option leaves the most monthly pension in your check while you are alive.</p>
+</article>
+
+<article class="survivor-decision-card">
+<div class="survivor-decision-label">Strongest Survivor Protection</div>
+<div class="survivor-decision-value">Run the estimator</div>
+<p>See which option leaves the largest monthly pension for the surviving spouse.</p>
+</article>
+
+<article class="survivor-decision-card">
+<div class="survivor-decision-label">Middle-Ground Option</div>
+<div class="survivor-decision-value">Run the estimator</div>
+<p>See which option splits the difference between current income and survivor protection.</p>
+</article>
+</div>
+
+<div class="survivor-section-label">Core Comparison</div>
+<div class="survivor-table-wrap">
+<table class="survivor-table" id="survivorSummaryTable">
+<thead>
+<tr>
+<th>Option</th>
+<th>Your Monthly Pension</th>
+<th>Survivor Monthly Pension</th>
+<th title="How much monthly pension you give up compared with the single-life option.">Give-Up vs Single</th>
+<th title="Estimated reduction versus the single-life pension using the sampled DRS age-gap model.">Reduction</th>
+<th>Decision Lens</th>
+</tr>
+</thead>
+<tbody id="survivorSummaryTableBody">
+<tr>
+<td colspan="6">No survivor comparison has been run yet.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<div class="survivor-section-label">
+Decision Snapshots
+<span id="survivorScenarioCaption" class="survivor-section-subtitle"></span>
+</div>
+<div class="survivor-table-wrap">
+<table class="survivor-table survivor-scenario-table">
+<thead>
+<tr id="survivorScenarioHeadRow">
+<th>Option</th>
+</tr>
+</thead>
+<tbody id="survivorScenarioTableBody">
+<tr>
+<td>No scenario table has been run yet.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+</div>
+
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="mailto:leoffhelper@gmail.com">Contact Us</a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+<h4>Subscribe for Retirement Tips</h4>
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+</div>
+</div>
+
+<div class="footer-bottom">
+<p>© 2026 LEOFF Helper - Educational use only</p>
+</div>
+</footer>
+
+<script type="module" src="/ui/survivor-benefit-estimator.js"></script>
+</body>
+</html>

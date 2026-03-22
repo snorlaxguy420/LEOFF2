@@ -1,0 +1,380 @@
+.survivor-shell{
+max-width:1280px;
+margin:0 auto;
+padding:34px 40px 80px;
+}
+
+.survivor-kicker{
+display:inline-block;
+padding:8px 12px;
+border-radius:999px;
+background:rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:12px;
+font-weight:700;
+letter-spacing:.05em;
+text-transform:uppercase;
+}
+
+.survivor-hero{
+max-width:860px;
+margin-bottom:30px;
+}
+
+.survivor-hero h1{
+margin:14px 0 14px;
+font-size:52px;
+line-height:1.02;
+color:var(--pnw-navy);
+}
+
+.survivor-hero p{
+margin:0;
+font-size:18px;
+line-height:1.65;
+color:rgba(42,42,42,.78);
+}
+
+.survivor-grid{
+display:grid;
+grid-template-columns:1.2fr .8fr;
+gap:24px;
+margin-bottom:24px;
+}
+
+.survivor-form-card,
+.survivor-summary-card,
+.survivor-results-card{
+background:rgba(255,255,255,.34);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,.62);
+border-radius:20px;
+box-shadow:
+0 18px 34px rgba(30,47,68,.10),
+inset 0 1px 0 rgba(255,255,255,.55);
+padding:26px;
+}
+
+.survivor-form-card h2,
+.survivor-summary-card h2,
+.survivor-results-card h2{
+margin-top:0;
+color:var(--pnw-evergreen);
+}
+
+.survivor-actions{
+display:flex;
+justify-content:flex-end;
+margin-top:22px;
+}
+
+.survivor-header-actions{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+.survivor-summary-list{
+margin:0 0 18px;
+padding-left:18px;
+line-height:1.7;
+}
+
+.survivor-note{
+padding:18px;
+border-radius:14px;
+background:rgba(255,255,255,.26);
+backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);
+border:1px solid rgba(31,77,58,.12);
+box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+
+.survivor-note + .survivor-note{
+margin-top:14px;
+}
+
+.survivor-note p{
+margin:8px 0 0;
+line-height:1.6;
+}
+
+.survivor-note a{
+color:var(--pnw-evergreen);
+font-weight:600;
+}
+
+.survivor-takeaway{
+margin:0 0 14px;
+padding:16px 18px;
+border-radius:14px;
+background:rgba(255,255,255,.30);
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+border:1px solid rgba(31,77,58,.16);
+color:var(--pnw-evergreen);
+font-weight:600;
+line-height:1.55;
+box-shadow:inset 0 1px 0 rgba(255,255,255,.5);
+}
+
+.survivor-status{
+margin-bottom:12px;
+font-size:14px;
+color:rgba(42,42,42,.72);
+}
+
+.survivor-decision-cards{
+display:grid;
+grid-template-columns:repeat(3, minmax(0, 1fr));
+gap:16px;
+margin:0 0 18px;
+}
+
+.survivor-decision-card{
+padding:18px;
+border-radius:16px;
+background:rgba(255,255,255,.26);
+backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);
+border:1px solid rgba(31,77,58,.12);
+box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+
+.survivor-decision-label{
+font-size:12px;
+font-weight:800;
+letter-spacing:.05em;
+text-transform:uppercase;
+color:rgba(42,42,42,.62);
+}
+
+.survivor-decision-value{
+margin-top:8px;
+font-size:22px;
+font-weight:800;
+line-height:1.2;
+color:var(--pnw-evergreen);
+}
+
+.survivor-decision-card p{
+margin:8px 0 0;
+line-height:1.55;
+color:rgba(42,42,42,.74);
+}
+
+.survivor-section-label{
+display:flex;
+flex-wrap:wrap;
+align-items:center;
+gap:8px;
+margin:18px 0 10px;
+font-size:14px;
+font-weight:800;
+letter-spacing:.04em;
+text-transform:uppercase;
+color:var(--pnw-navy);
+}
+
+.survivor-section-subtitle{
+font-size:12px;
+font-weight:600;
+text-transform:none;
+letter-spacing:0;
+color:rgba(42,42,42,.68);
+}
+
+.survivor-table-wrap{
+overflow-x:auto;
+}
+
+.survivor-table{
+width:100%;
+border-collapse:collapse;
+min-width:900px;
+}
+
+.survivor-table th,
+.survivor-table td{
+padding:14px 12px;
+border-bottom:1px solid rgba(0,0,0,.08);
+text-align:left;
+vertical-align:top;
+font-size:14px;
+}
+
+.survivor-table th{
+font-size:13px;
+text-transform:uppercase;
+letter-spacing:.04em;
+color:var(--pnw-navy);
+}
+
+.survivor-table tbody tr:hover{
+background:rgba(31,77,58,.04);
+}
+
+.survivor-option-label{
+display:block;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.survivor-option-sub{
+display:block;
+margin-top:4px;
+font-size:12px;
+color:rgba(42,42,42,.58);
+}
+
+.survivor-metric{
+display:block;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.survivor-submetric{
+display:block;
+margin-top:4px;
+font-size:12px;
+font-weight:600;
+color:rgba(31,77,58,.82);
+}
+
+.survivor-submetric.muted{
+color:rgba(42,42,42,.45);
+}
+
+.survivor-submetric.warn{
+color:#7d4f16;
+}
+
+.survivor-scenario-table th,
+.survivor-scenario-table td{
+min-width:170px;
+}
+
+@media (max-width: 980px){
+.survivor-shell{
+padding:24px 20px 56px;
+}
+
+.survivor-grid{
+grid-template-columns:1fr;
+}
+
+.survivor-decision-cards{
+grid-template-columns:1fr;
+}
+
+.survivor-header-actions{
+justify-content:flex-start;
+flex-wrap:wrap;
+margin-top:12px;
+}
+
+.survivor-hero h1{
+font-size:38px;
+}
+}
+
+@media print{
+@page{
+margin:.55in;
+size:auto;
+}
+
+body{
+background:#fff !important;
+font-size:11pt;
+color:#1f2937;
+}
+
+body *{
+visibility:hidden;
+}
+
+#survivorPrintCard,
+#survivorPrintCard *{
+visibility:visible;
+}
+
+#survivorPrintCard{
+position:absolute;
+left:0;
+top:0;
+width:100%;
+margin:0;
+padding:0 0 .08in;
+background:#fff;
+border:none;
+box-shadow:none;
+}
+
+#survivorPrintCard h2{
+margin:0 0 .12in;
+font-size:20pt;
+color:#173b2d;
+}
+
+.survivor-takeaway{
+margin:0 0 .18in;
+padding:.14in .18in;
+background:#f3f7f4;
+border:1px solid #c9d8cf;
+border-radius:10px;
+font-size:12pt;
+line-height:1.45;
+color:#173b2d;
+}
+
+.survivor-status{
+margin:0 0 .14in;
+font-size:10pt;
+color:#4b5563;
+}
+
+.survivor-header-actions{
+display:none !important;
+}
+
+.survivor-table-wrap{
+overflow:visible;
+}
+
+.survivor-table{
+min-width:0;
+width:100%;
+}
+
+.survivor-table th,
+.survivor-table td{
+padding:.11in .1in;
+font-size:10.5pt;
+border-bottom:1px solid #d7dee4;
+}
+
+.survivor-table th{
+font-size:9.5pt;
+letter-spacing:.03em;
+color:#24364d;
+background:#f8faf9;
+}
+
+.survivor-table tbody tr:hover{
+background:transparent;
+}
+
+.survivor-metric,
+.survivor-option-label{
+font-weight:700;
+color:#1f2f46;
+}
+
+.survivor-submetric,
+.survivor-option-sub{
+font-size:9pt;
+color:#2e6a52;
+}
+}

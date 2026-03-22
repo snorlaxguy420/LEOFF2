@@ -1,0 +1,202 @@
+/* =========================================================
+   SCHEMA-DRIVEN INPUT COLLECTOR
+========================================================= */
+
+import { assetRegistry } from "../core/assetRegistry.js";
+
+function readValue(id, type) {
+
+    const el = document.getElementById(id);
+
+    if (!el) return 0;
+
+    if (type === "checkbox") return el.checked;
+
+    const value = el.value;
+
+    if (type === "int") return parseInt(value) || 0;
+
+    if (type === "number") return parseFloat(value) || 0;
+
+    return value || "";
+
+}
+
+/* =========================================================
+   INPUT SCHEMA
+========================================================= */
+
+const schema = {
+
+    retireAge: "int",
+    lifeExpectancy: "int",
+
+    serviceYears: "number",
+    fas: "number",
+    cola: "number",
+    leoffBenefitEnhancement: "text",
+
+    survivorOption: "text",
+    survivorAge: "int",
+    hasPers2: "checkbox",
+    pers2ServiceYears: "number",
+    pers2Afc: "number",
+    pers2StartAge: "number",
+    pers2HireDate: "text",
+
+    /* =========================
+       SOCIAL SECURITY INPUTS
+    ========================= */
+
+    ssBirthYear: "int",
+    ssClaimAge: "number",
+    ssCola: "number",
+    ssMode: "text",
+
+    ssFraBenefit: "number",
+    ssBenefit62: "number",
+    ssBenefitFRA: "number",
+    ssBenefit70: "number",
+
+    ssOptimize: "checkbox",
+
+    expenseHousing: "number",
+    expenseGroceries: "number",
+    expenseBills: "number",
+    expenseAuto: "number",
+    expenseHealthcare: "number",
+    expenseInsurance: "number",
+    expenseOther: "number",
+    goodsServicesInflation: "number",
+    housingInflation: "number",
+    healthcareInflation: "number",
+
+    realToggle: "checkbox",
+    marketFirstToggle: "checkbox"
+
+};
+
+/* =========================================================
+   MAIN COLLECTOR
+========================================================= */
+
+export function collectInputs() {
+
+    const raw = {};
+
+    Object.entries(schema).forEach(([id,type]) => {
+        raw[id] = readValue(id,type);
+    });
+
+    const ssMode = raw.ssMode || "fraBenefit";
+
+    /* =====================================================
+       DERIVED VALUES
+    ===================================================== */
+
+    const monthlyExpenses =
+        raw.expenseHousing +
+        raw.expenseGroceries +
+        raw.expenseBills +
+        raw.expenseAuto +
+        raw.expenseHealthcare +
+        raw.expenseInsurance +
+        raw.expenseOther;
+    const essentialMonthlyExpenses =
+        raw.expenseHousing +
+        raw.expenseGroceries +
+        raw.expenseBills +
+        raw.expenseHealthcare +
+        raw.expenseInsurance;
+    const discretionaryMonthlyExpenses =
+        raw.expenseAuto +
+        raw.expenseOther;
+
+    const baseAnnualExpenses = monthlyExpenses * 12;
+    const essentialAnnualExpenses = essentialMonthlyExpenses * 12;
+    const discretionaryAnnualExpenses = discretionaryMonthlyExpenses * 12;
+
+    /* =====================================================
+       PROFILE MODULE (canonical age source)
+    ===================================================== */
+
+   const profileModule = assetRegistry.get("profile");
+   const profile = profileModule ? profileModule.getProfile() : null;
+
+    return {
+
+        profile,
+
+        retireAge: raw.retireAge,
+        lifeExpectancy: raw.lifeExpectancy,
+
+        pension: {
+            serviceYears: raw.serviceYears,
+            finalAverageSalary: raw.fas,
+            cola: raw.cola / 100,
+            benefitEnhancement: raw.leoffBenefitEnhancement || "tiered_multiplier",
+            survivorOption: raw.survivorOption,
+            survivorAge: raw.survivorAge
+        },
+
+        additionalPensions: raw.hasPers2 ? [
+            {
+                system: "PERS2",
+                enabled: true,
+                serviceYears: raw.pers2ServiceYears,
+                averageFinalCompensation: raw.pers2Afc,
+                retirementAge: raw.pers2StartAge,
+                hireDate: raw.pers2HireDate || null
+            }
+        ] : [],
+
+        /* =========================
+           SOCIAL SECURITY OBJECT
+        ========================= */
+
+        socialSecurity: {
+            birthYear: raw.ssBirthYear,
+            claimAge: raw.ssClaimAge,
+            cola: raw.ssCola / 100,
+            mode: ssMode,
+            fraBenefit: raw.ssFraBenefit,
+            benefit62: raw.ssBenefit62,
+            benefitFRA: raw.ssBenefitFRA,
+            benefit70: raw.ssBenefit70,
+            optimize: raw.ssOptimize
+        },
+
+        expenses: {
+            housing: raw.expenseHousing,
+            groceries: raw.expenseGroceries,
+            bills: raw.expenseBills,
+            auto: raw.expenseAuto,
+            healthcare: raw.expenseHealthcare,
+            insurance: raw.expenseInsurance,
+            other: raw.expenseOther,
+            essentialMonthly: essentialMonthlyExpenses,
+            discretionaryMonthly: discretionaryMonthlyExpenses,
+            monthly: monthlyExpenses,
+            essentialAnnual: essentialAnnualExpenses,
+            discretionaryAnnual: discretionaryAnnualExpenses,
+            annual: baseAnnualExpenses
+        },
+
+        assumptions: {
+            inflationRate: (raw.goodsServicesInflation || 3.29) / 100,
+            goodsServicesInflationRate:
+                (raw.goodsServicesInflation || 3.29) / 100,
+            housingInflationRate:
+                (raw.housingInflation || 2.8) / 100,
+            healthcareInflationRate:
+                (raw.healthcareInflation || 6) / 100
+        },
+
+        toggles: {
+            showReal: raw.realToggle,
+            marketFirst: raw.marketFirstToggle
+        }
+
+    };
+
+}

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOFF Helper Retirement Dashboard</title>
+<meta name="description" content="Review retirement readiness, income versus expenses, risk analysis, and retirement timing using the LEOFF Helper dashboard report.">
+<meta name="keywords" content="retirement dashboard, retirement readiness score, retirement risk analysis, LEOFF retirement report, income vs expenses retirement">
+<meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leoffhelper.com/retirement-dashboard">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="LEOFF Helper Retirement Dashboard">
+<meta property="og:description" content="Review retirement readiness, income versus expenses, risk analysis, and retirement timing using the LEOFF Helper dashboard report.">
+<meta property="og:url" content="https://leoffhelper.com/retirement-dashboard">
+<meta property="og:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEOFF Helper Retirement Dashboard">
+<meta name="twitter:description" content="Review retirement readiness, income versus expenses, risk analysis, and retirement timing using the LEOFF Helper dashboard report.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<link rel="stylesheet" href="/ui/simulator-dashboard.css">
+<link rel="stylesheet" href="/ui/dashboard.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "LEOFF Helper Retirement Dashboard",
+  "url": "https://leoffhelper.com/retirement-dashboard",
+  "description": "A report-style dashboard for reviewing retirement readiness, income versus expenses, risk analysis, and retirement timing.",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "LEOFF Helper",
+    "url": "https://leoffhelper.com/"
+  }
+}
+</script>
+</head>
+<body>
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<div class="simbg-section">
+<main class="dashboard-shell">
+
+<section class="dashboard-hero">
+<div class="dashboard-kicker">LEOFF Helper Dashboard</div>
+<h1>Your Retirement Plan at a Glance</h1>
+<p>
+Review pension sustainability, retirement timing, income coverage, and asset
+depletion in the same planning flow as the simulator.
+</p>
+<div class="report-actions">
+<button id="printReportBtn" class="report-action-primary">Print Report</button>
+<button id="downloadPdfBtn" class="report-action-secondary">Download PDF</button>
+<a href="/ui/simulator.html" class="report-action-secondary">Back to Calculator</a>
+</div>
+</section>
+
+<div id="retirementDashboard">
+
+  <div class="dashboard-control-bar">
+      <div class="retirement-slider compact-slider">
+          <label id="retirementAgeSliderLabel">Retirement Age: <strong>55</strong></label>
+          <input type="range" id="retirementAgeSlider" min="50" max="65" value="55">
+      </div>
+      <button id="editInputsBtn">Edit Plan</button>
+  </div>
+
+  <section class="dashboard-overview-grid">
+
+      <section class="dashboard-overview-card">
+          <div class="dashboard-card-header">
+              <div>
+                  <div class="dashboard-card-kicker">Recommended Age</div>
+                  <h2 id="recommendedRetirement" class="dashboard-card-value">--</h2>
+              </div>
+              <button
+                  class="detail-toggle"
+                  data-detail-target="recommendedAgeDetail"
+                  aria-expanded="false"
+              >
+                  + Show Detail
+              </button>
+          </div>
+          <p id="recommendedAgeSummary" class="dashboard-card-summary">
+              The age recommendation summary will appear here once the dashboard finishes loading.
+          </p>
+          <div id="recommendedAgeDetail" class="dashboard-card-detail">
+              <div class="report-stat-list">
+                  <div><span>Earliest Sustainable</span><strong id="earliestRetirement">--</strong></div>
+                  <div><span>Financial Freedom</span><strong id="freedomAge">--</strong></div>
+                  <div><span>Asset Depletion</span><strong id="assetDepletion">--</strong></div>
+                  <div><span>First Deficit Age</span><strong id="firstDeficitAge">--</strong></div>
+              </div>
+          </div>
+      </section>
+
+      <section class="dashboard-overview-card score-panel">
+          <div class="dashboard-card-header">
+              <div class="score-title">Retirement Readiness</div>
+              <button
+                  class="detail-toggle detail-toggle-light"
+                  data-detail-target="readinessDetail"
+                  aria-expanded="false"
+              >
+                  + Show Detail
+              </button>
+          </div>
+          <div id="readinessScore" class="score-number">
+              84 / 100
+          </div>
+          <div id="readinessGrade" class="score-grade">
+              B
+          </div>
+          <div id="readinessDescription" class="score-description">
+              Good start, with room to improve your long-term retirement position.
+          </div>
+          <div id="readinessDetail" class="dashboard-card-detail dashboard-card-detail-light">
+              <div class="report-stat-list">
+                  <div><span>Income Coverage</span><strong id="readinessCoverageScore">--</strong></div>
+                  <div><span>Deficit Severity</span><strong id="readinessDeficitScore">--</strong></div>
+                  <div><span>Longevity Safety</span><strong id="readinessLongevityScore">--</strong></div>
+                  <div><span>Early Retirement Stability</span><strong id="readinessEarlyScore">--</strong></div>
+                  <div><span>Income Stability</span><strong id="readinessStabilityScore">--</strong></div>
+              </div>
+          </div>
+      </section>
+
+      <section class="dashboard-overview-card">
+          <div class="dashboard-card-header">
+              <div>
+                  <div class="dashboard-card-kicker">Primary Risk</div>
+                  <h2 id="largestVulnerability" class="dashboard-card-value dashboard-card-value-risk">--</h2>
+              </div>
+              <button
+                  class="detail-toggle"
+                  data-detail-target="riskDetail"
+                  aria-expanded="false"
+              >
+                  + Show Detail
+              </button>
+          </div>
+          <p id="vulnerabilityExplanation" class="dashboard-card-summary">
+              The main risk explanation will appear here once the dashboard finishes loading.
+          </p>
+          <div id="riskDetail" class="dashboard-card-detail">
+              <p id="vulnerabilityMitigation" class="dashboard-detail-note"></p>
+              <section class="report-detail-panel report-risk-panel embedded-detail-panel">
+                  <h3>Top 3 Retirement Risks</h3>
+                  <div id="topRisksList" class="report-risk-list"></div>
+              </section>
+              <div class="embedded-detail-panel">
+                  <h3>Stress Signals</h3>
+                  <ul id="riskList" class="dashboard-bullet-list"></ul>
+              </div>
+          </div>
+      </section>
+
+      <section class="dashboard-overview-card">
+          <div class="dashboard-card-header">
+              <div>
+                  <div class="dashboard-card-kicker">Retirement-Year Margin</div>
+                  <h2 id="reportIncomeMargin" class="dashboard-card-value">--</h2>
+              </div>
+              <button
+                  class="detail-toggle"
+                  data-detail-target="marginDetail"
+                  aria-expanded="false"
+              >
+                  + Show Detail
+              </button>
+          </div>
+          <p id="marginSummaryText" class="dashboard-card-summary">
+              Retirement-year income and expense context will appear here once the dashboard finishes loading.
+          </p>
+          <div id="marginDetail" class="dashboard-card-detail">
+              <div class="report-stat-list">
+                  <div><span>Retirement-Year Income</span><strong id="retirementIncome">--</strong></div>
+                  <div><span>Annual Expenses</span><strong id="annualExpenses">--</strong></div>
+                  <div><span>Pension Coverage</span><strong id="pensionCoverage">--</strong></div>
+                  <div><span>Average Safety Margin</span><strong id="safetyMargin">--</strong></div>
+              </div>
+
+              <div class="detail-subgrid">
+                  <section class="embedded-detail-panel">
+                      <h3>Expense Breakdown</h3>
+                      <div class="report-stat-list">
+                          <div><span>Essential</span><strong id="expenseEssential">--</strong></div>
+                          <div><span>Discretionary</span><strong id="expenseDiscretionary">--</strong></div>
+                          <div><span>Housing</span><strong id="expenseHousing">--</strong></div>
+                          <div><span>Healthcare</span><strong id="expenseHealthcare">--</strong></div>
+                          <div><span>Insurance</span><strong id="expenseInsurance">--</strong></div>
+                          <div><span>Goods & Services</span><strong id="expenseGoodsServices">--</strong></div>
+                      </div>
+                  </section>
+
+                  <section class="embedded-detail-panel">
+                      <h3>Tax Snapshot</h3>
+                      <div class="report-stat-list">
+                          <div><span>Retirement-Year Taxes</span><strong id="taxesAtRetirement">--</strong></div>
+                          <div><span>Taxable Income</span><strong id="taxableIncomeAtRetirement">--</strong></div>
+                          <div><span>Tax Drag</span><strong id="taxDragRatio">--</strong></div>
+                      </div>
+                      <p id="taxSnapshotNarrative" class="report-inline-note"></p>
+                  </section>
+              </div>
+
+              <div class="detail-subgrid">
+                  <section class="embedded-detail-panel">
+                      <h3>Shortfall Summary</h3>
+                      <div class="report-stat-list">
+                          <div><span>First Deficit Age</span><strong id="reportFirstDeficitAge">--</strong></div>
+                          <div><span>Cumulative Shortfall</span><strong id="reportCumulativeShortfall">--</strong></div>
+                          <div><span>Worst Annual Deficit</span><strong id="reportWorstAnnualDeficit">--</strong></div>
+                      </div>
+                  </section>
+
+                  <section class="embedded-detail-panel">
+                      <h3>Financial Snapshot</h3>
+                      <div class="report-stat-list">
+                          <div><span>Total Assets</span><strong id="totalAssets">--</strong></div>
+                          <div><span>Total Debts</span><strong id="totalDebts">--</strong></div>
+                          <div><span>Net Worth</span><strong id="netWorth">--</strong></div>
+                      </div>
+                  </section>
+              </div>
+          </div>
+      </section>
+
+  </section>
+
+  <div class="timeline-panel">
+
+      <h3>Income vs Expense Timeline</h3>
+
+      <div class="chart-scroll-shell dashboard-screen-chart">
+      <canvas id="comparisonChart" width="1000" height="450"></canvas>
+      </div>
+
+      <div class="print-chart-stack">
+          <div class="print-chart-block">
+              <h4>Income vs Expense Bar Chart</h4>
+              <canvas id="printBarChart" width="1000" height="420"></canvas>
+          </div>
+          <div class="print-chart-block">
+              <h4>Income vs Expense Line Chart</h4>
+              <canvas id="printLineChart" width="1000" height="420"></canvas>
+          </div>
+      </div>
+
+  </div>
+
+  <section class="dashboard-recommendation-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Recommendation</div>
+              <h2 id="recommendationHeadline">Recommended retirement age: --</h2>
+          </div>
+          <button
+              class="detail-toggle"
+              data-detail-target="recommendationDetail"
+              aria-expanded="false"
+          >
+              + Show Detail
+          </button>
+      </div>
+      <p id="dashboardRecommendationText" class="dashboard-card-summary">
+          Your short recommendation will appear here once the dashboard finishes loading.
+      </p>
+      <div id="recommendationDetail" class="dashboard-card-detail">
+          <p id="recommendationNarrative" class="dashboard-card-summary">
+              We will explain why this retirement age is being recommended once the dashboard finishes loading.
+          </p>
+          <section class="embedded-detail-panel">
+              <div class="report-summary-kicker">Planning Lever</div>
+              <h3 id="planningLeverHeadline">What this scenario appears most sensitive to</h3>
+              <p id="planningLeverNarrative">
+                  We will describe the main planning lever for this scenario once the dashboard finishes loading.
+              </p>
+          </section>
+      </div>
+  </section>
+
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+
+<div class="footer-grid">
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="mailto:leoffhelper@gmail.com">Contact Us</a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+
+<h4>Subscribe for Retirement Tips</h4>
+
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+
+</div>
+
+</div>
+
+<div class="footer-bottom">
+
+<p>© 2024 LEOFF Helper - Not affiliated with any government agency</p>
+
+<div class="footer-icons">
+<a href="#">T</a>
+<a href="#">I</a>
+</div>
+
+</div>
+
+</footer>
+
+<div id="tooltip"></div>
+
+<script type="module" src="/ui/dashboardLoader.js"></script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>LEOFF Helper Retirement Planner | LEOFF 2 Pension Calculator</title>
+
+<meta name="description" content="Interactive retirement planning calculator designed for Washington State LEOFF Plan 2 firefighters and law enforcement officers. Model pensions, Social Security, assets, expenses, and retirement sustainability.">
+
+<meta name="keywords" content="LEOFF 2 pension calculator, firefighter retirement planning, Washington LEOFF retirement, firefighter pension estimate">
+
+<meta name="author" content="LEOFF Helper">
+
+<link rel="canonical" href="https://leoffhelper.com/leoff-retirement-planner">
+
+<link rel="stylesheet" href="/ui/simulator-dashboard.css">
+
+</head>
+
+<body>
+
+<header class="site-header">
+
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+</nav>
+
+</header>
+<div class="simbg-section">
+<main class="planner-container">
+
+<div class="planner-grid">
+
+<!-- ===============================
+LEFT SIDEBAR
+=============================== -->
+
+<aside class="planner-sidebar">
+
+<button class="nav-item active" data-tab="profile">Profile</button> <button class="nav-item" data-tab="pension">Pension</button> <button class="nav-item" data-tab="ss">Social Security</button> <button class="nav-item" data-tab="retirement">Retirement Accounts</button> <button class="nav-item" data-tab="assets">Assets</button> <button class="nav-item" data-tab="debts">Debts</button> <button class="nav-item" data-tab="expenses">Expenses</button>
+
+</aside>
+
+<!-- ===============================
+CENTER INPUT PANEL
+=============================== -->
+
+<section class="planner-input">
+
+<!-- PROFILE MODULE -->
+
+<div class="module active" id="profile">
+
+<div id="profileModuleContainer"></div>
+
+</div>
+
+<!-- PENSION -->
+
+<div class="module" id="pension">
+
+<h2>LEOFF Pension</h2>
+
+<div class="form-grid">
+
+<label>
+Retirement Age
+<input id="retireAge" type="number" value="53">
+</label>
+
+<label>
+Years of Service
+<input id="serviceYears" type="number" value="25">
+</label>
+
+<label>
+Final Average Salary
+<input id="fas" type="number" value="110000">
+</label>
+
+<label>
+Life Expectancy
+<input id="lifeExpectancy" type="number" value="90">
+</label>
+
+<label>
+COLA %
+<input id="cola" type="number" value="2">
+</label>
+
+<label>
+Survivor Option
+<select id="survivorOption">
+<option value="none">None</option>
+<option value="50%">50%</option>
+<option value="66.6%">66%</option>
+<option value="100%">100%</option>
+</select>
+</label>
+
+<label>
+Survivor Age
+<input id="survivorAge" type="number" value="50">
+</label>
+
+<label>
+Benefit Enhancement
+<select id="leoffBenefitEnhancement">
+<option value="tiered_multiplier">Tiered Multiplier</option>
+<option value="lump_sum">2% Pension + Lump Sum</option>
+</select>
+</label>
+
+</div>
+
+<div class="secondary-pension-card">
+
+<label class="secondary-pension-toggle">
+<input id="hasPers2" type="checkbox">
+Also add PERS Plan 2
+</label>
+
+<div id="pers2Section" class="form-grid" style="display:none;margin-top:18px;">
+
+<label>
+PERS 2 Service Years
+<input id="pers2ServiceYears" type="number" value="0">
+</label>
+
+<label>
+PERS 2 Average Final Compensation
+<input id="pers2Afc" type="number" value="0">
+</label>
+
+<label>
+Start Drawing PERS Age
+<input id="pers2StartAge" type="number" value="65">
+</label>
+
+<label>
+PERS 2 Hire Date
+<input id="pers2HireDate" type="date">
+</label>
+
+</div>
+
+</div>
+
+</div>
+
+<!-- SOCIAL SECURITY -->
+
+<div class="module" id="ss">
+
+<h2>Social Security</h2>
+
+<div class="form-grid">
+
+<label>
+Birth Year
+<input id="ssBirthYear" type="number">
+</label>
+
+<label>
+Claim Age
+<input id="ssClaimAge" type="number">
+</label>
+
+<label>
+COLA
+<input id="ssCola" type="number">
+</label>
+
+<label>
+Known Benefit Type
+<select id="ssMode">
+<option value="fraBenefit">Benefit at FRA</option>
+<option value="benefit62">Benefit at 62</option>
+<option value="benefit70">Benefit at 70</option>
+</select>
+</label>
+
+<label id="ssFraBenefitField">
+Benefit at FRA
+<input id="ssFraBenefit" type="number">
+</label>
+
+<label id="ssBenefit62Field" style="display:none;">
+Benefit at 62
+<input id="ssBenefit62" type="number">
+</label>
+
+<label id="ssBenefit70Field" style="display:none;">
+Benefit at 70
+<input id="ssBenefit70" type="number">
+</label>
+
+</div>
+
+</div>
+
+<!-- RETIREMENT ACCOUNTS -->
+
+<div class="module" id="retirement">
+
+<h2>Retirement Accounts</h2>
+
+<div id="retirementButtonBar"></div>
+<div id="retirementTypeContainer"></div>
+
+</div>
+
+<!-- ASSETS -->
+
+<div class="module" id="assets">
+
+<h2>Assets</h2>
+
+<div id="assetButtonBar"></div>
+<div id="assetTypeContainer"></div>
+
+</div>
+
+<!-- DEBTS -->
+
+<div class="module" id="debts">
+
+<h2>Debts</h2>
+
+<div id="debtButtonBar"></div>
+<div id="debtTypeContainer"></div>
+
+</div>
+
+<!-- EXPENSES -->
+
+<div class="module" id="expenses">
+
+<h2>Monthly Expenses</h2>
+
+<div class="form-grid">
+
+<label>Housing <input id="expenseHousing" type="number"> </label>
+
+<label>Groceries <input id="expenseGroceries" type="number"> </label>
+
+<label>Bills <input id="expenseBills" type="number"> </label>
+
+<label>Auto <input id="expenseAuto" type="number"> </label>
+
+<label>Healthcare <input id="expenseHealthcare" type="number"> </label>
+
+<label>Insurance <input id="expenseInsurance" type="number"> </label>
+
+<label>Other <input id="expenseOther" type="number"> </label>
+
+</div>
+
+<h2 style="margin-top:20px;">Expense Inflation Assumptions</h2>
+
+<div class="form-grid">
+
+<label class="inline-tooltip">
+Goods &amp; Services Inflation %
+<span class="inline-tooltip-text">
+Suggested default is 3.29%, based on the historical goods-and-services inflation assumption currently used in the simulator. If your saved plan shows a different number here, that is your custom assumption.
+</span>
+<input id="goodsServicesInflation" type="number" value="3.29">
+</label>
+
+<label class="inline-tooltip">
+Housing Inflation %
+<span class="inline-tooltip-text">
+Suggested default is 2.8%, based on the 12-month West Region BLS CPI Shelter increase reported for February 2026. If your saved plan shows a different number here, that is your custom assumption.
+</span>
+<input id="housingInflation" type="number" value="2.8">
+</label>
+
+<label class="inline-tooltip">
+Healthcare Inflation %
+<span class="inline-tooltip-text">
+Suggested default is 6.0%, based on the 12-month West Region BLS CPI Medical Care increase reported for February 2026. If your saved plan shows a different number here, that is your custom assumption.
+</span>
+<input id="healthcareInflation" type="number" value="6">
+</label>
+
+</div>
+
+<div class="assumption-action-row">
+<button id="resetInflationDefaultsBtn" type="button" class="secondary-btn">
+Reset to Suggested Defaults
+</button>
+</div>
+
+</div>
+
+</section>
+
+<!-- ===============================
+RIGHT PREVIEW PANEL
+=============================== -->
+
+<aside class="planner-preview">
+
+<div class="preview-card">
+
+<h3>Retirement Sustainability</h3>
+<div id="retirementStatus">—</div>
+
+</div>
+
+<div class="preview-card">
+
+<h3>First Deficit Year</h3>
+<div id="firstDeficit">—</div>
+
+</div>
+
+<div class="preview-card">
+
+<h3>Income Coverage</h3>
+<div id="incomeCoverage" class="preview-metric">—</div>
+
+
+</div>
+<a href="/ui/retirementDashboard.html">
+<button id="fullReportBtn" class="primary-btn" style="width:100%;margin-top:10px;">
+Generate Retirement Report
+</button>
+</a>
+
+</aside>
+
+<div id="tooltip" class="chart-tooltip"></div>
+
+</div> <!-- planner-grid -->
+
+<section class="timeline-section">
+
+<div class="timeline-card">
+
+<h2>Income Timeline</h2>
+<button id="chartToggleBtn" class="primary-btn">
+Bar Chart
+</button>
+
+<div class="chart-scroll-shell">
+<canvas id="incomeTimelineChart" width="1200" height="420"></canvas>
+</div>
+
+<div id="timelineLegend"></div>
+<div id="mobileIncomeSummary" class="mobile-income-summary"></div>
+
+</div>
+</div>
+</section>
+</main>
+<!-- ===============================
+FOOTER
+=============================== -->
+
+<footer class="site-footer">
+
+<div class="footer-grid">
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="mailto:leoffhelper@gmail.com">Contact Us</a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+
+<h4>Subscribe for Retirement Tips</h4>
+
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+
+</div>
+
+</div>
+
+<div class="footer-bottom">
+
+<p>© 2024 LEOFF Helper - Not affiliated with any government agency</p>
+
+<div class="footer-icons">
+<a href="#">🐦</a>
+<a href="#">🦋</a>
+</div>
+
+</div>
+
+</footer>
+<script type="module" src="/ui/simulator-dashboard.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,743 @@
+/* =========================================
+   LEOFF 2 Retirement Structural Simulator
+   Professional Institutional Styling
+========================================= */
+
+/* ---------- ROOT COLOR SYSTEM ---------- */
+
+:root {
+    --bg-light: #ece0d1;
+    --accent-light: #dbc1ac;
+    --accent-mid: #967259;
+    --accent-deep: #634832;
+    --accent-dark: #38220f;
+
+    --text-primary: #2b2b2b;
+    --text-muted: #6b6b6b;
+    --card-bg: #ffffff;
+}
+
+
+/* ---------- BASE LAYOUT ---------- */
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 40px auto 80px auto;
+    padding: 0 20px;
+}
+
+.header {
+    text-align: center;
+    padding: 40px 20px 20px 20px;
+}
+
+.header h1 {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--accent-deep);
+}
+
+.subtext {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+
+/* ---------- CARD SYSTEM ---------- */
+
+.card {
+    background: var(--card-bg);
+    padding: 28px;
+    margin-bottom: 28px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    border-top: 4px solid var(--accent-light);
+}
+
+.tab-card {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--accent-deep);
+    font-weight: 600;
+}
+
+.results-card h2 {
+    border-bottom: 1px solid var(--accent-light);
+    padding-bottom: 12px;
+}
+
+
+/* ---------- TOP TABS (CONNECTED STYLE) ---------- */
+
+.tabs-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: -1px; /* Pull into card */
+    flex-wrap: wrap;
+}
+
+.tabs-wrapper .tab-btn {
+    padding: 10px 18px;
+    border: 1px solid var(--accent-light);
+    border-bottom: none;
+    background: var(--accent-light);
+    color: var(--accent-deep);
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tabs-wrapper .tab-btn:hover {
+    background: var(--accent-mid);
+    color: white;
+}
+
+.tabs-wrapper .tab-btn.active {
+    background: var(--card-bg);
+    color: var(--accent-deep);
+    position: relative;
+    top: 1px; /* Visually connects */
+}
+
+
+/* ---------- TAB CONTENT ---------- */
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+
+/* ---------- GRID LAYOUTS ---------- */
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+
+
+/* ---------- INPUT STYLING ---------- */
+
+label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+input,
+select {
+    margin-top: 6px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #d4d4d4;
+    font-size: 14px;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-mid);
+    box-shadow: 0 0 0 2px rgba(150, 114, 89, 0.2);
+}
+
+
+/* ---------- BUTTON ---------- */
+
+.run-container {
+    text-align: center;
+    margin: 30px 0 50px 0;
+}
+
+.primary-btn {
+    background-color: var(--accent-deep);
+    color: white;
+    padding: 14px 32px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.primary-btn:hover {
+    background-color: var(--accent-dark);
+    transform: translateY(-1px);
+}
+
+.primary-btn:active {
+    transform: translateY(0);
+}
+
+
+/* ---------- CHART AREA ---------- */
+
+#comparisonChart {
+    margin-top: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--accent-light);
+}
+
+
+/* ---------- LEGEND ---------- */
+
+#legend {
+    margin: 15px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 14px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+}
+
+
+/* ---------- TOOLTIP ---------- */
+
+#tooltip {
+    position: absolute;
+    background: white;
+    padding: 10px 14px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    white-space: nowrap;
+    z-index: 10;
+    border-left: 4px solid var(--accent-mid);
+}
+
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 900px) {
+    .grid-2,
+    .grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+.grid-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 20px;
+}
+/* ============================= */
+/* Disclaimer Page Styling       */
+/* ============================= */
+/* ============================= */
+/* Color Palette Variables       */
+/* ============================= */
+
+:root {
+    --bg-main: #ece0d1;
+    --bg-card: #dbc1ac;
+
+    --accent: #967259;
+
+    --text-heading: #634832;
+    --text-body: #38220f;
+}
+
+/* ============================= */
+/* Base Page Styling             */
+/* ============================= */
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text-body);
+}
+
+/* ============================= */
+/* Disclaimer Container          */
+/* ============================= */
+
+.disclaimer-container {
+    max-width: 850px;
+    margin: 80px auto;
+    padding: 50px;
+    background-color: var(--bg-card);
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(56, 34, 15, 0.15);
+    line-height: 1.75;
+}
+
+/* ============================= */
+/* Headings                      */
+/* ============================= */
+
+.disclaimer-container h1 {
+    font-size: 34px;
+    margin-bottom: 35px;
+    color: var(--text-heading);
+}
+
+.disclaimer-container h2 {
+    font-size: 20px;
+    margin-top: 40px;
+    margin-bottom: 15px;
+    color: var(--text-heading);
+}
+
+/* ============================= */
+/* Paragraphs & Lists            */
+/* ============================= */
+
+.disclaimer-container p {
+    margin-bottom: 18px;
+}
+
+.disclaimer-container ul {
+    padding-left: 22px;
+    margin-bottom: 20px;
+}
+
+.disclaimer-container li {
+    margin-bottom: 8px;
+}
+
+/* ============================= */
+/* Emphasis Section              */
+/* ============================= */
+
+.emphasis {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.closing {
+    margin-top: 25px;
+    font-weight: 500;
+}
+
+/* ============================= */
+/* Back Link                     */
+/* ============================= */
+
+.back-link {
+    margin-top: 50px;
+    text-align: center;
+}
+
+.back-link a {
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+}
+
+.back-link a:hover {
+    opacity: 0.75;
+}
+/* ============================= */
+/* Last Updated Timestamp        */
+/* ============================= */
+
+.last-updated {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+/* ======================================================
+   Footer
+====================================================== */
+
+.footer {
+    margin-top: 80px;
+    padding: 25px 0;
+    background-color: #dbc1ac;
+    border-top: 2px solid #967259;
+}
+
+.footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: 14px;
+    color: #38220f;
+}
+
+.footer-link {
+    text-decoration: none;
+    font-weight: 600;
+    color: #634832;
+    transition: opacity 0.2s ease;
+}
+
+.footer-link:hover {
+    opacity: 0.7;
+}
+/* =========================================================
+   COMPACT EXPENSE GRID
+========================================================= */
+
+.expense-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 20px;
+    margin-bottom: 15px;
+}
+
+.expense-grid .input-group {
+    margin-bottom: 0;
+}
+
+.expense-summary {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #DDD;
+}
+
+.expense-summary input {
+    background: #F7F7F7;
+    font-weight: 600;
+}
+.expense-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+    margin-bottom: 20px;
+}
+
+.expense-summary {
+    border-top: 1px solid #DDD;
+    padding-top: 15px;
+}
+
+.expense-summary input {
+    background: #F7F7F7;
+    font-weight: 600;
+}
+.inflation-footnote {
+    font-size: 12px;
+    color: #6F4E37; /* coffee tone */
+    margin-top: 6px;
+}
+
+.inflation-footnote a {
+    color: #4B3621;
+    text-decoration: underline;
+}
+
+.inflation-footnote a:hover {
+    opacity: 0.8;
+}
+/* =========================================================
+   ASSET + RETIREMENT TYPE BUTTONS
+   Matches institutional tab styling
+========================================================= */
+
+.asset-type-buttons,
+#retirementButtonBar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.asset-type-buttons button,
+#retirementButtonBar button {
+
+    background: var(--accent-light);
+    color: var(--accent-deep);
+
+    border: 1px solid var(--accent-light);
+    border-radius: 8px;
+
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.1s ease,
+        box-shadow 0.15s ease;
+}
+
+.asset-type-buttons button:hover,
+#retirementButtonBar button:hover {
+
+    background: var(--accent-mid);
+    color: white;
+
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.asset-type-buttons button:active,
+#retirementButtonBar button:active {
+
+    transform: translateY(1px);
+}
+/* =========================================================
+   SECONDARY BUTTONS
+   Used for: Add Pension / Add Income / etc
+========================================================= */
+
+.secondary-btn {
+
+    background: transparent;
+    color: var(--accent-deep);
+
+    border: 2px solid var(--accent-mid);
+    border-radius: 8px;
+
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.1s ease;
+}
+
+.secondary-btn:hover {
+
+    background: var(--accent-mid);
+    color: white;
+
+    border-color: var(--accent-mid);
+
+}
+
+
+.secondary-btn:active {
+
+    transform: translateY(1px);
+
+}
+/* GRID LAYOUT FOR ALL ACCOUNT/ASSET MODULES */
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+/* CARD STYLE */
+
+.module-card {
+  background: #f6f3ef;
+  border: 1px solid #d8c9b6;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+}
+
+/* FORM COMPRESSION */
+
+.module-card .form-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.module-card label {
+  grid-column: span 2;
+  font-weight: 600;
+}
+
+.module-card input,
+.module-card select {
+  width: 100%;
+  box-sizing: border-box;
+}
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(280px,1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.module-card {
+    background: var(--panel-light);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #d9d1c7;
+}
+
+.module-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.module-summary {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.module-editor {
+    display: none;
+    margin-top: 10px;
+}
+
+.module-editor label {
+    display:block;
+    font-size:13px;
+    margin-top:8px;
+}
+
+.module-editor input {
+    width:100%;
+    padding:6px;
+    margin-top:3px;
+}
+
+.module-actions {
+    margin-top:10px;
+}
+
+.btn-edit {
+    background:var(--coffee-medium);
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:4px;
+    cursor:pointer;
+}
+.summary-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.summary-card {
+    background:#f6f1ea;
+    border:1px solid #d9d1c7;
+    border-radius:8px;
+    padding:14px;
+}
+
+.summary-label {
+    font-size:12px;
+    color:#555;
+}
+
+.summary-value {
+    font-size:20px;
+    font-weight:600;
+}
+
+/* ===============================
+   SITE FOOTER
+================================ */
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: #38220F;
+    border-top: 1px solid #e5e7eb;
+
+    padding: 10px 24px;
+    font-size: 13px;
+
+    z-index: 1000;
+}
+
+.footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-text {
+    color: #ece0d1;
+}
+
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.footer-links a {
+    text-decoration: none;
+    color: #ece0d1;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+/* Prevent page content hiding behind footer */
+body {
+    padding-bottom: 55px;
+}
+
+/* Disable floating footer on small screens */
+@media (max-width: 900px) {
+
+    .footer {
+        position: static;
+    }
+
+    body {
+        padding-bottom: 0;
+    }
+
+}

@@ -228,6 +228,7 @@ function testSimulationStateRoundTrip() {
         pension: {
             serviceYears: 25,
             finalAverageSalary: 110000,
+            currentAnnualPay: 100000,
             cola: 0.02,
             benefitEnhancement: "lump_sum",
             survivorOption: "50%",
@@ -270,6 +271,7 @@ function testSimulationStateRoundTrip() {
 
     assert(roundTrip.retireAge === 53, "Retirement age round-trip failed");
     assert(roundTrip.pension.serviceYears === 25, "Service years round-trip failed");
+    assert(roundTrip.pension.currentAnnualPay === 100000, "Current annual pay round-trip failed");
     assert(roundTrip.pension.benefitEnhancement === "lump_sum", "Benefit enhancement round-trip failed");
     assert(roundTrip.expenses.housing === 1800, "Expense detail round-trip failed");
     assert(roundTrip.expenses.insurance === 250, "Insurance round-trip failed");
@@ -657,6 +659,50 @@ function testRetirementAccountRmdProjection() {
     logResult("Retirement account RMD projection passed");
 }
 
+function testRetirementAccountContributionAccumulation() {
+    const projection = projectTotalRetirement({
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "401k",
+                balance: 100000,
+                startAge: 60,
+                growthRate: 0.10,
+                employeeContributionRate: 0.10,
+                employerMatchRate: 0.05,
+                withdrawalType: "amount",
+                withdrawal: 1000,
+                taxable: true,
+                accountType: "401k"
+            }
+        ],
+        currentAge: 45,
+        currentAnnualPay: 100000,
+        expectedFinalAnnualPay: 110000,
+        retireAge: 47,
+        lifeExpectancy: 48,
+        baseExpenses: 0,
+        inflation: 0,
+        showReal: false
+    });
+
+    const age47 = projection.results.find(result => result.age === 47);
+    const age48 = projection.results.find(result => result.age === 48);
+    const age47Balance = age47?.portfolios?.["401k"] || 0;
+    const age48Balance = age48?.portfolios?.["401k"] || 0;
+
+    assert(
+        Math.round(age47Balance) === 169400,
+        "Retirement account pay-based contributions did not accumulate into the starting retirement balance"
+    );
+    assert(
+        Math.round(age48Balance) === 186340,
+        "Retirement account balances should keep growing before withdrawals begin"
+    );
+
+    logResult("Retirement account contribution accumulation passed");
+}
+
 function testSplitExpenseInflationProjection() {
     const simulationState = buildSimulationState({
         inputs: {
@@ -882,6 +928,7 @@ function testInputPopulationAndPreviewMetrics() {
         pension: {
             serviceYears: 25,
             finalAverageSalary: 110000,
+            currentAnnualPay: 100000,
             cola: 0.02,
             benefitEnhancement: "lump_sum",
             survivorOption: "50%",
@@ -922,6 +969,10 @@ function testInputPopulationAndPreviewMetrics() {
     assert(
         document.getElementById("serviceYears").value === "25",
         "Shared input population failed for service years"
+    );
+    assert(
+        document.getElementById("currentAnnualPay").value === "100000",
+        "Shared input population failed for current annual pay"
     );
     assert(
         document.getElementById("leoffBenefitEnhancement").value === "lump_sum",
@@ -1277,6 +1328,7 @@ async function runVerification() {
         testSocialSecurityCalculation();
         testRetirementAccountTaxTreatment();
         testRetirementAccountRmdProjection();
+        testRetirementAccountContributionAccumulation();
         testSplitExpenseInflationProjection();
         testRentalIncomeProjectionBreakdown();
         testDebtPayloadConsistency();

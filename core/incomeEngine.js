@@ -336,6 +336,9 @@ export function applyRetirementAccountTaxTreatment({
 
 export function projectTotalRetirement({
     incomeSources,
+    currentAge: startingAge = null,
+    currentAnnualPay = 0,
+    expectedFinalAnnualPay = 0,
     retireAge,
     lifeExpectancy,
     baseExpenses,
@@ -445,6 +448,49 @@ export function projectTotalRetirement({
     const orderedIncomeSources =
         orderIncomeSourcesForProjection(incomeSources);
 
+    function advancePortfolioBalance({
+        balance,
+        growthRate = 0,
+        annualContribution = 0
+    }) {
+        const startingBalance = Math.max(balance || 0, 0);
+        const annualGrowth = growthRate || 0;
+        const contributionAmount =
+            Math.max(annualContribution || 0, 0);
+
+        const nextBalance =
+            (startingBalance * (1 + annualGrowth)) +
+            contributionAmount;
+
+        return nextBalance < 1 ? 0 : nextBalance;
+    }
+
+    function getAmortizedAnnualPay({
+        currentAnnualPay: startingAnnualPay,
+        expectedFinalAnnualPay: endingAnnualPay,
+        yearIndex,
+        totalYears
+    }) {
+        const startingPay = Math.max(startingAnnualPay || 0, 0);
+        const endingPay = Math.max(endingAnnualPay || 0, 0);
+        const fallbackStart =
+            startingPay > 0 ? startingPay : endingPay;
+        const fallbackEnd =
+            endingPay > 0 ? endingPay : startingPay;
+
+        if (totalYears <= 0) {
+            return fallbackEnd;
+        }
+
+        if (totalYears === 1) {
+            return fallbackEnd;
+        }
+
+        const progress = yearIndex / (totalYears - 1);
+
+        return fallbackStart + ((fallbackEnd - fallbackStart) * progress);
+    }
+
     // Initialize balances
 orderedIncomeSources.forEach(source => {
 
@@ -454,6 +500,47 @@ orderedIncomeSources.forEach(source => {
 
 
 });
+
+    if (
+        Number.isFinite(startingAge) &&
+        Number.isFinite(retireAge) &&
+        startingAge < retireAge
+    ) {
+        const preRetirementYears =
+            Math.max(0, Math.floor(retireAge - startingAge));
+
+        for (let year = 0; year < preRetirementYears; year++) {
+            orderedIncomeSources.forEach(source => {
+                if (source.type !== "portfolio") {
+                    return;
+                }
+
+                const balance = portfolioBalances[source.name] || 0;
+
+                if (balance <= 0) {
+                    return;
+                }
+
+                portfolioBalances[source.name] =
+                    advancePortfolioBalance({
+                        balance,
+                        growthRate: source.growthRate,
+                        annualContribution:
+                            getAmortizedAnnualPay({
+                                currentAnnualPay,
+                                expectedFinalAnnualPay,
+                                yearIndex: year,
+                                totalYears: preRetirementYears
+                            }) *
+                            Math.max(
+                                (source.employeeContributionRate || 0) +
+                                (source.employerMatchRate || 0),
+                                0
+                            )
+                    });
+            });
+        }
+    }
 
     for (let year = 0; year <= years; year++) {
 
@@ -523,6 +610,14 @@ if (source.type === "real_estate") {
                 let balance = portfolioBalances[source.name];
                 const openingBalance = balance;
 
+                if (balance > 0 && currentAge < source.startAge) {
+                    portfolioBalances[source.name] =
+                        advancePortfolioBalance({
+                            balance,
+                            growthRate: source.growthRate
+                        });
+                    return;
+                }
 
                 if (balance > 0 && currentAge >= source.startAge) {
 

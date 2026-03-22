@@ -51,6 +51,7 @@ export function buildSimulationState({
             system: overrides.pensionSystem ?? "LEOFF2",
             yearsOfService: pension.serviceYears ?? 0,
             finalAverageSalary: pension.finalAverageSalary ?? 0,
+            currentAnnualPay: pension.currentAnnualPay ?? 0,
             retirementAge:
                 overrides.retireAge ??
                 inputs.retireAge ??
@@ -123,6 +124,7 @@ export function simulationStateToInputs(simulationState = {}) {
         pension: {
             serviceYears: pension.yearsOfService ?? 0,
             finalAverageSalary: pension.finalAverageSalary ?? 0,
+            currentAnnualPay: pension.currentAnnualPay ?? 0,
             cola: pension.cola ?? 0,
             benefitEnhancement:
                 pension.benefitEnhancement ?? "tiered_multiplier",

@@ -33,6 +33,7 @@ const schema = {
 
     serviceYears: "number",
     fas: "number",
+    currentAnnualPay: "number",
     cola: "number",
     leoffBenefitEnhancement: "text",
 
@@ -133,6 +134,7 @@ export function collectInputs() {
         pension: {
             serviceYears: raw.serviceYears,
             finalAverageSalary: raw.fas,
+            currentAnnualPay: raw.currentAnnualPay,
             cola: raw.cola / 100,
             benefitEnhancement: raw.leoffBenefitEnhancement || "tiered_multiplier",
             survivorOption: raw.survivorOption,

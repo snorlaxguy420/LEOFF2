@@ -15,6 +15,7 @@ export function populateSimulatorInputs(inputs) {
         lifeExpectancy: inputs.lifeExpectancy,
         serviceYears: inputs.pension?.serviceYears,
         fas: inputs.pension?.finalAverageSalary,
+        currentAnnualPay: inputs.pension?.currentAnnualPay,
         cola: (inputs.pension?.cola || 0) * 100,
         leoffBenefitEnhancement:
             inputs.pension?.benefitEnhancement || "tiered_multiplier",

@@ -117,6 +117,7 @@ loadAll(){
                     system: "LEOFF2",
                     yearsOfService: 0,
                     finalAverageSalary: 0,
+                    currentAnnualPay: 0,
                     retirementAge: 55,
                     survivorOption: "SINGLE",
                     survivorAge: null,

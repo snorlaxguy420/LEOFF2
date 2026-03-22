@@ -10,6 +10,8 @@ export function runProjection(simulationState) {
     const profile = state.profile || {};
     const expenses = state.expenses || {};
     const assumptions = state.assumptions || {};
+    const pension = state.pension || {};
+    const currentAge = profile.currentAge;
 
     const retireAge =
         state.retireAge ??
@@ -28,6 +30,9 @@ export function runProjection(simulationState) {
 
     return projectTotalRetirement({
         incomeSources: state.incomeSources || [],
+        currentAge,
+        currentAnnualPay: pension.currentAnnualPay ?? 0,
+        expectedFinalAnnualPay: pension.finalAverageSalary ?? 0,
         retireAge,
         lifeExpectancy,
         baseExpenses,

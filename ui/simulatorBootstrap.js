@@ -53,9 +53,10 @@ export function buildAssetButtons(assetRegistry, {
         const button = document.createElement("button");
         button.textContent =
             asset.id === "debt" ? "Add Debt" : asset.name;
+        button.classList.add("asset-choice-btn");
 
         if (buttonClassName) {
-            button.className = buttonClassName;
+            button.classList.add(buttonClassName);
         }
 
         button.addEventListener("click", () => {

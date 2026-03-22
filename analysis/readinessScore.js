@@ -9,12 +9,20 @@ export function calculateReadinessScore(results, retireAge) {
         return { score: 0, grade: "F" };
     }
 
+    const retirementYears = (results || [])
+        .filter(result => {
+            if (retireAge == null) return true;
+            return (result?.age ?? retireAge) >= retireAge;
+        });
+    const evaluationYears =
+        retirementYears.length
+            ? retirementYears
+            : results;
+
     let coverageYears = 0;
-    let worstDeficit = 0;
-    let incomeDrops = 0;
-
-    const incomeValues = [];
-
+    let essentialCoverageYears = 0;
+    let lowestMarginRatio = 1;
+    let hadPositivePortfolio = false;
     let assetDepletionAge = null;
 
     function totalPortfolio(r){
@@ -23,107 +31,99 @@ export function calculateReadinessScore(results, retireAge) {
             .reduce((sum,v)=>sum+(v||0),0);
     }
 
-    results.forEach((r,i)=>{
-
+    evaluationYears.forEach(r => {
         const income = r.income || 0;
         const expenses = r.expenses || 0;
-
-        incomeValues.push(income);
+        const essentialExpenses =
+            r?.expenseBreakdown?.essential ??
+            expenses;
+        const portfolioTotal = totalPortfolio(r);
 
         if (income >= expenses) {
             coverageYears++;
-        } else {
-            const deficit = expenses - income;
-            if (deficit > worstDeficit) worstDeficit = deficit;
         }
 
-        if (assetDepletionAge === null && totalPortfolio(r) <= 0) {
+        if (income >= essentialExpenses) {
+            essentialCoverageYears++;
+        }
+
+        if (expenses > 0) {
+            lowestMarginRatio = Math.min(
+                lowestMarginRatio,
+                (income - expenses) / expenses
+            );
+        }
+
+        if (portfolioTotal > 0) {
+            hadPositivePortfolio = true;
+        }
+
+        if (
+            hadPositivePortfolio &&
+            assetDepletionAge === null &&
+            portfolioTotal <= 0
+        ) {
             assetDepletionAge = r.age;
         }
-
-        if (i > 0) {
-            const change = income - incomeValues[i-1];
-            if (change < 0) {
-                incomeDrops += Math.abs(change);
-            }
-        }
-
     });
 
-    const totalYears = results.length;
+    const totalYears = evaluationYears.length;
 
     /* =========================================================
-       1. INCOME COVERAGE (35)
+       1. INCOME COVERAGE (30)
     ========================================================= */
 
     const coverageRatio = coverageYears / totalYears;
-    const coverageScore = coverageRatio * 35;
+    const coverageScore = coverageRatio * 30;
 
     /* =========================================================
-       2. DEFICIT SEVERITY (20)
+       2. ESSENTIAL COVERAGE (20)
     ========================================================= */
 
-    let deficitScore = 20;
-
-    if (worstDeficit > 5000) deficitScore = 18;
-    if (worstDeficit > 10000) deficitScore = 15;
-    if (worstDeficit > 25000) deficitScore = 10;
-    if (worstDeficit > 50000) deficitScore = 0;
+    const essentialCoverageRatio = essentialCoverageYears / totalYears;
+    const essentialScore = essentialCoverageRatio * 20;
 
     /* =========================================================
-       3. LONGEVITY SAFETY (20)
+       3. LONGEVITY SAFETY (25)
     ========================================================= */
 
-    const finalAge = results[results.length - 1].age;
+    const finalAge = evaluationYears[evaluationYears.length - 1].age;
 
-    let longevityScore = 20;
+    let longevityScore = 25;
 
-    if (assetDepletionAge !== null) {
-
-        if (assetDepletionAge >= finalAge) {
-            longevityScore = 18;
-        }
-
-        else if (assetDepletionAge >= finalAge - 5) {
-            longevityScore = 10;
-        }
-
-        else {
-            longevityScore = 0;
-        }
-
+    if (hadPositivePortfolio && assetDepletionAge !== null) {
+        const retirementSpan = Math.max(
+            1,
+            finalAge - (retireAge ?? evaluationYears[0].age ?? finalAge)
+        );
+        const yearsShort = Math.max(0, finalAge - assetDepletionAge);
+        longevityScore = Math.max(
+            0,
+            25 * (1 - (yearsShort / retirementSpan))
+        );
     }
 
     /* =========================================================
        4. EARLY RETIREMENT STABILITY (15)
     ========================================================= */
 
-    const earlyYears =
-        results.filter(r => r.age >= retireAge && r.age < retireAge + 10);
+    const earlyYears = evaluationYears.slice(0, 10);
 
-    let earlyDeficits = 0;
-
-    earlyYears.forEach(r=>{
-        if (r.income < r.expenses) earlyDeficits++;
-    });
-
-    let earlyScore = 15;
-
-    if (earlyDeficits === 1) earlyScore = 12;
-    if (earlyDeficits === 2) earlyScore = 8;
-    if (earlyDeficits >= 3) earlyScore = 0;
+    const earlyCoverageRatio =
+        earlyYears.length
+            ? earlyYears.filter(r => (r.income || 0) >= (r.expenses || 0)).length / earlyYears.length
+            : 1;
+    const earlyScore = earlyCoverageRatio * 15;
 
     /* =========================================================
-       5. INCOME STABILITY (10)
+       5. MARGIN STRENGTH (10)
     ========================================================= */
 
-    const avgDrop = incomeDrops / (incomeValues.length - 1);
-
-    let stabilityScore = 10;
-
-    if (avgDrop > 5000) stabilityScore = 8;
-    if (avgDrop > 15000) stabilityScore = 5;
-    if (avgDrop > 30000) stabilityScore = 0;
+    const normalizedMargin = Math.max(
+        0,
+        Math.min(1, (lowestMarginRatio + 0.5) / 0.5)
+    );
+    const marginScore = normalizedMargin * 10;
 
     /* =========================================================
        FINAL SCORE
@@ -131,10 +131,10 @@ export function calculateReadinessScore(results, retireAge) {
 
     const score = Math.round(
         coverageScore +
-        deficitScore +
+        essentialScore +
         longevityScore +
         earlyScore +
-        stabilityScore
+        marginScore
     );
 
     const grade =
@@ -148,10 +148,10 @@ export function calculateReadinessScore(results, retireAge) {
         grade,
         breakdown: {
             coverageScore,
-            deficitScore,
+            essentialScore,
             longevityScore,
             earlyScore,
-            stabilityScore
+            marginScore
         }
     };
 

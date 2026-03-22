@@ -5,15 +5,20 @@ const BASE_COLOR_BANK = [
     "#1F4D3A",
     "#3F7C85",
     "#B46A3C",
+    "#E3D888",
+    "#FFEAEE",
     "#1E2F44",
     "#6A8F6B",
+    "#C97B63",
+    "#87677B",
     "#7F5539",
     "#4E6A84",
     "#8C6A4A",
     "#58735C",
     "#C08A4D",
     "#7B5E57",
-    "#6F8B95"
+    "#6F8B95",
+    "#A7B97B"
 ];
 
 const NAMED_INCOME_COLORS = {
@@ -26,15 +31,15 @@ const NAMED_INCOME_COLORS = {
     "Real Estate Value": "#6A8F6B"
 };
 
-const ACCOUNT_TYPE_COLORS = {
-    "401k": "#606C38",
-    "roth_401k": "#7A8F45",
-    "traditional_ira": "#8C5E58",
-    "roth_ira": "#C08A4D",
-    "457b": "#4E6A84",
-    "403b": "#7B5E57",
-    "401a": "#967259",
-    "tsp": "#58735C"
+const ACCOUNT_TYPE_COLOR_FAMILIES = {
+    "401k": ["#606C38", "#E3D888", "#4E6A84", "#FFEAEE", "#C97B63", "#87677B"],
+    "roth_401k": ["#A7B97B", "#B46A3C", "#6F8B95", "#E3D888", "#87677B", "#FFEAEE"],
+    "traditional_ira": ["#8C5E58", "#E3D888", "#58735C", "#FFEAEE", "#C08A4D", "#87677B"],
+    "roth_ira": ["#C08A4D", "#4E6A84", "#E3D888", "#87677B", "#7B5E57", "#FFEAEE"],
+    "457b": ["#4E6A84", "#E3D888", "#B46A3C", "#FFEAEE", "#6A8F6B", "#87677B"],
+    "403b": ["#7B5E57", "#A7B97B", "#E3D888", "#87677B", "#3F7C85", "#FFEAEE"],
+    "401a": ["#967259", "#E3D888", "#58735C", "#FFEAEE", "#C97B63", "#87677B"],
+    "tsp": ["#58735C", "#E3D888", "#4E6A84", "#87677B", "#B46A3C", "#FFEAEE"]
 };
 
 function hashString(value = "") {
@@ -52,32 +57,71 @@ function generateFallbackColor(seedLabel) {
     return `hsl(${hue}, 48%, 42%)`;
 }
 
-function resolveIncomeColor({ name, source }) {
+function resolveIncomeColorCandidates({ name, source }) {
     if (NAMED_INCOME_COLORS[name]) {
-        return NAMED_INCOME_COLORS[name];
+        return [NAMED_INCOME_COLORS[name]];
     }
 
-    if (source?.accountType && ACCOUNT_TYPE_COLORS[source.accountType]) {
-        return ACCOUNT_TYPE_COLORS[source.accountType];
+    if (
+        source?.accountType &&
+        ACCOUNT_TYPE_COLOR_FAMILIES[source.accountType]
+    ) {
+        const family =
+            ACCOUNT_TYPE_COLOR_FAMILIES[source.accountType];
+        const startIndex = hashString(name) % family.length;
+
+        return family.map((_, index) =>
+            family[(startIndex + index) % family.length]
+        );
     }
 
     if (source?.taxCategory === "social_security" || name.includes("Social Security")) {
-        return "#3F7C85";
+        return ["#3F7C85"];
     }
 
     if (name.includes("Pension")) {
-        return "#1F4D3A";
+        return ["#1F4D3A", "#2E5F49", "#58735C"];
     }
 
     if (name.includes("Lump Sum")) {
-        return "#B46A3C";
+        return ["#B46A3C", "#C08A4D", "#8C6A4A"];
     }
 
     if (name.includes("Rental")) {
-        return "#6B4F3A";
+        return ["#6B4F3A", "#7B5E57", "#8C6A4A"];
     }
 
-    return null;
+    return [];
+}
+
+function pickUniqueColor({
+    name,
+    source,
+    usedColors = new Set(),
+    fallbackIndex = 0
+}) {
+    const preferredColors =
+        resolveIncomeColorCandidates({ name, source });
+    const fallbackColors = [
+        ...BASE_COLOR_BANK,
+        generateFallbackColor(name)
+    ];
+    const candidates = [
+        ...preferredColors,
+        ...fallbackColors.slice(fallbackIndex),
+        ...fallbackColors.slice(0, fallbackIndex)
+    ];
+
+    for (const color of candidates) {
+        if (!usedColors.has(color)) {
+            usedColors.add(color);
+            return color;
+        }
+    }
+
+    const generatedColor = generateFallbackColor(`${name}-${fallbackIndex}`);
+    usedColors.add(generatedColor);
+    return generatedColor;
 }
 
 function collectBreakdownNames(results) {
@@ -137,12 +181,17 @@ function buildDefaultIncomeColors({
         }
     });
 
+    const usedColors = new Set();
+
     return Object.fromEntries(
         orderedSources.map(({ name, source }, index) => [
             name,
-            resolveIncomeColor({ name, source }) ||
-            BASE_COLOR_BANK[index] ||
-            generateFallbackColor(name)
+            pickUniqueColor({
+                name,
+                source,
+                usedColors,
+                fallbackIndex: index
+            })
         ])
     );
 }

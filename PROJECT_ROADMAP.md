@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 15, 2026
+Last updated: March 22, 2026
 
 ## Current Status
 
@@ -40,6 +40,7 @@ Completed:
 - Shared simulator helpers now reduce duplication between simulator entry points in [ui/simulatorShared.js](/D:/LEOFF%202/ui/simulatorShared.js)
 - Shared UI helpers now reduce duplicated input population and preview logic in [ui/simulatorUiShared.js](/D:/LEOFF%202/ui/simulatorUiShared.js)
 - Shared simulator bootstrap helpers now reduce duplicated profile/module bootstrapping and asset-button setup in [ui/simulatorBootstrap.js](/D:/LEOFF%202/ui/simulatorBootstrap.js)
+- Canonical simulator state now carries `Current Annual Pay` alongside final salary assumptions, allowing pay-based retirement-account accumulation to project consistently across save/restore, simulator, and dashboard flows
 - Retirement account withdrawals now distinguish `401k`, `Roth 401k`, `Traditional IRA`, `Roth IRA`, and `457b` tax treatment in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
 - Expense projection now supports split inflation across goods/services, housing, and healthcare in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [core/projectionEngine.js](/D:/LEOFF%202/core/projectionEngine.js)
 
@@ -51,11 +52,15 @@ Status: Implemented
 
 Completed:
 - Readiness score engine exists in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js)
+- The readiness score now uses a lighter interim deterministic model focused on retirement-year income coverage, essential coverage, longevity safety, early retirement cushion, and margin strength; this is intended as a bridge until Monte Carlo modeling arrives
 - Scenario comparison exists in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js)
 - Unified analysis engine added in [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js)
 - Dashboard now consumes the analysis engine instead of recomputing key values inline
 - V1 retirement vulnerability engine exists in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
 - Retirement vulnerability analysis now includes richer stress categories, severity tiers, and mitigation guidance in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
+
+Remaining:
+- Revisit readiness scoring once Monte Carlo modeling exists so the dashboard can shift from an interim deterministic composite toward a probability-informed readiness view
 
 ### Phase 4 - Chart Engine
 Status: Implemented
@@ -94,6 +99,7 @@ Completed:
 - Shared collapsible cards now support module-level validation messaging, and current asset/debt modules now block obviously incomplete saves more gracefully in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js)
 - Asset/debt saved-card summaries are now more consistent in tone and structure, with save-time and restore-time cards sharing the same summary builders across crypto, metals, real estate, debts, and retirement accounts
 - Retirement-account projection now applies an approximate IRS-style required minimum distribution floor for eligible tax-deferred accounts at age 73+, and processes retirement-account sources in a more realistic default order in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
+- Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields on `401k` and `457b`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
 
 Remaining:
 - Continue refining any remaining edge-case behavior across all asset/debt cards
@@ -190,6 +196,7 @@ Status: Not implemented
 
 Planned:
 - Monte Carlo simulation
+- Probability-informed retirement readiness / success scoring layered on top of Monte Carlo results
 - Social Security optimizer
 - Estate projection
 - Withdrawal strategy optimizer
@@ -212,10 +219,15 @@ Remaining:
 - Cross-device QA for simulator, dashboard, and articles
 
 ### Phase 13 - Domain and Launch
-Status: Not implemented
+Status: In progress
 
-Planned:
-- Buy and secure the production domain
+Completed:
+- Production domain `leoffhelper.com` is now secured and configured through the current static-host setup
+- DNS and domain routing are now configured for the live site
+- The site is now published to a live production environment on GitHub Pages with the custom domain in place
+- A basic deployment/update workflow now exists through Git pushes to `main`
+
+Remaining:
 - Prioritize core domains:
   - `leoffhelper.com`
   - `leoff2helper.com`
@@ -228,11 +240,8 @@ Planned:
   - `leoff2-helper.com`
   - `leoffhelper.org`
   - `leoffhelper.net`
-- Configure DNS and domain routing
-- Choose and configure production hosting
-- Publish the site to a live production environment
 - Verify live asset paths, SEO metadata, and public page routing after launch
-- Establish a basic deployment/update workflow for pushing site changes live
+- Continue hardening the deployment/update workflow for safer live releases
 
 ## Deterministic Accuracy Backlog
 
@@ -259,6 +268,7 @@ Planned:
    - Pre-tax retirement withdrawals now use progressive incremental federal tax instead of a flat marginal estimate
    - Pension income and Social Security taxability now contribute more realistically to taxable-income stacking
    - Projection results now track estimated yearly taxes and taxable income
+   - Retirement accounts now accumulate using employee contributions, employer match where applicable, expected annual returns, and a pay path that ramps from `Current Annual Pay` to expected final pay
 
 4. Pension rule depth
    Status: Planned

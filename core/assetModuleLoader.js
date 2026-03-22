@@ -7,6 +7,7 @@ import { assetRegistry } from "../core/assetRegistry.js";
 export async function loadAssetModules() {
 
     const modules = [
+        "../modules/assets/liquidAccounts.js",
         "../modules/assets/preciousMetals.js",
         "../modules/assets/crypto.js",
         "../modules/assets/debts.js",

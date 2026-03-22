@@ -454,15 +454,15 @@ function renderReadinessBreakdown(results, retireAge) {
     const breakdown = readiness.breakdown || {};
 
     document.getElementById("readinessCoverageScore").innerText =
-        `${Math.round(breakdown.coverageScore || 0)} / 35`;
+        `${Math.round(breakdown.coverageScore || 0)} / 30`;
     document.getElementById("readinessDeficitScore").innerText =
-        `${Math.round(breakdown.deficitScore || 0)} / 20`;
+        `${Math.round(breakdown.essentialScore || 0)} / 20`;
     document.getElementById("readinessLongevityScore").innerText =
-        `${Math.round(breakdown.longevityScore || 0)} / 20`;
+        `${Math.round(breakdown.longevityScore || 0)} / 25`;
     document.getElementById("readinessEarlyScore").innerText =
         `${Math.round(breakdown.earlyScore || 0)} / 15`;
     document.getElementById("readinessStabilityScore").innerText =
-        `${Math.round(breakdown.stabilityScore || 0)} / 10`;
+        `${Math.round(breakdown.marginScore || 0)} / 10`;
 }
 
 function renderExpenseBreakdown(retirementYear) {

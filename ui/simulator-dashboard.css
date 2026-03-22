@@ -305,6 +305,62 @@ color:white;
 cursor:pointer;
 }
 
+#assetButtonBar,
+#retirementButtonBar,
+#debtButtonBar{
+display:flex;
+flex-wrap:wrap;
+gap:12px;
+margin:0 0 18px 0;
+align-items:center;
+}
+
+#assetButtonBar .asset-choice-btn,
+#retirementButtonBar .asset-choice-btn,
+#debtButtonBar .asset-choice-btn{
+background:
+linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.04)),
+#3F7C85;
+border:1px solid rgba(255,255,255,.24);
+border-bottom-color:rgba(24,54,58,.58);
+border-radius:10px;
+padding:10px 18px;
+min-height:44px;
+color:#f9f5ee;
+font-weight:600;
+letter-spacing:.01em;
+box-shadow:
+0 1px 0 rgba(255,255,255,.12) inset,
+0 6px 14px rgba(26,53,57,.12);
+transition:
+background .2s ease,
+border-color .2s ease,
+box-shadow .15s ease,
+transform .1s ease;
+}
+
+#assetButtonBar .asset-choice-btn:hover,
+#retirementButtonBar .asset-choice-btn:hover,
+#debtButtonBar .asset-choice-btn:hover{
+background:
+linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.05)),
+#2d626a;
+border-color:rgba(255,255,255,.34);
+box-shadow:
+0 1px 0 rgba(255,255,255,.16) inset,
+0 10px 18px rgba(26,53,57,.16);
+transform:translateY(-1px);
+}
+
+#assetButtonBar .asset-choice-btn:active,
+#retirementButtonBar .asset-choice-btn:active,
+#debtButtonBar .asset-choice-btn:active{
+transform:translateY(1px);
+box-shadow:
+0 1px 0 rgba(255,255,255,.08) inset,
+0 4px 8px rgba(26,53,57,.12);
+}
+
 .secondary-btn{
 background:rgba(31,77,58,.10);
 border:1px solid rgba(31,77,58,.18);

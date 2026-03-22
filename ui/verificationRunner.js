@@ -19,6 +19,7 @@ import {
     calculateSocialSecurityIncomeSource,
     normalizeSocialSecurityFraBenefit
 } from "../core/socialSecurityEngine.js";
+import { calculateReadinessScore } from "../analysis/readinessScore.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
     populateSimulatorInputs,
@@ -852,6 +853,40 @@ function testDebtPayloadConsistency() {
     logResult("Debt payload consistency passed");
 }
 
+async function testDebtModuleCardFlow() {
+    await import("../modules/assets/debts.js");
+
+    const debtModule = assetRegistry.get("debt");
+    const debtContainer = document.getElementById("debtTypeContainer");
+
+    assert(debtModule, "Debt module did not register");
+    assert(debtContainer, "Debt container missing");
+
+    const debtCard = debtModule.createCard();
+    debtContainer.appendChild(debtCard);
+
+    debtCard.querySelector("#debtName").value = "Car Loan";
+    debtCard.querySelector("#debtBalance").value = "18000";
+    debtCard.querySelector("#debtRate").value = "6";
+    debtCard.querySelector("#debtPayment").value = "450";
+    debtCard.querySelector("#debtExtra").value = "50";
+    debtCard.querySelector(".save-debt").click();
+
+    const summaryText =
+        debtCard.querySelector(".summary-text")?.textContent || "";
+
+    assert(
+        summaryText.includes("Car Loan") &&
+        summaryText.includes("$18,000") &&
+        summaryText.includes("$450"),
+        "Debt card summary did not render expected values after save"
+    );
+
+    debtCard.remove();
+
+    logResult("Debt module card flow passed");
+}
+
 function testRetirementVulnerabilityEngine() {
     const inputs = {
         retireAge: 53,
@@ -940,6 +975,136 @@ function testZeroHousingDoesNotTriggerHousingRisk() {
     );
 
     logResult("Zero-housing vulnerability guard passed");
+}
+
+function testReadinessScoreUsesRetirementYearsOnly() {
+    const results = [
+        {
+            age: 45,
+            income: 120000,
+            expenses: 60000,
+            portfolios: {
+                "401k": 0
+            }
+        },
+        {
+            age: 46,
+            income: 125000,
+            expenses: 61000,
+            portfolios: {
+                "401k": 0
+            }
+        },
+        {
+            age: 53,
+            income: 42000,
+            expenses: 50000,
+            expenseBreakdown: {
+                essential: 40000
+            },
+            portfolios: {
+                "401k": 0
+            }
+        },
+        {
+            age: 54,
+            income: 52000,
+            expenses: 50000,
+            expenseBreakdown: {
+                essential: 40000
+            },
+            portfolios: {
+                "401k": 0
+            }
+        }
+    ];
+
+    const readiness = calculateReadinessScore(results, 53);
+
+    assert(
+        Math.round(readiness.breakdown.coverageScore || 0) === 15,
+        "Readiness score should only count retirement years for income coverage"
+    );
+    assert(
+        Math.round(readiness.breakdown.essentialScore || 0) === 20,
+        "Readiness score should grant full essential coverage when retirement income covers essentials"
+    );
+    assert(
+        Math.round(readiness.breakdown.longevityScore || 0) === 25,
+        "Readiness score should not treat absent portfolios as depleted assets"
+    );
+
+    logResult("Readiness score retirement-year guard passed");
+}
+
+async function testLiquidAssetModules() {
+    await import("../modules/assets/liquidAccounts.js");
+
+    const checkingModule = assetRegistry.get("checkingCash");
+    const savingsModule = assetRegistry.get("savings");
+    const brokerageModule = assetRegistry.get("brokerage");
+    const assetContainer = document.getElementById("assetTypeContainer");
+
+    assert(checkingModule, "Checking / Cash module did not register");
+    assert(savingsModule, "Savings / HYSA module did not register");
+    assert(brokerageModule, "Taxable Brokerage module did not register");
+    assert(assetContainer, "Asset container missing for liquid-asset verification");
+
+    const checkingCard = checkingModule.createCard();
+    const savingsCard = savingsModule.createCard();
+    const brokerageCard = brokerageModule.createCard();
+
+    assetContainer.appendChild(checkingCard);
+    assetContainer.appendChild(savingsCard);
+    assetContainer.appendChild(brokerageCard);
+
+    checkingCard.querySelector("#checkingCashLabel").value = "Emergency Fund";
+    checkingCard.querySelector("#checkingCashBalance").value = "25000";
+    checkingCard.querySelector("#checkingCashRate").value = "2";
+    checkingCard.querySelector("#checkingCashWithdrawAge").value = "55";
+    checkingCard.querySelector("#checkingCashWithdrawType").value = "amount";
+    checkingCard.querySelector("#checkingCashWithdrawValue").value = "12000";
+
+    savingsCard.querySelector("#savingsLabel").value = "HYSA";
+    savingsCard.querySelector("#savingsBalance").value = "50000";
+    savingsCard.querySelector("#savingsRate").value = "4";
+    savingsCard.querySelector("#savingsWithdrawAge").value = "55";
+    savingsCard.querySelector("#savingsWithdrawType").value = "amount";
+    savingsCard.querySelector("#savingsWithdrawValue").value = "18000";
+
+    brokerageCard.querySelector("#brokerageLabel").value = "Joint Brokerage";
+    brokerageCard.querySelector("#brokerageBalance").value = "180000";
+    brokerageCard.querySelector("#brokerageRate").value = "7";
+    brokerageCard.querySelector("#brokerageWithdrawAge").value = "55";
+    brokerageCard.querySelector("#brokerageWithdrawType").value = "percent";
+    brokerageCard.querySelector("#brokerageWithdrawValue").value = "4";
+
+    const checkingPayload = checkingModule.getSimulationPayloads();
+    const savingsPayload = savingsModule.getSimulationPayloads();
+    const brokeragePayload = brokerageModule.getSimulationPayloads();
+
+    assert(
+        checkingPayload?.name === "Emergency Fund" &&
+        checkingPayload?.withdrawal === 12000 &&
+        checkingPayload?.taxable === false,
+        "Checking / Cash payload did not match expected values"
+    );
+    assert(
+        savingsPayload?.name === "HYSA" &&
+        savingsPayload?.growthRate === 0.04,
+        "Savings / HYSA payload did not match expected values"
+    );
+    assert(
+        brokeragePayload?.name === "Joint Brokerage" &&
+        brokeragePayload?.withdrawalRate === 0.04,
+        "Taxable Brokerage payload did not match expected values"
+    );
+
+    checkingCard.remove();
+    savingsCard.remove();
+    brokerageCard.remove();
+
+    logResult("Liquid asset module payloads passed");
 }
 
 function testMultipleRetirementAccountPayloads() {
@@ -1366,6 +1531,8 @@ function testCollapsibleCardValidation() {
 async function runVerification() {
     try {
         await runBrowserSmokeTests();
+        await testLiquidAssetModules();
+        await testDebtModuleCardFlow();
         testSimulationStateRoundTrip();
         testProjectionChartModes();
         testProjectionChartDatasets();
@@ -1379,6 +1546,7 @@ async function runVerification() {
         testDebtPayloadConsistency();
         testRetirementVulnerabilityEngine();
         testZeroHousingDoesNotTriggerHousingRisk();
+        testReadinessScoreUsesRetirementYearsOnly();
         testMultipleRetirementAccountPayloads();
         testInputPopulationAndPreviewMetrics();
         testModuleRestorePlacement();

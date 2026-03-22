@@ -477,48 +477,79 @@ body {
 ========================================================= */
 
 .asset-type-buttons,
-#retirementButtonBar {
+#retirementButtonBar,
+#assetButtonBar,
+#debtButtonBar {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 20px;
+    align-items: center;
 }
 
 .asset-type-buttons button,
-#retirementButtonBar button {
+#retirementButtonBar button,
+#assetButtonBar button,
+#debtButtonBar button,
+.asset-choice-btn {
 
-    background: var(--accent-light);
-    color: var(--accent-deep);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04)),
+        var(--accent-mid);
+    color: #f9f5ee;
 
-    border: 1px solid var(--accent-light);
-    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.22);
+    border-bottom-color: rgba(28, 57, 61, 0.55);
+    border-radius: 10px;
 
-    padding: 8px 16px;
-    font-size: 14px;
-    font-weight: 500;
+    padding: 10px 18px;
+    min-height: 44px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.12) inset,
+        0 6px 14px rgba(26, 53, 57, 0.10);
 
     cursor: pointer;
 
     transition:
         background 0.2s ease,
         color 0.2s ease,
+        border-color 0.2s ease,
         transform 0.1s ease,
         box-shadow 0.15s ease;
 }
 
 .asset-type-buttons button:hover,
-#retirementButtonBar button:hover {
+#retirementButtonBar button:hover,
+#assetButtonBar button:hover,
+#debtButtonBar button:hover,
+.asset-choice-btn:hover {
 
-    background: var(--accent-mid);
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.05)),
+        var(--accent-deep);
     color: white;
 
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    border-color: rgba(255,255,255,0.34);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.16) inset,
+        0 10px 18px rgba(26,53,57,0.16);
+    transform: translateY(-1px);
 }
 
 .asset-type-buttons button:active,
-#retirementButtonBar button:active {
+#retirementButtonBar button:active,
+#assetButtonBar button:active,
+#debtButtonBar button:active,
+.asset-choice-btn:active {
 
     transform: translateY(1px);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,0.08) inset,
+        0 4px 8px rgba(26,53,57,0.12);
 }
 /* =========================================================
    SECONDARY BUTTONS

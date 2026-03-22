@@ -15,6 +15,10 @@ function readPercent(el) {
     return parseFloat(el?.value || 0) / 100;
 }
 
+function formatMoney(v) {
+    return "$" + Number(v).toLocaleString();
+}
+
 function saveFieldState(card, ids) {
 
     const state = {};
@@ -67,6 +71,44 @@ function calculateYearsToPayoff(balance, rate, monthlyPayment) {
 
     return months / 12;
 
+}
+
+function buildDebtSummaryHTML(form) {
+    const name =
+        form.querySelector("#debtName").value || "Debt";
+    const balance =
+        form.querySelector("#debtBalance").value;
+    const payment =
+        form.querySelector("#debtPayment").value;
+
+    return `
+            <strong>${name}</strong><br>
+            Balance: ${formatMoney(balance)}<br>
+            Payment: ${formatMoney(payment)}/mo
+        `;
+}
+
+function validateDebtForm(form) {
+    const balance = readNumber(form.querySelector("#debtBalance"));
+    const rate = readPercent(form.querySelector("#debtRate"));
+    const minimumPayment = readNumber(form.querySelector("#debtPayment"));
+    const extraPayment = readNumber(form.querySelector("#debtExtra"));
+    const totalPayment = minimumPayment + extraPayment;
+    const monthlyInterestOnly = balance * (rate / 12);
+
+    if (balance <= 0) {
+        return "Enter a debt balance greater than $0 before saving.";
+    }
+
+    if (totalPayment <= 0) {
+        return "Enter a monthly payment greater than $0 before saving.";
+    }
+
+    if (rate > 0 && totalPayment <= monthlyInterestOnly) {
+        return "Monthly payment must be high enough to reduce principal, not just cover interest.";
+    }
+
+    return null;
 }
 
 /* ------------------------------------------------
@@ -253,44 +295,6 @@ getSimulationPayloads(inputs) {
         ? payloads[0]
         : payloads;
 
-}
-
-function buildDebtSummaryHTML(form) {
-    const name =
-        form.querySelector("#debtName").value || "Debt";
-    const balance =
-        form.querySelector("#debtBalance").value;
-    const payment =
-        form.querySelector("#debtPayment").value;
-
-    return `
-            <strong>${name}</strong><br>
-            Balance: ${formatMoney(balance)}<br>
-            Payment: ${formatMoney(payment)}/mo
-        `;
-}
-
-function validateDebtForm(form) {
-    const balance = readNumber(form.querySelector("#debtBalance"));
-    const rate = readPercent(form.querySelector("#debtRate"));
-    const minimumPayment = readNumber(form.querySelector("#debtPayment"));
-    const extraPayment = readNumber(form.querySelector("#debtExtra"));
-    const totalPayment = minimumPayment + extraPayment;
-    const monthlyInterestOnly = balance * (rate / 12);
-
-    if (balance <= 0) {
-        return "Enter a debt balance greater than $0 before saving.";
-    }
-
-    if (totalPayment <= 0) {
-        return "Enter a monthly payment greater than $0 before saving.";
-    }
-
-    if (rate > 0 && totalPayment <= monthlyInterestOnly) {
-        return "Monthly payment must be high enough to reduce principal, not just cover interest.";
-    }
-
-    return null;
 }
 
 });

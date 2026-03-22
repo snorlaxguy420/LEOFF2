@@ -1187,6 +1187,15 @@ EDIT INPUT BUTTON
         grid-template-columns: 1fr;
     }
 
+    .dashboard-chart-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .detail-subgrid {
+        grid-template-columns: 1fr !important;
+    }
+
     .score-number {
         font-size: 44px;
     }
@@ -1207,6 +1216,27 @@ EDIT INPUT BUTTON
         width: 720px;
         max-width: none;
         height: 260px;
+    }
+
+    .dashboard-card-detail {
+        margin-top: 14px;
+        padding-top: 14px;
+    }
+
+    .embedded-detail-panel {
+        padding: 14px;
+        min-width: 0;
+    }
+
+    .report-stat-list div {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .report-stat-list strong {
+        text-align: left;
+        justify-self: start;
     }
 
     #editInputsBtn,

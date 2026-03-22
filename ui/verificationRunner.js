@@ -897,6 +897,51 @@ function testRetirementVulnerabilityEngine() {
     logResult("Retirement vulnerability engine passed");
 }
 
+function testZeroHousingDoesNotTriggerHousingRisk() {
+    const vulnerability = runRetirementVulnerabilityAnalysis({
+        inputs: {
+            retireAge: 53,
+            lifeExpectancy: 90,
+            expenses: {
+                housing: 0,
+                monthly: 0,
+                annual: 0
+            }
+        },
+        incomeSources: [],
+        projection: {
+            results: [
+                {
+                    age: 53,
+                    income: 50000,
+                    totalIncome: 50000,
+                    expenses: 0,
+                    surplus: 50000,
+                    breakdown: {},
+                    expenseBreakdown: {
+                        housing: 0,
+                        essential: 0
+                    },
+                    portfolios: {}
+                }
+            ],
+            cumulativeShortfall: 0
+        },
+        assumedInflationRate: 0.03
+    });
+
+    assert(
+        vulnerability.primaryRisk === null,
+        "Zero-severity vulnerability scenarios should not produce a fake primary risk"
+    );
+    assert(
+        vulnerability.risks.length === 0,
+        "Zero-severity vulnerability scenarios should not produce ranked risks"
+    );
+
+    logResult("Zero-housing vulnerability guard passed");
+}
+
 function testMultipleRetirementAccountPayloads() {
     const sourceA = {
         type: "portfolio",
@@ -1333,6 +1378,7 @@ async function runVerification() {
         testRentalIncomeProjectionBreakdown();
         testDebtPayloadConsistency();
         testRetirementVulnerabilityEngine();
+        testZeroHousingDoesNotTriggerHousingRisk();
         testMultipleRetirementAccountPayloads();
         testInputPopulationAndPreviewMetrics();
         testModuleRestorePlacement();

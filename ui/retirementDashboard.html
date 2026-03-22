@@ -159,14 +159,12 @@ depletion in the same planning flow as the simulator.
           </p>
           <div id="riskDetail" class="dashboard-card-detail">
               <p id="vulnerabilityMitigation" class="dashboard-detail-note"></p>
-              <section class="report-detail-panel report-risk-panel embedded-detail-panel">
-                  <h3>Top 3 Retirement Risks</h3>
-                  <div id="topRisksList" class="report-risk-list"></div>
-              </section>
-              <div class="embedded-detail-panel">
-                  <h3>Stress Signals</h3>
-                  <ul id="riskList" class="dashboard-bullet-list"></ul>
+              <div class="report-stat-list">
+                  <div><span>Stress Severity</span><strong id="primaryRiskSeverity">--</strong></div>
+                  <div><span>Stress Deficit Age</span><strong id="primaryRiskFailureAge">--</strong></div>
+                  <div><span>Stress Asset Depletion</span><strong id="primaryRiskDepletionAge">--</strong></div>
               </div>
+              <ul id="riskList" class="dashboard-bullet-list"></ul>
           </div>
       </section>
 
@@ -191,52 +189,10 @@ depletion in the same planning flow as the simulator.
               <div class="report-stat-list">
                   <div><span>Retirement-Year Income</span><strong id="retirementIncome">--</strong></div>
                   <div><span>Annual Expenses</span><strong id="annualExpenses">--</strong></div>
-                  <div><span>Pension Coverage</span><strong id="pensionCoverage">--</strong></div>
-                  <div><span>Average Safety Margin</span><strong id="safetyMargin">--</strong></div>
-              </div>
-
-              <div class="detail-subgrid">
-                  <section class="embedded-detail-panel">
-                      <h3>Expense Breakdown</h3>
-                      <div class="report-stat-list">
-                          <div><span>Essential</span><strong id="expenseEssential">--</strong></div>
-                          <div><span>Discretionary</span><strong id="expenseDiscretionary">--</strong></div>
-                          <div><span>Housing</span><strong id="expenseHousing">--</strong></div>
-                          <div><span>Healthcare</span><strong id="expenseHealthcare">--</strong></div>
-                          <div><span>Insurance</span><strong id="expenseInsurance">--</strong></div>
-                          <div><span>Goods & Services</span><strong id="expenseGoodsServices">--</strong></div>
-                      </div>
-                  </section>
-
-                  <section class="embedded-detail-panel">
-                      <h3>Tax Snapshot</h3>
-                      <div class="report-stat-list">
-                          <div><span>Retirement-Year Taxes</span><strong id="taxesAtRetirement">--</strong></div>
-                          <div><span>Taxable Income</span><strong id="taxableIncomeAtRetirement">--</strong></div>
-                          <div><span>Tax Drag</span><strong id="taxDragRatio">--</strong></div>
-                      </div>
-                      <p id="taxSnapshotNarrative" class="report-inline-note"></p>
-                  </section>
-              </div>
-
-              <div class="detail-subgrid">
-                  <section class="embedded-detail-panel">
-                      <h3>Shortfall Summary</h3>
-                      <div class="report-stat-list">
-                          <div><span>First Deficit Age</span><strong id="reportFirstDeficitAge">--</strong></div>
-                          <div><span>Cumulative Shortfall</span><strong id="reportCumulativeShortfall">--</strong></div>
-                          <div><span>Worst Annual Deficit</span><strong id="reportWorstAnnualDeficit">--</strong></div>
-                      </div>
-                  </section>
-
-                  <section class="embedded-detail-panel">
-                      <h3>Financial Snapshot</h3>
-                      <div class="report-stat-list">
-                          <div><span>Total Assets</span><strong id="totalAssets">--</strong></div>
-                          <div><span>Total Debts</span><strong id="totalDebts">--</strong></div>
-                          <div><span>Net Worth</span><strong id="netWorth">--</strong></div>
-                      </div>
-                  </section>
+                  <div><span>Lowest Annual Margin</span><strong id="lowestAnnualMargin">--</strong></div>
+                  <div><span>Highest Annual Margin</span><strong id="highestAnnualMargin">--</strong></div>
+                  <div><span>Retirement-Year Taxes</span><strong id="taxesAtRetirement">--</strong></div>
+                  <div><span>Net Worth</span><strong id="netWorth">--</strong></div>
               </div>
           </div>
       </section>

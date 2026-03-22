@@ -86,6 +86,72 @@ function formatCurrency(value) {
     return "$" + Math.round(value || 0).toLocaleString();
 }
 
+function setElementText(id, value) {
+    const el = document.getElementById(id);
+
+    if (el) {
+        el.innerText = value;
+    }
+}
+
+function getMarginExtremes(results = []) {
+    if (!Array.isArray(results) || results.length === 0) {
+        return null;
+    }
+
+    let lowest = null;
+    let highest = null;
+
+    results.forEach(result => {
+        const margin =
+            (result?.income || 0) - (result?.expenses || 0);
+        const entry = {
+            age: result?.age ?? null,
+            margin
+        };
+
+        if (!lowest || margin < lowest.margin) {
+            lowest = entry;
+        }
+
+        if (!highest || margin > highest.margin) {
+            highest = entry;
+        }
+    });
+
+    return {
+        lowest,
+        highest
+    };
+}
+
+function describeMarginExtreme(label, entry) {
+    if (!entry) {
+        return null;
+    }
+
+    const ageLabel =
+        entry.age !== null && entry.age !== undefined
+            ? `at age ${entry.age}`
+            : "in the projection";
+
+    if (entry.margin >= 0) {
+        return `${label} annual surplus is ${formatCurrency(entry.margin)} ${ageLabel}`;
+    }
+
+    return `${label} annual margin is a deficit of ${formatCurrency(Math.abs(entry.margin))} ${ageLabel}`;
+}
+
+function buildMarginRangeSentence(results = []) {
+    const extremes = getMarginExtremes(results);
+
+    if (!extremes) {
+        return "Margin range data is not available yet.";
+    }
+
+    return `${describeMarginExtreme("Lowest", extremes.lowest)}. ${describeMarginExtreme("Highest", extremes.highest)}.`;
+}
+
 function getReadinessGradeDescription(grade) {
     const descriptions = {
         A: "Your retirement is secure and sustainable.",
@@ -102,26 +168,22 @@ function getReadinessGradeDescription(grade) {
 function buildBriefRecommendationText({
     analysis,
     vulnerabilityAnalysis,
-    avgMargin
+    results
 }) {
     const recommendedAge =
         analysis.recommendedRetirementAge ??
         analysis.earliestRetirementAge;
     const primaryRisk =
         vulnerabilityAnalysis.primaryRisk?.label ?? "lower stress sensitivity";
-    const marginSentence =
-        avgMargin >= 0
-            ? `The plan still carries an average annual surplus of ${formatCurrency(avgMargin)}.`
-            : `The plan still carries an average annual shortfall of ${formatCurrency(Math.abs(avgMargin))}.`;
 
-    return `Age ${recommendedAge} appears to be the strongest current balance of sustainability and resilience. ${marginSentence} The main pressure point is ${primaryRisk}.`;
+    return `Age ${recommendedAge} appears to be the strongest current balance of sustainability and resilience. ${buildMarginRangeSentence(results)} The main pressure point is ${primaryRisk}.`;
 }
 
 function buildRecommendationNarrative({
     retireAge,
     analysis,
     vulnerabilityAnalysis,
-    avgMargin
+    results
 }) {
     const recommendedAge =
         analysis.recommendedRetirementAge ??
@@ -134,9 +196,7 @@ function buildRecommendationNarrative({
     const primaryRisk =
         vulnerabilityAnalysis.primaryRisk?.label ?? "Low Vulnerability";
     const marginSentence =
-        avgMargin >= 0
-            ? `At this age, the plan still carries an average annual surplus of ${formatCurrency(avgMargin)}.`
-            : `At this age, the plan shows an average annual shortfall of ${formatCurrency(Math.abs(avgMargin))}, which is a sign the timing may still be too aggressive.`;
+        buildMarginRangeSentence(results);
 
     const supportPoints = [];
 
@@ -148,7 +208,17 @@ function buildRecommendationNarrative({
 
     if (financialFreedomAge !== null && financialFreedomAge !== undefined) {
         supportPoints.push(
-            `income becomes self-supporting by age ${financialFreedomAge}`
+            `projected income fully covers expenses by age ${financialFreedomAge}`
+        );
+    }
+
+    if (
+        financialFreedomAge !== null &&
+        financialFreedomAge !== undefined &&
+        recommendedAge > financialFreedomAge
+    ) {
+        supportPoints.push(
+            `the later recommendation reflects a stricter goal of covering expenses without relying on portfolio withdrawals`
         );
     }
 
@@ -159,7 +229,7 @@ function renderRecommendationSection({
     retireAge,
     analysis,
     vulnerabilityAnalysis,
-    avgMargin
+    results
 }) {
     const headline = document.getElementById("recommendationHeadline");
     const narrative = document.getElementById("recommendationNarrative");
@@ -179,7 +249,7 @@ function renderRecommendationSection({
             retireAge,
             analysis,
             vulnerabilityAnalysis,
-            avgMargin
+            results
         });
     }
 
@@ -187,7 +257,7 @@ function renderRecommendationSection({
         shortText.textContent = buildBriefRecommendationText({
             analysis,
             vulnerabilityAnalysis,
-            avgMargin
+            results
         });
     }
 }
@@ -347,14 +417,24 @@ function renderRecommendedAgeOverview({
         analysis.financialFreedomAge ?? "Requires Drawdown";
 
     if (summary) {
+        if (
+            typeof analysis.recommendedRetirementAge === "number" &&
+            typeof analysis.financialFreedomAge === "number" &&
+            analysis.recommendedRetirementAge > analysis.financialFreedomAge
+        ) {
+            summary.textContent =
+                `Age ${recommendedRetirement} is the current model favorite because it is the first age that appears to cover expenses without relying on portfolio withdrawals. Age ${earliestSustainable} is the earliest sustainable timing, and age ${freedomAge} is the first age projected income fully covers expenses.`;
+            return;
+        }
+
         summary.textContent =
-            `Age ${recommendedRetirement} is the current model favorite. Earliest sustainable timing is ${earliestSustainable}, and income becomes self-supporting at ${freedomAge}.`;
+            `Age ${recommendedRetirement} is the current model favorite. Earliest sustainable timing is ${earliestSustainable}, and projected income fully covers expenses by age ${freedomAge}.`;
     }
 }
 
 function renderMarginOverview({
     retirementYear,
-    avgMargin
+    results
 }) {
     const summary = document.getElementById("marginSummaryText");
 
@@ -364,12 +444,9 @@ function renderMarginOverview({
 
     const retirementIncome = formatCurrency(retirementYear?.income || 0);
     const retirementExpenses = formatCurrency(retirementYear?.expenses || 0);
-    const marginDirection =
-        avgMargin >= 0 ? "average surplus" : "average shortfall";
-    const marginValue = formatCurrency(Math.abs(avgMargin));
 
     summary.textContent =
-        `The selected retirement year projects ${retirementIncome} of income against ${retirementExpenses} of annual expenses, with an ${marginDirection} of ${marginValue} across retirement.`;
+        `The selected retirement year projects ${retirementIncome} of income against ${retirementExpenses} of annual expenses. ${buildMarginRangeSentence(results)}`;
 }
 
 function renderReadinessBreakdown(results, retireAge) {
@@ -389,20 +466,18 @@ function renderReadinessBreakdown(results, retireAge) {
 }
 
 function renderExpenseBreakdown(retirementYear) {
+    if (!document.getElementById("expenseEssential")) {
+        return;
+    }
+
     const breakdown = retirementYear?.expenseBreakdown || {};
 
-    document.getElementById("expenseEssential").innerText =
-        formatCurrency(breakdown.essential || 0);
-    document.getElementById("expenseDiscretionary").innerText =
-        formatCurrency(breakdown.discretionary || 0);
-    document.getElementById("expenseHousing").innerText =
-        formatCurrency(breakdown.housing || 0);
-    document.getElementById("expenseHealthcare").innerText =
-        formatCurrency(breakdown.healthcare || 0);
-    document.getElementById("expenseInsurance").innerText =
-        formatCurrency(breakdown.insurance || 0);
-    document.getElementById("expenseGoodsServices").innerText =
-        formatCurrency(breakdown.goodsServices || 0);
+    setElementText("expenseEssential", formatCurrency(breakdown.essential || 0));
+    setElementText("expenseDiscretionary", formatCurrency(breakdown.discretionary || 0));
+    setElementText("expenseHousing", formatCurrency(breakdown.housing || 0));
+    setElementText("expenseHealthcare", formatCurrency(breakdown.healthcare || 0));
+    setElementText("expenseInsurance", formatCurrency(breakdown.insurance || 0));
+    setElementText("expenseGoodsServices", formatCurrency(breakdown.goodsServices || 0));
 }
 
 function renderTaxSnapshot(retirementYear) {
@@ -411,16 +486,15 @@ function renderTaxSnapshot(retirementYear) {
     const grossIncome = retirementYear?.income || 0;
     const taxDrag = grossIncome > 0 ? taxes / grossIncome : 0;
 
-    document.getElementById("taxesAtRetirement").innerText =
-        formatCurrency(taxes);
-    document.getElementById("taxableIncomeAtRetirement").innerText =
-        formatCurrency(taxableIncome);
-    document.getElementById("taxDragRatio").innerText =
-        formatPercent(taxDrag);
-    document.getElementById("taxSnapshotNarrative").innerText =
+    setElementText("taxesAtRetirement", formatCurrency(taxes));
+    setElementText("taxableIncomeAtRetirement", formatCurrency(taxableIncome));
+    setElementText("taxDragRatio", formatPercent(taxDrag));
+    setElementText(
+        "taxSnapshotNarrative",
         grossIncome > 0
             ? `In the selected retirement year, taxes consume about ${Math.round(taxDrag * 100)}% of projected income.`
-            : "No retirement-year income is currently projected, so tax drag is effectively zero.";
+            : "No retirement-year income is currently projected, so tax drag is effectively zero."
+    );
 }
 
 function renderTopRisks(vulnerabilityAnalysis) {
@@ -450,6 +524,10 @@ function renderTopRisks(vulnerabilityAnalysis) {
 }
 
 function renderShortfallSummary(projection, analysis) {
+    if (!document.getElementById("reportFirstDeficitAge")) {
+        return;
+    }
+
     const results = projection?.results || [];
     let worstAnnualDeficit = 0;
 
@@ -462,14 +540,14 @@ function renderShortfallSummary(projection, analysis) {
         }
     });
 
-    document.getElementById("reportFirstDeficitAge").innerText =
-        analysis.retirementFailureAge ?? "Never";
-    document.getElementById("reportCumulativeShortfall").innerText =
-        formatCurrency(projection?.cumulativeShortfall || 0);
-    document.getElementById("reportWorstAnnualDeficit").innerText =
+    setElementText("reportFirstDeficitAge", analysis.retirementFailureAge ?? "Never");
+    setElementText("reportCumulativeShortfall", formatCurrency(projection?.cumulativeShortfall || 0));
+    setElementText(
+        "reportWorstAnnualDeficit",
         worstAnnualDeficit > 0
             ? formatCurrency(worstAnnualDeficit)
-            : "None";
+            : "None"
+    );
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -578,26 +656,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        vulnerabilityAnalysis.secondaryRisks.forEach(risk => {
+        vulnerabilityAnalysis.secondaryRisks.slice(0, 3).forEach(risk => {
             addRisk(
-                `Secondary risk: ${risk.label} (${risk.severityTier}, severity ${risk.severityScore})`
+                `${risk.label} (${risk.severityTier})`
             );
         });
-
-        const primary = vulnerabilityAnalysis.primaryRisk;
-        addRisk(`Primary stress score: ${primary.severityScore} (${primary.severityTier})`);
-
-        if (primary.stressedMetrics.failureAge !== null) {
-            addRisk(`Under stress, income deficits begin at age ${primary.stressedMetrics.failureAge}`);
-        } else {
-            addRisk(`Under stress, income still covers expenses through age ${primary.stressedMetrics.finalAge}`);
-        }
-
-        if (primary.stressedMetrics.assetDepletionAge !== null) {
-            addRisk(`Under stress, assets deplete at age ${primary.stressedMetrics.assetDepletionAge}`);
-        } else {
-            addRisk("Under stress, assets do not fully deplete");
-        }
     }
 
     function renderDashboardForAge(retireAge) {
@@ -644,6 +707,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const totalDebts = mortgageDebts;
         const netWorth = totalAssets - totalDebts;
         const comparisonChartModeForScreen = comparisonChartMode;
+        const marginExtremes = getMarginExtremes(results);
 
         if (comparisonChartModeForScreen === "bar") {
             clearTimelineLegend();
@@ -690,41 +754,57 @@ document.addEventListener("DOMContentLoaded", () => {
             analysis.readinessGrade;
         document.getElementById("readinessDescription").innerText =
             getReadinessGradeDescription(analysis.readinessGrade);
-        document.getElementById("pensionCoverage").innerText =
-            Math.round(coverage * 100) + "%";
-        document.getElementById("safetyMargin").innerText =
-            "$" + Math.round(avgMargin).toLocaleString();
-        document.getElementById("firstDeficitAge").innerText =
-            analysis.retirementFailureAge ?? "Never";
-        document.getElementById("earliestRetirement").innerText =
-            analysis.earliestRetirementAge ?? "Not Sustainable";
-        document.getElementById("freedomAge").innerText =
-            analysis.financialFreedomAge ?? "Requires Drawdown";
-        document.getElementById("recommendedRetirement").innerText =
-            analysis.recommendedRetirementAge ?? "Not Achievable";
-        document.getElementById("reportIncomeMargin").innerText =
-            `${avgMargin >= 0 ? "+" : "-"}${formatCurrency(Math.abs(avgMargin))}`;
-        document.getElementById("assetDepletion").innerText =
-            analysis.assetDepletionAge ?? "Sustainable";
-        document.getElementById("totalAssets").innerText =
-            "$" + Math.round(totalAssets).toLocaleString();
-        document.getElementById("totalDebts").innerText =
-            "$" + Math.round(totalDebts).toLocaleString();
-        document.getElementById("netWorth").innerText =
-            "$" + Math.round(netWorth).toLocaleString();
-        document.getElementById("retirementIncome").innerText =
-            "$" + Math.round(retirementYear.income).toLocaleString();
-        document.getElementById("annualExpenses").innerText =
-            "$" + Math.round(retirementYear.expenses).toLocaleString();
+        setElementText("pensionCoverage", Math.round(coverage * 100) + "%");
+        setElementText("safetyMargin", "$" + Math.round(avgMargin).toLocaleString());
+        setElementText("firstDeficitAge", analysis.retirementFailureAge ?? "Never");
+        setElementText("earliestRetirement", analysis.earliestRetirementAge ?? "Not Sustainable");
+        setElementText("freedomAge", analysis.financialFreedomAge ?? "Requires Drawdown");
+        setElementText("recommendedRetirement", analysis.recommendedRetirementAge ?? "Not Achievable");
+        setElementText("reportIncomeMargin", `${avgMargin >= 0 ? "+" : "-"}${formatCurrency(Math.abs(avgMargin))}`);
+        setElementText("assetDepletion", analysis.assetDepletionAge ?? "Sustainable");
+        setElementText("totalAssets", "$" + Math.round(totalAssets).toLocaleString());
+        setElementText("totalDebts", "$" + Math.round(totalDebts).toLocaleString());
+        setElementText("netWorth", "$" + Math.round(netWorth).toLocaleString());
+        setElementText("retirementIncome", "$" + Math.round(retirementYear.income).toLocaleString());
+        setElementText("annualExpenses", "$" + Math.round(retirementYear.expenses).toLocaleString());
+        setElementText(
+            "lowestAnnualMargin",
+            marginExtremes?.lowest
+                ? `${formatCurrency(marginExtremes.lowest.margin)} at ${marginExtremes.lowest.age}`
+                : "--"
+        );
+        setElementText(
+            "highestAnnualMargin",
+            marginExtremes?.highest
+                ? `${formatCurrency(marginExtremes.highest.margin)} at ${marginExtremes.highest.age}`
+                : "--"
+        );
 
-        document.getElementById("largestVulnerability").innerText =
-            vulnerabilityAnalysis.primaryRisk?.label ?? "Low Vulnerability";
-        document.getElementById("vulnerabilityExplanation").innerText =
+        setElementText("largestVulnerability", vulnerabilityAnalysis.primaryRisk?.label ?? "Low Vulnerability");
+        setElementText(
+            "vulnerabilityExplanation",
             vulnerabilityAnalysis.primaryRisk?.explanation ??
-            "Current stress tests did not identify a single dominant retirement threat.";
-        document.getElementById("vulnerabilityMitigation").innerText =
+            "Current stress tests did not identify a single dominant retirement threat."
+        );
+        setElementText(
+            "vulnerabilityMitigation",
             vulnerabilityAnalysis.primaryRisk?.mitigation ??
-            "Best mitigation: preserve margin and keep reducing dependence on stressed assumptions.";
+            "Best mitigation: preserve margin and keep reducing dependence on stressed assumptions."
+        );
+        setElementText(
+            "primaryRiskSeverity",
+            vulnerabilityAnalysis.primaryRisk
+                ? `${vulnerabilityAnalysis.primaryRisk.severityTier} (${vulnerabilityAnalysis.primaryRisk.severityScore})`
+                : "Low"
+        );
+        setElementText(
+            "primaryRiskFailureAge",
+            vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.failureAge ?? "None"
+        );
+        setElementText(
+            "primaryRiskDepletionAge",
+            vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.assetDepletionAge ?? "None"
+        );
 
         renderRiskList(vulnerabilityAnalysis);
         renderRecommendedAgeOverview({
@@ -733,13 +813,13 @@ document.addEventListener("DOMContentLoaded", () => {
         });
         renderMarginOverview({
             retirementYear,
-            avgMargin
+            results
         });
         renderRecommendationSection({
             retireAge,
             analysis,
             vulnerabilityAnalysis,
-            avgMargin
+            results
         });
         renderPlanningLeverSection({
             retireAge,
@@ -751,7 +831,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderReadinessBreakdown(results, retireAge);
         renderExpenseBreakdown(retirementYear);
         renderTaxSnapshot(retirementYear);
-        renderTopRisks(vulnerabilityAnalysis);
         renderShortfallSummary(currentProjection, analysis);
     }
 

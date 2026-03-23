@@ -148,6 +148,14 @@ display:none;
 display:block;
 }
 
+.module-helper-text{
+margin:10px 0 18px;
+max-width:720px;
+font-size:14px;
+line-height:1.5;
+color:rgba(30,47,68,.82);
+}
+
 .form-grid{
 display:grid;
 grid-template-columns:1fr 1fr;

@@ -11,6 +11,7 @@ export function runProjection(simulationState) {
     const expenses = state.expenses || {};
     const assumptions = state.assumptions || {};
     const pension = state.pension || {};
+    const spouse = profile.spouse || {};
     const currentAge = profile.currentAge;
 
     const retireAge =
@@ -31,6 +32,14 @@ export function runProjection(simulationState) {
     return projectTotalRetirement({
         incomeSources: state.incomeSources || [],
         currentAge,
+        spouseCurrentAge:
+            spouse.currentAge ??
+            spouse.age ??
+            null,
+        spouseRetirementAge:
+            spouse.retirementAge ?? null,
+        spouseAnnualIncome:
+            spouse.annualIncome ?? 0,
         currentAnnualPay: pension.currentAnnualPay ?? 0,
         expectedFinalAnnualPay: pension.finalAverageSalary ?? 0,
         retireAge,

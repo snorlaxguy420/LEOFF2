@@ -15,7 +15,8 @@ import {
 } from "./simulatorShared.js";
 import {
     populateSimulatorInputs,
-    applyProjectionPreview
+    applyProjectionPreview,
+    clearProjectionPreview
 } from "./simulatorUiShared.js";
 import {
     buildAssetButtons,
@@ -35,6 +36,46 @@ const SUGGESTED_INFLATION_DEFAULTS = {
     healthcareInflation: "6"
 };
 const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
+
+function hasRequiredCurrentExpenses(inputs) {
+    return (inputs?.expenses?.monthly || 0) > 0;
+}
+
+function setReportButtonDisabled(disabled) {
+    const reportBtn = document.getElementById("fullReportBtn");
+
+    if (!reportBtn) return;
+
+    const reportLink = reportBtn.closest("a");
+
+    reportBtn.disabled = disabled;
+    reportBtn.style.opacity = disabled ? "0.55" : "1";
+    reportBtn.style.pointerEvents = disabled ? "none" : "";
+
+    if (reportLink) {
+        reportLink.style.pointerEvents = disabled ? "none" : "";
+        reportLink.setAttribute("aria-disabled", disabled ? "true" : "false");
+    }
+}
+
+function clearTimeline() {
+    const canvas = document.getElementById("incomeTimelineChart");
+    const legend = document.getElementById("timelineLegend");
+    const mobileSummary = document.getElementById("mobileIncomeSummary");
+
+    if (canvas) {
+        const ctx = canvas.getContext("2d");
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    if (legend) {
+        legend.innerHTML = "";
+    }
+
+    if (mobileSummary) {
+        mobileSummary.innerHTML = "";
+    }
+}
 
 function isPhoneChartLayout() {
     return window.innerWidth <= 640;
@@ -228,14 +269,9 @@ PROJECTION ENGINE
 function runProjection(existingSimulationState = null){
 
     const inputs = collectInputs();
-
-    const incomeSources = buildSimulationIncomeSources({
-        inputs,
-        assetRegistry
-    });
     const simulationState = buildSimulationState({
         inputs,
-        incomeSources,
+        incomeSources: [],
         assumptions:
             inputs.assumptions ||
             {
@@ -243,8 +279,37 @@ function runProjection(existingSimulationState = null){
             }
     });
 
+    StateManager.saveWorkspaceState({
+        simulationState: {
+            ...existingSimulationState,
+            ...simulationState,
+            incomeSources: simulationState.incomeSources
+        }
+    });
+
+    if (!hasRequiredCurrentExpenses(inputs)) {
+        lastIncomeSources = [];
+        lastResults = null;
+        clearProjectionPreview(setText);
+        const coverageEl = document.getElementById("incomeCoverage");
+        if (coverageEl) {
+            coverageEl.style.color = "";
+        }
+        clearTimeline();
+        setReportButtonDisabled(true);
+        sessionStorage.removeItem("retirementProjection");
+        return;
+    }
+
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    simulationState.incomeSources = incomeSources;
+
     const projection = runProjectionEngine(simulationState);
     lastIncomeSources = incomeSources;
+    setReportButtonDisabled(false);
 
     saveProjectionSnapshot({
         projection,
@@ -394,7 +459,11 @@ function renderMobileIncomeSummary(results) {
         return;
     }
 
-    const retirementYear = results[0];
+    const retireAge =
+        parseInt(document.getElementById("retireAge")?.value, 10) || null;
+    const retirementYear =
+        results.find(result => result.age === retireAge) ||
+        results[0];
     const entries = Object.entries(retirementYear.breakdown || {})
         .filter(([_, amount]) => amount > 0)
         .sort((a, b) => b[1] - a[1]);

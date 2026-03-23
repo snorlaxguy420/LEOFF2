@@ -19,6 +19,7 @@ import {
     calculateSocialSecurityIncomeSource,
     normalizeSocialSecurityFraBenefit
 } from "../core/socialSecurityEngine.js";
+import { compareRetirementAges } from "../analysis/retirementScenarios.js";
 import { calculateReadinessScore } from "../analysis/readinessScore.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
@@ -222,7 +223,13 @@ function buildSampleResults() {
 function testSimulationStateRoundTrip() {
     const inputs = {
         profile: {
-            currentAge: 45
+            currentAge: 45,
+            spouse: {
+                name: "Taylor",
+                currentAge: 43,
+                retirementAge: 58,
+                annualIncome: 65000
+            }
         },
         retireAge: 53,
         lifeExpectancy: 90,
@@ -274,6 +281,9 @@ function testSimulationStateRoundTrip() {
     assert(roundTrip.pension.serviceYears === 25, "Service years round-trip failed");
     assert(roundTrip.pension.currentAnnualPay === 100000, "Current annual pay round-trip failed");
     assert(roundTrip.pension.benefitEnhancement === "lump_sum", "Benefit enhancement round-trip failed");
+    assert(roundTrip.profile.spouse.currentAge === 43, "Spouse current age round-trip failed");
+    assert(roundTrip.profile.spouse.retirementAge === 58, "Spouse retirement age round-trip failed");
+    assert(roundTrip.profile.spouse.annualIncome === 65000, "Spouse income round-trip failed");
     assert(roundTrip.expenses.housing === 1800, "Expense detail round-trip failed");
     assert(roundTrip.expenses.insurance === 250, "Insurance round-trip failed");
     assert(roundTrip.socialSecurity.claimAge === 67, "Social Security round-trip failed");
@@ -768,6 +778,72 @@ function testSplitExpenseInflationProjection() {
     logResult("Split expense inflation projection passed");
 }
 
+function testPreRetirementEmploymentIncomeProjection() {
+    const projection = projectTotalRetirement({
+        incomeSources: [],
+        currentAge: 45,
+        currentAnnualPay: 100000,
+        expectedFinalAnnualPay: 110000,
+        retireAge: 47,
+        lifeExpectancy: 47,
+        baseExpenses: 50000,
+        inflation: 0.03
+    });
+    const age45 = projection.results.find(result => result.age === 45);
+    const age46 = projection.results.find(result => result.age === 46);
+    const age47 = projection.results.find(result => result.age === 47);
+
+    assert(age45, "Pre-retirement projection missing current-age year");
+    assert(age46, "Pre-retirement projection missing working-age year");
+    assert(age47, "Pre-retirement projection missing retirement year");
+    assert(
+        Math.round(age45.income || 0) === 100000,
+        "Current-age employment income was not projected"
+    );
+    assert(
+        Math.round(age46.income || 0) === 110000,
+        "Pre-retirement earnings were not amortized toward final pay"
+    );
+    assert(
+        Math.round(age47.income || 0) === 0,
+        "Employment income should stop at retirement age"
+    );
+
+    logResult("Pre-retirement employment income projection passed");
+}
+
+function testSpouseIncomeStopsAtSpouseRetirement() {
+    const projection = projectTotalRetirement({
+        incomeSources: [],
+        currentAge: 45,
+        spouseCurrentAge: 43,
+        spouseRetirementAge: 45,
+        spouseAnnualIncome: 60000,
+        retireAge: 47,
+        lifeExpectancy: 47,
+        baseExpenses: 50000,
+        inflation: 0.03
+    });
+    const age45 = projection.results.find(result => result.age === 45);
+    const age46 = projection.results.find(result => result.age === 46);
+    const age47 = projection.results.find(result => result.age === 47);
+
+    assert(
+        Math.round((age45?.breakdown?.["Spouse Income"] || 0)) === 60000,
+        "Spouse income should count before spouse retirement"
+    );
+    assert(
+        Math.round((age46?.breakdown?.["Spouse Income"] || 0)) === 0,
+        "Spouse income should stop once spouse reaches retirement age"
+    );
+    assert(
+        Math.round((age47?.breakdown?.["Spouse Income"] || 0)) === 0,
+        "Spouse income should remain off after spouse retirement"
+    );
+
+    logResult("Spouse income retirement stop passed");
+}
+
 function testRentalIncomeProjectionBreakdown() {
     const rentalPayloads = generateRealEstatePayloads({
         label: "Test Rental",
@@ -1037,6 +1113,63 @@ function testReadinessScoreUsesRetirementYearsOnly() {
     logResult("Readiness score retirement-year guard passed");
 }
 
+function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
+    const comparison = compareRetirementAges({
+        inputs: {
+            profile: {
+                currentAge: 58
+            },
+            retireAge: 58,
+            lifeExpectancy: 90,
+            pension: {
+                serviceYears: 25,
+                finalAverageSalary: 110000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "none",
+                survivorAge: null
+            },
+            expenses: {
+                monthly: 0,
+                annual: 0
+            },
+            assumptions: {
+                inflationRate: 0.03
+            }
+        },
+        incomeSources: []
+    });
+
+    assert(comparison.scenarios.length > 0, "Retirement comparison produced no scenarios");
+    assert(
+        comparison.scenarios.every(scenario => scenario.age >= 58),
+        "Retirement comparison should not evaluate ages below the user's current age"
+    );
+
+    if (comparison.earliestSustainableAge !== null) {
+        assert(
+            comparison.earliestSustainableAge >= 58,
+            "Earliest sustainable age should not be below the user's current age"
+        );
+    }
+
+    if (comparison.financialFreedomAge !== null) {
+        assert(
+            comparison.financialFreedomAge >= 58,
+            "Financial freedom age should not be below the user's current age"
+        );
+    }
+
+    if (comparison.recommendedRetirementAge !== null) {
+        assert(
+            comparison.recommendedRetirementAge >= 58,
+            "Recommended retirement age should not be below the user's current age"
+        );
+    }
+
+    logResult("Retirement recommendation current-age floor passed");
+}
+
 async function testLiquidAssetModules() {
     await import("../modules/assets/liquidAccounts.js");
 
@@ -1212,7 +1345,16 @@ function testInputPopulationAndPreviewMetrics() {
     const metrics = getProjectionPreviewMetrics({
         retireAge: 53,
         firstDeficitYear: 55,
-        results: buildSampleResults()
+        results: [
+            {
+                age: 45,
+                income: 100000,
+                totalIncome: 100000,
+                expenses: 50000,
+                netWorth: 250000
+            },
+            ...buildSampleResults()
+        ]
     });
 
     assert(metrics.coveragePercent === 120, "Preview metric coverage failed");
@@ -1542,11 +1684,14 @@ async function runVerification() {
         testRetirementAccountRmdProjection();
         testRetirementAccountContributionAccumulation();
         testSplitExpenseInflationProjection();
+        testPreRetirementEmploymentIncomeProjection();
+        testSpouseIncomeStopsAtSpouseRetirement();
         testRentalIncomeProjectionBreakdown();
         testDebtPayloadConsistency();
         testRetirementVulnerabilityEngine();
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
+        testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
         testMultipleRetirementAccountPayloads();
         testInputPopulationAndPreviewMetrics();
         testModuleRestorePlacement();

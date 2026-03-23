@@ -111,7 +111,8 @@ loadAll(){
                 profile: {
                     currentAge: null,
                     retirementAge: 55,
-                    lifeExpectancy: null
+                    lifeExpectancy: null,
+                    spouse: null
                 },
                 pension: {
                     system: "LEOFF2",

@@ -115,6 +115,17 @@ export function getProjectionPreviewMetrics(projection) {
     };
 }
 
+export function clearProjectionPreview(setText) {
+    setText("incomeCoverage", "--");
+    setText("firstDeficit", "--");
+    setText("retirementStatus", "Enter current expenses");
+
+    const netWorthEl = document.getElementById("netWorth");
+    if (netWorthEl) {
+        netWorthEl.textContent = "--";
+    }
+}
+
 export function applyProjectionPreview({
     projection,
     setText,

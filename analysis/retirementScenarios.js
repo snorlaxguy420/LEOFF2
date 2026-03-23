@@ -39,11 +39,18 @@ export function compareRetirementAges({ inputs, incomeSources }) {
     };
 
     const scenarios = [];
-
-    const minAge = 50;
-    const maxAge = Math.min(
-        Math.max(inputs.lifeExpectancy || 70, 70) - 5,
-        70
+    const currentAge =
+        Math.max(
+            0,
+            Math.ceil(inputs?.profile?.currentAge || 0)
+        );
+    const minAge = Math.max(50, currentAge);
+    const maxAge = Math.max(
+        minAge,
+        Math.min(
+            Math.max(inputs.lifeExpectancy || 70, 70) - 5,
+            70
+        )
     );
 
     function totalPortfolio(result) {

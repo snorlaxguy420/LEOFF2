@@ -337,6 +337,9 @@ export function applyRetirementAccountTaxTreatment({
 export function projectTotalRetirement({
     incomeSources,
     currentAge: startingAge = null,
+    spouseCurrentAge = null,
+    spouseRetirementAge = null,
+    spouseAnnualIncome = 0,
     currentAnnualPay = 0,
     expectedFinalAnnualPay = 0,
     retireAge,
@@ -354,7 +357,17 @@ export function projectTotalRetirement({
     let firstDeficitYear = null;
     let depletionAges = {};
 
-    let years = lifeExpectancy - retireAge;
+    const projectionStartAge =
+        Number.isFinite(startingAge)
+            ? startingAge
+            : retireAge;
+    const preRetirementYears =
+        Number.isFinite(projectionStartAge) &&
+        Number.isFinite(retireAge) &&
+        projectionStartAge < retireAge
+            ? Math.max(0, Math.floor(retireAge - projectionStartAge))
+            : 0;
+    let years = lifeExpectancy - projectionStartAge;
     let portfolioBalances = {};
     let realEstateAssets = {};
     let mortgageDebts = {};
@@ -491,6 +504,43 @@ export function projectTotalRetirement({
         return fallbackStart + ((fallbackEnd - fallbackStart) * progress);
     }
 
+    function getEmploymentIncome(currentAge) {
+        if (
+            !Number.isFinite(projectionStartAge) ||
+            !Number.isFinite(retireAge) ||
+            currentAge >= retireAge
+        ) {
+            return 0;
+        }
+
+        return getAmortizedAnnualPay({
+            currentAnnualPay,
+            expectedFinalAnnualPay,
+            yearIndex: Math.max(0, currentAge - projectionStartAge),
+            totalYears: preRetirementYears
+        });
+    }
+
+    function getSpouseEmploymentIncome(currentAge) {
+        if (
+            !Number.isFinite(spouseCurrentAge) ||
+            !Number.isFinite(spouseRetirementAge) ||
+            spouseAnnualIncome <= 0
+        ) {
+            return 0;
+        }
+
+        const spouseAgeAtYear =
+            spouseCurrentAge +
+            Math.max(0, currentAge - projectionStartAge);
+
+        if (spouseAgeAtYear >= spouseRetirementAge) {
+            return 0;
+        }
+
+        return spouseAnnualIncome;
+    }
+
     // Initialize balances
 orderedIncomeSources.forEach(source => {
 
@@ -501,55 +551,36 @@ orderedIncomeSources.forEach(source => {
 
 });
 
-    if (
-        Number.isFinite(startingAge) &&
-        Number.isFinite(retireAge) &&
-        startingAge < retireAge
-    ) {
-        const preRetirementYears =
-            Math.max(0, Math.floor(retireAge - startingAge));
-
-        for (let year = 0; year < preRetirementYears; year++) {
-            orderedIncomeSources.forEach(source => {
-                if (source.type !== "portfolio") {
-                    return;
-                }
-
-                const balance = portfolioBalances[source.name] || 0;
-
-                if (balance <= 0) {
-                    return;
-                }
-
-                portfolioBalances[source.name] =
-                    advancePortfolioBalance({
-                        balance,
-                        growthRate: source.growthRate,
-                        annualContribution:
-                            getAmortizedAnnualPay({
-                                currentAnnualPay,
-                                expectedFinalAnnualPay,
-                                yearIndex: year,
-                                totalYears: preRetirementYears
-                            }) *
-                            Math.max(
-                                (source.employeeContributionRate || 0) +
-                                (source.employerMatchRate || 0),
-                                0
-                            )
-                    });
-            });
-        }
-    }
-
     for (let year = 0; year <= years; year++) {
 
-        let currentAge = retireAge + year;
+        let currentAge = projectionStartAge + year;
         let totalIncome = 0;
         let totalTaxes = 0;
         let yearlyTaxableIncome = 0;
         let yearlyBreakdown = {};
         let supplementalExpenses = 0;
+        const employmentIncome = getEmploymentIncome(currentAge);
+        const spouseIncome = getSpouseEmploymentIncome(currentAge);
+
+        if (employmentIncome > 0) {
+            totalIncome += employmentIncome;
+            yearlyBreakdown["Employment Income"] = employmentIncome;
+            totalTaxes +=
+                calculateFederalIncomeTax(
+                    yearlyTaxableIncome + employmentIncome
+                ) - calculateFederalIncomeTax(yearlyTaxableIncome);
+            yearlyTaxableIncome += employmentIncome;
+        }
+
+        if (spouseIncome > 0) {
+            totalIncome += spouseIncome;
+            yearlyBreakdown["Spouse Income"] = spouseIncome;
+            totalTaxes +=
+                calculateFederalIncomeTax(
+                    yearlyTaxableIncome + spouseIncome
+                ) - calculateFederalIncomeTax(yearlyTaxableIncome);
+            yearlyTaxableIncome += spouseIncome;
+        }
 
         orderedIncomeSources.forEach(source => {
 // ===============================
@@ -611,10 +642,21 @@ if (source.type === "real_estate") {
                 const openingBalance = balance;
 
                 if (balance > 0 && currentAge < source.startAge) {
+                    const annualContribution =
+                        currentAge < retireAge
+                            ? employmentIncome *
+                              Math.max(
+                                  (source.employeeContributionRate || 0) +
+                                  (source.employerMatchRate || 0),
+                                  0
+                              )
+                            : 0;
+
                     portfolioBalances[source.name] =
                         advancePortfolioBalance({
                             balance,
-                            growthRate: source.growthRate
+                            growthRate: source.growthRate,
+                            annualContribution
                         });
                     return;
                 }
@@ -779,6 +821,8 @@ let netWorth =
         results,
         cumulativeShortfall,
         firstDeficitYear,
-        depletionAges
+        depletionAges,
+        retireAge,
+        projectionStartAge
     };
 }

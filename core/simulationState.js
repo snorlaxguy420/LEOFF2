@@ -45,7 +45,20 @@ export function buildSimulationState({
                 overrides.lifeExpectancy ??
                 inputs.lifeExpectancy ??
                 profile.lifeExpectancy ??
-                null
+                null,
+            spouse: profile.spouse
+                ? {
+                    name: profile.spouse.name ?? "",
+                    currentAge:
+                        profile.spouse.currentAge ??
+                        profile.spouse.age ??
+                        null,
+                    retirementAge:
+                        profile.spouse.retirementAge ?? null,
+                    annualIncome:
+                        profile.spouse.annualIncome ?? 0
+                }
+                : null
         },
         pension: {
             system: overrides.pensionSystem ?? "LEOFF2",

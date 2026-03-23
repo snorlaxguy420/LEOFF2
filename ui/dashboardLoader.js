@@ -14,6 +14,28 @@ import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulner
 
 let comparisonChartMode = "bar";
 
+function getMinimumDashboardRetirementAge(inputs = {}) {
+    const currentAge =
+        Math.max(
+            0,
+            Math.ceil(inputs?.profile?.currentAge || 0)
+        );
+
+    return Math.max(50, currentAge);
+}
+
+function getMaximumDashboardRetirementAge(inputs = {}) {
+    const minimumAge = getMinimumDashboardRetirementAge(inputs);
+
+    return Math.max(
+        minimumAge,
+        Math.min(
+            Math.max(inputs?.lifeExpectancy || 70, 70) - 5,
+            70
+        )
+    );
+}
+
 function totalPortfolio(result) {
     if (!result?.portfolios) return 0;
 
@@ -94,6 +116,15 @@ function setElementText(id, value) {
     }
 }
 
+function getDisplayedRecommendationAge(analysis = {}, retireAge = null) {
+    return (
+        analysis.recommendedRetirementAge ??
+        analysis.financialFreedomAge ??
+        analysis.earliestRetirementAge ??
+        retireAge
+    );
+}
+
 function getMarginExtremes(results = []) {
     if (!Array.isArray(results) || results.length === 0) {
         return null;
@@ -166,15 +197,22 @@ function getReadinessGradeDescription(grade) {
 }
 
 function buildBriefRecommendationText({
+    retireAge,
     analysis,
     vulnerabilityAnalysis,
     results
 }) {
     const recommendedAge =
-        analysis.recommendedRetirementAge ??
-        analysis.earliestRetirementAge;
+        getDisplayedRecommendationAge(analysis, retireAge);
     const primaryRisk =
         vulnerabilityAnalysis.primaryRisk?.label ?? "lower stress sensitivity";
+
+    if (
+        analysis.recommendedRetirementAge == null &&
+        analysis.financialFreedomAge != null
+    ) {
+        return `Age ${recommendedAge} appears to cover expenses throughout the plan, but it still depends on planned portfolio withdrawals. ${buildMarginRangeSentence(results)} The main pressure point is ${primaryRisk}.`;
+    }
 
     return `Age ${recommendedAge} appears to be the strongest current balance of sustainability and resilience. ${buildMarginRangeSentence(results)} The main pressure point is ${primaryRisk}.`;
 }
@@ -186,9 +224,7 @@ function buildRecommendationNarrative({
     results
 }) {
     const recommendedAge =
-        analysis.recommendedRetirementAge ??
-        analysis.earliestRetirementAge ??
-        retireAge;
+        getDisplayedRecommendationAge(analysis, retireAge);
     const earliestSustainable =
         analysis.earliestRetirementAge;
     const financialFreedomAge =
@@ -210,6 +246,14 @@ function buildRecommendationNarrative({
         supportPoints.push(
             `projected income fully covers expenses by age ${financialFreedomAge}`
         );
+    }
+
+    if (
+        analysis.recommendedRetirementAge === null &&
+        financialFreedomAge !== null &&
+        financialFreedomAge !== undefined
+    ) {
+        return `Age ${recommendedAge} appears to be the strongest current timing for full expense coverage in this plan, even though the projection still relies on planned portfolio withdrawals in some years. ${supportPoints.length ? `${supportPoints.join(", ")}, and ` : ""}${marginSentence} The main risk to keep watching is ${primaryRisk}.`;
     }
 
     if (
@@ -235,9 +279,7 @@ function renderRecommendationSection({
     const narrative = document.getElementById("recommendationNarrative");
     const shortText = document.getElementById("dashboardRecommendationText");
     const recommendedAge =
-        analysis.recommendedRetirementAge ??
-        analysis.earliestRetirementAge ??
-        retireAge;
+        getDisplayedRecommendationAge(analysis, retireAge);
 
     if (headline) {
         headline.textContent =
@@ -255,6 +297,7 @@ function renderRecommendationSection({
 
     if (shortText) {
         shortText.textContent = buildBriefRecommendationText({
+            retireAge,
             analysis,
             vulnerabilityAnalysis,
             results
@@ -271,9 +314,7 @@ function buildPlanningLeverContent({
 }) {
     const primaryRisk = vulnerabilityAnalysis.primaryRisk;
     const recommendedAge =
-        analysis.recommendedRetirementAge ??
-        analysis.earliestRetirementAge ??
-        retireAge;
+        getDisplayedRecommendationAge(analysis, retireAge);
     const deficitAge = analysis.retirementFailureAge;
     const assetDepletionAge = analysis.assetDepletionAge;
     const expenseBase = retirementYear?.expenses || 0;
@@ -408,15 +449,22 @@ function renderRecommendedAgeOverview({
 }) {
     const summary = document.getElementById("recommendedAgeSummary");
     const recommendedRetirement =
-        analysis.recommendedRetirementAge ??
-        analysis.earliestRetirementAge ??
-        retireAge;
+        getDisplayedRecommendationAge(analysis, retireAge);
     const earliestSustainable =
         analysis.earliestRetirementAge ?? "Not Sustainable";
     const freedomAge =
         analysis.financialFreedomAge ?? "Requires Drawdown";
 
     if (summary) {
+        if (
+            analysis.recommendedRetirementAge === null &&
+            typeof analysis.financialFreedomAge === "number"
+        ) {
+            summary.textContent =
+                `Age ${recommendedRetirement} is the first age currently projected to cover expenses year by year, but it still appears to rely on planned portfolio withdrawals. Earliest sustainable timing is ${earliestSustainable}, and projected income fully covers expenses by age ${freedomAge}.`;
+            return;
+        }
+
         if (
             typeof analysis.recommendedRetirementAge === "number" &&
             typeof analysis.financialFreedomAge === "number" &&
@@ -759,7 +807,10 @@ document.addEventListener("DOMContentLoaded", () => {
         setElementText("firstDeficitAge", analysis.retirementFailureAge ?? "Never");
         setElementText("earliestRetirement", analysis.earliestRetirementAge ?? "Not Sustainable");
         setElementText("freedomAge", analysis.financialFreedomAge ?? "Requires Drawdown");
-        setElementText("recommendedRetirement", analysis.recommendedRetirementAge ?? "Not Achievable");
+        setElementText(
+            "recommendedRetirement",
+            getDisplayedRecommendationAge(analysis, retireAge) ?? "Not Achievable"
+        );
         setElementText("reportIncomeMargin", `${avgMargin >= 0 ? "+" : "-"}${formatCurrency(Math.abs(avgMargin))}`);
         setElementText("assetDepletion", analysis.assetDepletionAge ?? "Sustainable");
         setElementText("totalAssets", "$" + Math.round(totalAssets).toLocaleString());
@@ -866,19 +917,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const slider = document.getElementById("retirementAgeSlider");
     const comparisonChartToggleBtn =
         document.getElementById("comparisonChartToggleBtn");
+    const minimumRetirementAge =
+        getMinimumDashboardRetirementAge(baseInputs);
+    const maximumRetirementAge =
+        getMaximumDashboardRetirementAge(baseInputs);
+    const initialSliderAge =
+        Math.min(
+            Math.max(initialRecommendedAge, minimumRetirementAge),
+            maximumRetirementAge
+        );
 
     if (slider) {
-        slider.min = String(50);
-        slider.max = String(
-            Math.min(
-                Math.max(baseInputs.lifeExpectancy || 70, 70) - 5,
-                70
-            )
-        );
-        slider.value = String(initialRecommendedAge);
+        slider.min = String(minimumRetirementAge);
+        slider.max = String(maximumRetirementAge);
+        slider.value = String(initialSliderAge);
         slider.addEventListener("input", () => {
             const retireAge =
-                parseInt(slider.value, 10) || initialRecommendedAge;
+                parseInt(slider.value, 10) || initialSliderAge;
             renderDashboardForAge(retireAge);
         });
     }
@@ -894,13 +949,13 @@ document.addEventListener("DOMContentLoaded", () => {
             syncComparisonChartToggleUi();
 
             const retireAge =
-                parseInt(slider?.value || String(initialRecommendedAge), 10) ||
-                initialRecommendedAge;
+                parseInt(slider?.value || String(initialSliderAge), 10) ||
+                initialSliderAge;
 
             renderDashboardForAge(retireAge);
         });
     }
 
     initializeDetailToggles();
-    renderDashboardForAge(initialRecommendedAge);
+    renderDashboardForAge(initialSliderAge);
 });

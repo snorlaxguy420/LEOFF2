@@ -49,8 +49,9 @@ assetRegistry.registerAsset({
         "birthYear",
         "maritalStatus",
         "spouseName",
-        "spouseBirthMonth",
-        "spouseBirthYear"
+        "spouseCurrentAge",
+        "spouseRetirementAge",
+        "spouseAnnualIncome"
     ],
 
 /* --------------------------------
@@ -107,17 +108,16 @@ createCard() {
                     <input id="spouseName" type="text">
                 </label>
 
-                <label>Spouse Birth Month
-                    <select id="spouseBirthMonth">
-                        <option value="">Month</option>
-                        ${Array.from({length:12},(_,i)=>
-                            `<option value="${i+1}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`
-                        ).join("")}
-                    </select>
+                <label>Spouse Current Age
+                    <input id="spouseCurrentAge" type="number">
                 </label>
 
-                <label>Spouse Birth Year
-                    <input id="spouseBirthYear" type="number">
+                <label>Spouse Retirement Age
+                    <input id="spouseRetirementAge" type="number" value="65">
+                </label>
+
+                <label>Spouse Current Annual Income
+                    <input id="spouseAnnualIncome" type="number" value="0">
                 </label>
 
             </div>
@@ -228,17 +228,15 @@ getProfile(){
     const spouseName =
         document.getElementById("spouseName")?.value;
 
-    const spouseBirthMonth =
-        parseInt(document.getElementById("spouseBirthMonth")?.value);
-
-    const spouseBirthYear =
-        parseInt(document.getElementById("spouseBirthYear")?.value);
-
     const currentAge =
         calculateAge(birthMonth, birthYear);
 
-    const spouseAge =
-        calculateAge(spouseBirthMonth, spouseBirthYear);
+    const spouseCurrentAge =
+        parseInt(document.getElementById("spouseCurrentAge")?.value) || null;
+    const spouseRetirementAge =
+        parseInt(document.getElementById("spouseRetirementAge")?.value) || null;
+    const spouseAnnualIncome =
+        parseFloat(document.getElementById("spouseAnnualIncome")?.value || 0) || 0;
 
     return {
 
@@ -251,9 +249,10 @@ getProfile(){
         spouse: maritalStatus === "married" ? {
 
             name: spouseName,
-            birthMonth: spouseBirthMonth,
-            birthYear: spouseBirthYear,
-            age: spouseAge
+            currentAge: spouseCurrentAge,
+            age: spouseCurrentAge,
+            retirementAge: spouseRetirementAge,
+            annualIncome: spouseAnnualIncome
 
         } : null
 

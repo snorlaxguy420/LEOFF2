@@ -279,6 +279,53 @@ font-size:38px;
 }
 }
 
+@media (max-width: 720px){
+.survivor-shell{
+padding:24px 16px 48px;
+}
+
+.survivor-hero h1{
+font-size:34px;
+}
+
+.survivor-hero p{
+font-size:16px;
+line-height:1.6;
+}
+
+.survivor-form-card,
+.survivor-summary-card,
+.survivor-results-card{
+padding:18px;
+border-radius:16px;
+}
+
+.survivor-actions{
+justify-content:stretch;
+}
+
+.survivor-actions .primary-btn{
+width:100%;
+}
+
+.survivor-header-actions{
+display:grid;
+grid-template-columns:1fr;
+width:100%;
+}
+
+.survivor-header-actions > *{
+width:100%;
+box-sizing:border-box;
+}
+
+.survivor-table th,
+.survivor-table td{
+padding:12px 10px;
+font-size:13px;
+}
+}
+
 @media print{
 @page{
 margin:.55in;

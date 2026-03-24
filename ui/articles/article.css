@@ -435,19 +435,47 @@ body {
     .site-header {
         padding: 16px 20px;
         flex-wrap: wrap;
-        gap: 12px;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .logo-wrap {
+        gap: 10px;
+    }
+
+    .logo-wrap img {
+        height: 62px;
+    }
+
+    .logo-wrap::after {
+        padding: 5px 8px;
+        font-size: 10px;
     }
 
     .nav {
         margin-left: 0;
         width: 100%;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .nav a {
         margin-left: 0;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid rgba(255,255,255,0.16);
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+    .nav a.nav-login {
+        grid-column: 1 / -1;
     }
 
     .article-layout {
@@ -460,30 +488,63 @@ body {
 }
 
 @media (max-width: 720px) {
+    .site-header {
+        padding: 14px 12px;
+    }
+
+    .logo-wrap {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .logo-wrap img {
+        height: 52px;
+    }
+
+    .logo-wrap::after {
+        padding: 4px 8px;
+        font-size: 9px;
+    }
+
     .article-shell {
-        padding: 26px 20px 56px;
+        padding: 24px 16px 48px;
     }
 
     .article-hero h1 {
-        font-size: 40px;
+        font-size: 34px;
     }
 
     .article-dek {
-        font-size: 20px;
+        font-size: 18px;
+        line-height: 1.6;
     }
 
     .article-content {
-        padding: 24px 22px;
+        padding: 20px 18px;
     }
 
     .article-content p,
     .article-content li {
-        font-size: 18px;
+        font-size: 17px;
+        line-height: 1.75;
     }
 
     .article-card,
     .article-content {
-        padding: 20px;
+        padding: 18px;
+    }
+
+    .article-content h2 {
+        font-size: 28px;
+    }
+
+    .article-content h3 {
+        font-size: 21px;
+    }
+
+    .article-content blockquote {
+        font-size: 18px;
+        padding: 14px 16px;
     }
 
     .article-cta {

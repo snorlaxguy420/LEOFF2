@@ -1170,6 +1170,10 @@ EDIT INPUT BUTTON
         left: 24px;
         transform: none;
     }
+
+    .dashboard-chart-actions > * {
+        flex: 1 1 220px;
+    }
 }
 
 @media (max-width: 640px) {
@@ -1204,6 +1208,10 @@ EDIT INPUT BUTTON
     .dashboard-chart-actions {
         width: 100%;
         justify-content: stretch;
+    }
+
+    .dashboard-chart-actions > * {
+        width: 100%;
     }
 
     .dashboard-chart-slider {

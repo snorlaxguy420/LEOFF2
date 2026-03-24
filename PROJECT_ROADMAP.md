@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 22, 2026
+Last updated: March 23, 2026
 
 ## Current Status
 
@@ -120,6 +120,9 @@ Completed:
   and `Recommended Retirement Age` requires expense coverage without portfolio withdrawals
 - Dashboard now displays the `Largest Retirement Vulnerability` with a tooltip and stress-test explanation using [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
 - Dashboard now displays mitigation guidance and ranked secondary vulnerability output for the currently selected retirement age
+- Retirement-age recommendations no longer scan or recommend ages below the user's current age in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with browser verification coverage in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
+- Dashboard recommendation messaging now avoids showing `Not Achievable` for scenarios that still cover expenses but rely on planned portfolio withdrawals, instead falling back to the strongest available displayed timing in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- Dashboard retirement-age slider and related actions now live within the timeline/chart panel instead of a separate top control bar, improving chart-context alignment in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 
 Remaining:
 - Continue removing remaining inline business logic from the dashboard loader
@@ -139,6 +142,7 @@ Completed / In progress:
 - Survivor Benefit Estimator page now exists in [ui/survivor-benefit-estimator.html](/D:/LEOFF%202/ui/survivor-benefit-estimator.html)
 - The survivor tool now uses sampled DRS age-gap outputs to estimate joint-option reductions for `50%`, `66.67%`, and `100%` survivor choices
 - The estimator now compares single life versus survivor options with a clearer decision-oriented layout: monthly-benefit comparison, give-up versus single-life framing, early/middle/late death snapshots, copy/print actions, and explicit estimator framing
+- Homepage hero now includes a direct launch CTA for the Survivor Benefit Comparison tool, improving discoverability of the estimator from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 
 Planned:
 - Lifetime Pension Value Calculator
@@ -184,6 +188,7 @@ Completed:
   [ui/articles/article-when-to-get-professional-financial-help.html](/D:/LEOFF%202/ui/articles/article-when-to-get-professional-financial-help.html)
 - Existing article pages now link to the Retirement Age Comparison Tool where relevant, strengthening internal linking density across the article library
 - The survivor-options article now links directly into the Survivor Benefit Estimator where relevant, extending internal linking into the new Phase 7 tool
+- Homepage hero CTA stack now links directly into the Survivor Benefit Comparison tool, extending internal linking and tool discovery from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 
 Planned:
 - Technical SEO improvements for non-article pages
@@ -212,6 +217,7 @@ Progress:
 - Simulator chart renderers now use narrower mobile padding, lighter axis labels, and tighter sampling on phone widths in [ui/chartRenderer.js](/D:/LEOFF%202/ui/chartRenderer.js) and [ui/incomeTimelineRenderer.js](/D:/LEOFF%202/ui/incomeTimelineRenderer.js)
 - Simulator now has a dedicated phone-specific layout mode in [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css) and [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), with reordered mobile cards, touch-friendly two-column tab navigation, and a simplified total-income-versus-expenses chart view paired with a phone-only retirement income-source summary
 - Homepage feature panels have been refreshed to better match the current product mix of tools, forecasting, and guides, with cleaner card presentation in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
+- Dashboard chart controls now collapse with the retirement-age slider inside the chart header rather than a separate top bar, improving mobile and desktop control grouping in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 
 Remaining:
 - Touch-friendly controls and interactions

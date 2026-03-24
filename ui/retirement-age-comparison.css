@@ -248,6 +248,54 @@ font-size:38px;
 }
 }
 
+@media (max-width: 720px){
+.comparison-shell{
+padding:24px 16px 48px;
+}
+
+.comparison-hero h1{
+font-size:34px;
+}
+
+.comparison-hero p{
+font-size:16px;
+line-height:1.6;
+}
+
+.comparison-form-card,
+.comparison-summary-card,
+.comparison-results-card,
+.comparison-seo-card{
+padding:18px;
+border-radius:16px;
+}
+
+.comparison-actions{
+justify-content:stretch;
+}
+
+.comparison-actions .primary-btn{
+width:100%;
+}
+
+.comparison-header-actions{
+display:grid;
+grid-template-columns:1fr;
+width:100%;
+}
+
+.comparison-header-actions > *{
+width:100%;
+box-sizing:border-box;
+}
+
+.comparison-table th,
+.comparison-table td{
+padding:12px 10px;
+font-size:13px;
+}
+}
+
 @media print{
 @page{
 margin:.55in;

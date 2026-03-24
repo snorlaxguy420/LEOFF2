@@ -72,14 +72,6 @@ depletion in the same planning flow as the simulator.
 
 <div id="retirementDashboard">
 
-  <div class="dashboard-control-bar">
-      <div class="retirement-slider compact-slider">
-          <label id="retirementAgeSliderLabel">Retirement Age: <strong>55</strong></label>
-          <input type="range" id="retirementAgeSlider" min="50" max="65" value="55">
-      </div>
-      <button id="editInputsBtn">Edit Plan</button>
-  </div>
-
   <section class="dashboard-overview-grid">
 
       <section class="dashboard-overview-card">
@@ -202,10 +194,19 @@ depletion in the same planning flow as the simulator.
   <div class="timeline-panel">
 
       <div class="dashboard-chart-header">
-          <h3>Income vs Expense Timeline</h3>
-          <button id="comparisonChartToggleBtn" class="report-action-secondary" type="button">
-              Line Chart
-          </button>
+          <div class="dashboard-chart-title-block">
+              <h3>Income vs Expense Timeline</h3>
+              <div class="retirement-slider compact-slider dashboard-chart-slider">
+                  <label id="retirementAgeSliderLabel">Retirement Age: <strong>55</strong></label>
+                  <input type="range" id="retirementAgeSlider" min="50" max="65" value="55">
+              </div>
+          </div>
+          <div class="dashboard-chart-actions">
+              <button id="comparisonChartToggleBtn" class="report-action-secondary" type="button">
+                  Line Chart
+              </button>
+              <button id="editInputsBtn" type="button">Edit Plan</button>
+          </div>
       </div>
 
       <div class="chart-scroll-shell dashboard-screen-chart">

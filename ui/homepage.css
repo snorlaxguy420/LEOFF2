@@ -219,6 +219,28 @@ background:#34686f;
 border-color:#34686f;
 color:white;
 }
+
+.hero-subtool-link{
+display:flex;
+margin-top:18px;
+}
+
+.btn-survivor{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    background:#E09F3E;
+    border:2px solid #E09F3E;
+    color:white;
+    padding:14px 28px;
+    box-shadow:0 10px 24px rgba(224,159,62,.24);
+}
+
+.btn-survivor:hover{
+    background:#C98A2F;
+    border-color:#C98A2F;
+    color:white;
+}
 /* ===============================
 WHAT IS SECTION
 =============================== */

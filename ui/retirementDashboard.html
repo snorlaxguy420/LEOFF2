@@ -258,6 +258,56 @@ depletion in the same planning flow as the simulator.
       </div>
   </section>
 
+  <div class="dashboard-bottom">
+      <section class="report-detail-panel">
+          <div class="report-summary-kicker">Expense Breakdown</div>
+          <h3>How retirement spending is currently distributed</h3>
+          <div class="report-stat-list">
+              <div><span>Essential Spending</span><strong id="expenseEssential">--</strong></div>
+              <div><span>Discretionary Spending</span><strong id="expenseDiscretionary">--</strong></div>
+              <div><span>Housing</span><strong id="expenseHousing">--</strong></div>
+              <div><span>Healthcare</span><strong id="expenseHealthcare">--</strong></div>
+              <div><span>Insurance</span><strong id="expenseInsurance">--</strong></div>
+              <div><span>Goods and Services</span><strong id="expenseGoodsServices">--</strong></div>
+          </div>
+      </section>
+
+      <section class="report-detail-panel">
+          <div class="report-summary-kicker">Tax Snapshot</div>
+          <h3>How taxes affect the selected retirement year</h3>
+          <div class="report-stat-list">
+              <div><span>Taxable Income</span><strong id="taxableIncomeAtRetirement">--</strong></div>
+              <div><span>Tax Drag Ratio</span><strong id="taxDragRatio">--</strong></div>
+          </div>
+          <p id="taxSnapshotNarrative" class="report-inline-note">
+              Tax context for the selected retirement year will appear here once the dashboard finishes loading.
+          </p>
+      </section>
+  </div>
+
+  <div class="dashboard-bottom">
+      <section class="report-detail-panel">
+          <div class="report-summary-kicker">Top 3 Risks</div>
+          <h3>What the current stress tests are watching most closely</h3>
+          <div id="topRisksList" class="report-risk-list">
+              <div class="report-risk-item">
+                  <h4>Loading risks</h4>
+                  <p>The dashboard will populate the current top retirement risks once analysis finishes.</p>
+              </div>
+          </div>
+      </section>
+
+      <section class="report-detail-panel">
+          <div class="report-summary-kicker">Shortfall Summary</div>
+          <h3>Where the plan first shows pressure</h3>
+          <div class="report-stat-list">
+              <div><span>First Deficit Age</span><strong id="reportFirstDeficitAge">--</strong></div>
+              <div><span>Cumulative Shortfall</span><strong id="reportCumulativeShortfall">--</strong></div>
+              <div><span>Worst Annual Deficit</span><strong id="reportWorstAnnualDeficit">--</strong></div>
+          </div>
+      </section>
+  </div>
+
 </div>
 
 </main>

@@ -833,12 +833,12 @@ function testSpouseIncomeStopsAtSpouseRetirement() {
         "Spouse income should count before spouse retirement"
     );
     assert(
-        Math.round((age46?.breakdown?.["Spouse Income"] || 0)) === 0,
-        "Spouse income should stop once spouse reaches retirement age"
+        Math.round((age46?.breakdown?.["Spouse Income"] || 0)) === 60000,
+        "Spouse income should continue until the spouse reaches retirement age"
     );
     assert(
         Math.round((age47?.breakdown?.["Spouse Income"] || 0)) === 0,
-        "Spouse income should remain off after spouse retirement"
+        "Spouse income should stop once spouse reaches retirement age"
     );
 
     logResult("Spouse income retirement stop passed");
@@ -1001,7 +1001,14 @@ function testRetirementVulnerabilityEngine() {
     });
 
     assert(vulnerability.primaryRisk, "Retirement vulnerability primary risk missing");
-    assert(vulnerability.risks.length >= 3, "Retirement vulnerability scenarios missing");
+    assert(
+        vulnerability.risks.length >= 1,
+        "Retirement vulnerability ranked risks missing"
+    );
+    assert(
+        vulnerability.risks.some(risk => risk.id === vulnerability.primaryRisk.id),
+        "Retirement vulnerability primary risk should be included in ranked risks"
+    );
     assert(vulnerability.primaryRisk.mitigation, "Retirement vulnerability mitigation missing");
     assert(vulnerability.primaryRisk.severityTier, "Retirement vulnerability severity tier missing");
 

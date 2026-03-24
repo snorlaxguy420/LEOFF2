@@ -1371,7 +1371,8 @@ EDIT INPUT BUTTON
     }
 
     .report-risk-list,
-    .report-highlight-grid {
+    .report-highlight-grid,
+    .dashboard-bottom {
         grid-template-columns: 1fr;
     }
 

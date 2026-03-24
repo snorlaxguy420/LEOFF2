@@ -63,6 +63,32 @@ margin-top:0;
 color:var(--pnw-evergreen);
 }
 
+.panel-header{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:16px;
+margin-bottom:16px;
+}
+
+.panel-header h2{
+margin-bottom:0;
+}
+
+.comparison-form-card .form-grid label{
+gap:8px;
+font-weight:600;
+color:rgba(30,47,68,.88);
+}
+
+.comparison-form-card input,
+.comparison-form-card select{
+min-height:48px;
+padding:12px 14px;
+font-size:16px;
+box-sizing:border-box;
+}
+
 .comparison-actions{
 display:flex;
 justify-content:flex-end;
@@ -73,6 +99,10 @@ margin-top:22px;
 display:flex;
 gap:10px;
 align-items:center;
+}
+
+.comparison-header-actions > *{
+min-height:44px;
 }
 
 .comparison-takeaway{
@@ -95,6 +125,10 @@ padding-left:18px;
 line-height:1.7;
 }
 
+.comparison-summary-list li + li{
+margin-top:8px;
+}
+
 .comparison-note{
 padding:18px;
 border-radius:14px;
@@ -110,14 +144,29 @@ margin:8px 0 0;
 line-height:1.6;
 }
 
+.comparison-note + .comparison-note{
+margin-top:14px;
+}
+
 .comparison-status{
 margin-bottom:12px;
 font-size:14px;
 color:rgba(42,42,42,.72);
 }
 
+.comparison-table-hint{
+margin:0 0 10px;
+font-size:13px;
+line-height:1.45;
+color:rgba(42,42,42,.64);
+}
+
 .comparison-table-wrap{
 overflow-x:auto;
+overflow-y:hidden;
+-webkit-overflow-scrolling:touch;
+overscroll-behavior-x:contain;
+padding-bottom:6px;
 }
 
 .comparison-table{
@@ -270,12 +319,28 @@ padding:18px;
 border-radius:16px;
 }
 
+.panel-header{
+display:grid;
+grid-template-columns:1fr;
+gap:14px;
+margin-bottom:14px;
+}
+
+.comparison-form-card .form-grid{
+gap:14px;
+}
+
+.comparison-form-card .form-grid label{
+font-size:13px;
+}
+
 .comparison-actions{
 justify-content:stretch;
 }
 
 .comparison-actions .primary-btn{
 width:100%;
+min-height:48px;
 }
 
 .comparison-header-actions{
@@ -287,12 +352,38 @@ width:100%;
 .comparison-header-actions > *{
 width:100%;
 box-sizing:border-box;
+min-height:46px;
+}
+
+.comparison-takeaway{
+padding:14px;
+font-size:15px;
+line-height:1.5;
+}
+
+.comparison-status{
+margin-bottom:10px;
+font-size:13px;
+line-height:1.45;
+}
+
+.comparison-table-hint{
+font-size:12px;
+}
+
+.comparison-table-wrap{
+margin:0 -4px;
+padding:0 4px 6px;
 }
 
 .comparison-table th,
 .comparison-table td{
 padding:12px 10px;
 font-size:13px;
+}
+
+.comparison-table{
+min-width:920px;
 }
 }
 

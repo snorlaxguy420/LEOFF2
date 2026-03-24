@@ -218,11 +218,17 @@ Progress:
 - Simulator now has a dedicated phone-specific layout mode in [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css) and [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), with reordered mobile cards, touch-friendly two-column tab navigation, and a simplified total-income-versus-expenses chart view paired with a phone-only retirement income-source summary
 - Homepage feature panels have been refreshed to better match the current product mix of tools, forecasting, and guides, with cleaner card presentation in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 - Dashboard chart controls now collapse with the retirement-age slider inside the chart header rather than a separate top bar, improving mobile and desktop control grouping in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- Shared mobile header/nav treatment is now stronger across simulator-style public pages through [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), improving touch targets and stacked navigation on the calculator, dashboard-adjacent pages, about, articles, login, and tool shells
+- Homepage phone/tablet presentation now has a fuller mobile pass across the hero, CTA stack, feature sections, FAQ surfaces, and footer in [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
+- Articles, article pages, and login now use tighter mobile shell spacing, card padding, and typography in [ui/articles.css](/D:/LEOFF%202/ui/articles.css), [ui/articles/article.css](/D:/LEOFF%202/ui/articles/article.css), [ui/about.css](/D:/LEOFF%202/ui/about.css), and [ui/login.css](/D:/LEOFF%202/ui/login.css)
+- Simulator mobile usability now has a more intentional phone flow in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), including a mobile step indicator, previous/next section controls, reordered mobile panel flow, and stronger phone-sized form controls
+- Dashboard mobile readability now has a fuller phone-specific pass in [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), including cleaner overview-card stacking, more readable recommendation/risk text wrapping, larger mobile actions, and a more intentional chart-control block around the retirement-age slider
+- Retirement Age Comparison and Survivor Benefit Estimator now have stronger phone-specific card, action, and wide-table handling in [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css) and [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css)
 
 Remaining:
-- Touch-friendly controls and interactions
-- Responsive chart and dashboard behavior validation
-- Cross-device QA for simulator, dashboard, and articles
+- Finish real-device QA across the homepage, simulator, dashboard, Retirement Age Comparison, Survivor Benefit Estimator, and at least one article page
+- Validate the current responsive pass at `360px`, `390px`, `412px`, `430px`, and `768px`
+- Log and fix any remaining overflow, clipping, tiny touch targets, unreadable charts or tables, awkward spacing, or controls hidden below the fold
 
 ### Phase 13 - Domain and Launch
 Status: In progress
@@ -288,6 +294,7 @@ Remaining:
 
 ## Immediate Next Steps
 
--> 1. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
-2. Verify the updated essential-versus-discretionary expense behavior in real UI runs and decide whether users need manual category overrides.
-3. Keep deepening Phase 8 report polish now that printable report, PDF export, and report detail sections are in place.
+-> 1. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
+2. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
+3. Verify the updated essential-versus-discretionary expense behavior in real UI runs and decide whether users need manual category overrides.
+4. Keep deepening Phase 8 report polish now that printable report, PDF export, and report detail sections are in place.

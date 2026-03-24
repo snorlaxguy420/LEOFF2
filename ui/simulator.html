@@ -59,6 +59,14 @@ CENTER INPUT PANEL
 
 <section class="planner-input">
 
+<div class="mobile-section-progress" aria-live="polite">
+<div class="mobile-section-progress-kicker">Calculator Step</div>
+<div class="mobile-section-progress-row">
+<strong id="mobileSectionLabel">Profile</strong>
+<span id="mobileSectionCount">1 of 7</span>
+</div>
+</div>
+
 <!-- PROFILE MODULE -->
 
 <div class="module active" id="profile">
@@ -315,6 +323,15 @@ Reset to Suggested Defaults
 
 </div>
 
+<div class="mobile-section-actions">
+<button id="mobilePrevSectionBtn" type="button" class="secondary-btn">
+Previous Step
+</button>
+<button id="mobileNextSectionBtn" type="button" class="primary-btn">
+Next Step
+</button>
+</div>
+
 </section>
 
 <!-- ===============================
@@ -344,7 +361,7 @@ RIGHT PREVIEW PANEL
 
 
 </div>
-<a href="/ui/retirementDashboard.html">
+<a href="/ui/retirementDashboard.html" class="report-link">
 <button id="fullReportBtn" class="primary-btn" style="width:100%;margin-top:10px;">
 Generate Retirement Report
 </button>

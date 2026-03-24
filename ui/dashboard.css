@@ -331,6 +331,7 @@ SCORE PANEL
     display: flex;
     flex-direction: column;
     min-height: 240px;
+    gap: 0;
 
 }
 
@@ -360,7 +361,8 @@ SCORE PANEL
     margin: 0;
     color: var(--pnw-navy);
     font-size: 40px;
-    line-height: 1;
+    line-height: 1.02;
+    overflow-wrap: anywhere;
 
 }
 
@@ -407,7 +409,7 @@ SCORE PANEL
 .detail-toggle {
 
     flex-shrink: 0;
-    min-height: 36px;
+    min-height: 40px;
     padding: 0 14px;
     border-radius: 999px;
     border: 1px solid rgba(31, 77, 58, 0.16);
@@ -1124,6 +1126,10 @@ EDIT INPUT BUTTON
 }
 
 .dashboard-chart-slider label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 8px;
     color: rgba(42, 42, 42, 0.78);
     font-weight: 600;
@@ -1135,6 +1141,10 @@ EDIT INPUT BUTTON
     justify-content: flex-end;
     gap: 12px;
     flex-wrap: wrap;
+}
+
+.dashboard-chart-actions > * {
+    min-height: 44px;
 }
 
 @media (max-width: 900px) {
@@ -1150,6 +1160,7 @@ EDIT INPUT BUTTON
     .dashboard-card-header {
         flex-direction: column;
         align-items: flex-start;
+        gap: 14px;
     }
 
     .dashboard-card-value {
@@ -1178,12 +1189,31 @@ EDIT INPUT BUTTON
 
 @media (max-width: 640px) {
 
+    .dashboard-shell {
+        padding: 18px 12px 42px;
+    }
+
+    .dashboard-hero {
+        margin-bottom: 20px;
+    }
+
     .dashboard-hero h1 {
         font-size: 30px;
+        line-height: 1.08;
     }
 
     .dashboard-hero p {
         font-size: 16px;
+    }
+
+    .report-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .report-actions > * {
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .summary-panel,
@@ -1193,29 +1223,87 @@ EDIT INPUT BUTTON
     .risk-panel,
     .dashboard-overview-card,
     .dashboard-recommendation-panel {
-        padding: 18px;
+        padding: 16px;
     }
 
     .dashboard-overview-grid {
         grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .dashboard-overview-card,
+    .dashboard-recommendation-panel,
+    .score-panel {
+        min-height: auto;
+    }
+
+    .dashboard-card-header {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-card-kicker {
+        margin-bottom: 6px;
+        font-size: 11px;
+    }
+
+    .dashboard-card-value {
+        font-size: 30px;
+        line-height: 1.08;
+    }
+
+    .dashboard-card-value-risk {
+        font-size: 22px;
+    }
+
+    .dashboard-card-summary {
+        font-size: 15px;
+        line-height: 1.55;
     }
 
     .dashboard-chart-header {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
+        margin-bottom: 14px;
     }
 
     .dashboard-chart-actions {
         width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
         justify-content: stretch;
+        gap: 10px;
     }
 
     .dashboard-chart-actions > * {
         width: 100%;
+        min-height: 48px;
+    }
+
+    .dashboard-chart-title-block {
+        display: grid;
+        gap: 10px;
     }
 
     .dashboard-chart-slider {
         max-width: none;
+        margin-top: 0;
+        padding: 12px 12px 10px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(239,231,220,0.86));
+        border: 1px solid rgba(63, 124, 133, 0.12);
+    }
+
+    .dashboard-chart-slider label {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        font-size: 13px;
+    }
+
+    #retirementAgeSlider {
+        min-height: 28px;
     }
 
     .detail-subgrid {
@@ -1232,16 +1320,30 @@ EDIT INPUT BUTTON
 
     .score-description {
         font-size: 14px;
+        max-width: none;
     }
 
     .timeline-panel {
-        padding: 18px;
+        padding: 16px 14px 18px;
     }
 
     .timeline-panel canvas {
         width: 720px;
         max-width: none;
         height: 260px;
+    }
+
+    .chart-scroll-shell {
+        margin: 0 -2px;
+        padding: 0 2px 6px;
+    }
+
+    #timelineLegend {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px 12px;
+        margin-top: 14px;
+        font-size: 12px;
     }
 
     .dashboard-card-detail {
@@ -1257,7 +1359,8 @@ EDIT INPUT BUTTON
     .report-stat-list div {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 4px;
+        gap: 6px;
+        padding-bottom: 12px;
     }
 
     .report-stat-list strong {
@@ -1265,9 +1368,27 @@ EDIT INPUT BUTTON
         justify-self: start;
     }
 
+    .report-risk-list,
+    .report-highlight-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .report-risk-item,
+    .report-highlight-card,
+    .embedded-detail-panel {
+        padding: 14px;
+    }
+
+    .report-inline-note,
+    .report-risk-item p {
+        font-size: 14px;
+        line-height: 1.55;
+    }
+
     #editInputsBtn,
     .detail-toggle {
         width: 100%;
+        min-height: 46px;
     }
 }
 

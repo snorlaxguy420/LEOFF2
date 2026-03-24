@@ -30,6 +30,15 @@ GLOBAL STATE
 let chartMode = "line";
 let lastResults = null;
 let lastIncomeSources = [];
+const SIMULATOR_TAB_SEQUENCE = [
+    "profile",
+    "pension",
+    "ss",
+    "retirement",
+    "assets",
+    "debts",
+    "expenses"
+];
 const SUGGESTED_INFLATION_DEFAULTS = {
     goodsServicesInflation: "3.29",
     housingInflation: "2.8",
@@ -86,6 +95,99 @@ function syncMobileSimulatorMode() {
         "mobile-simulator",
         isPhoneChartLayout()
     );
+}
+
+function getSimulatorTabs() {
+    return Array.from(document.querySelectorAll(".nav-item"));
+}
+
+function getSimulatorModules() {
+    return Array.from(document.querySelectorAll(".module"));
+}
+
+function getActiveSimulatorTabId() {
+    const activeTab =
+        getSimulatorTabs().find(tab => tab.classList.contains("active"));
+
+    return activeTab?.dataset?.tab || SIMULATOR_TAB_SEQUENCE[0];
+}
+
+function scrollActiveModuleIntoView() {
+    if (!isPhoneChartLayout()) {
+        return;
+    }
+
+    const plannerInput = document.querySelector(".planner-input");
+
+    plannerInput?.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+function updateMobileSectionUi(activeTabId) {
+    const currentIndex =
+        Math.max(0, SIMULATOR_TAB_SEQUENCE.indexOf(activeTabId));
+    const currentTab = getSimulatorTabs()
+        .find(tab => tab.dataset.tab === activeTabId);
+    const prevBtn = document.getElementById("mobilePrevSectionBtn");
+    const nextBtn = document.getElementById("mobileNextSectionBtn");
+    const label = document.getElementById("mobileSectionLabel");
+    const count = document.getElementById("mobileSectionCount");
+    const previousTabId = SIMULATOR_TAB_SEQUENCE[currentIndex - 1] || null;
+    const nextTabId =
+        SIMULATOR_TAB_SEQUENCE[currentIndex + 1] || null;
+
+    if (label) {
+        label.textContent =
+            currentTab?.textContent?.trim() || "Profile";
+    }
+
+    if (count) {
+        count.textContent =
+            `${currentIndex + 1} of ${SIMULATOR_TAB_SEQUENCE.length}`;
+    }
+
+    if (prevBtn) {
+        prevBtn.disabled = !previousTabId;
+        prevBtn.textContent = previousTabId
+            ? `Previous: ${getSimulatorTabs()
+                .find(tab => tab.dataset.tab === previousTabId)
+                ?.textContent?.trim() || "Previous"}`
+            : "Start of Calculator";
+    }
+
+    if (nextBtn) {
+        nextBtn.disabled = !nextTabId;
+        nextBtn.textContent = nextTabId
+            ? `Next: ${getSimulatorTabs()
+                .find(tab => tab.dataset.tab === nextTabId)
+                ?.textContent?.trim() || "Next"}`
+            : "Final Step Reached";
+    }
+}
+
+function setActiveSimulatorTab(targetTabId, { scrollOnMobile = false } = {}) {
+    const tabs = getSimulatorTabs();
+    const modules = getSimulatorModules();
+
+    if (!targetTabId) {
+        return;
+    }
+
+    tabs.forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.tab === targetTabId);
+    });
+
+    modules.forEach(module => {
+        module.classList.toggle("active", module.id === targetTabId);
+    });
+
+    updateMobileSectionUi(targetTabId);
+
+    if (scrollOnMobile) {
+        scrollActiveModuleIntoView();
+    }
 }
 
 function syncChartModeUi() {
@@ -235,28 +337,48 @@ function setupChartToggle(){
 
 function setupSidebarTabs(){
 
-    const tabs = document.querySelectorAll(".nav-item");
-    const modules = document.querySelectorAll(".module");
+    const tabs = getSimulatorTabs();
+    const prevBtn = document.getElementById("mobilePrevSectionBtn");
+    const nextBtn = document.getElementById("mobileNextSectionBtn");
 
     tabs.forEach(tab => {
 
         tab.addEventListener("click", () => {
-
-            const target = tab.dataset.tab;
-
-            // remove active classes
-            tabs.forEach(t => t.classList.remove("active"));
-            modules.forEach(m => m.classList.remove("active"));
-
-            // activate clicked tab
-            tab.classList.add("active");
-
-            const module = document.getElementById(target);
-            if(module) module.classList.add("active");
+            setActiveSimulatorTab(tab.dataset.tab, {
+                scrollOnMobile: isPhoneChartLayout()
+            });
 
         });
 
     });
+
+    prevBtn?.addEventListener("click", () => {
+        const currentIndex =
+            SIMULATOR_TAB_SEQUENCE.indexOf(getActiveSimulatorTabId());
+        const previousTabId =
+            SIMULATOR_TAB_SEQUENCE[currentIndex - 1];
+
+        if (previousTabId) {
+            setActiveSimulatorTab(previousTabId, {
+                scrollOnMobile: true
+            });
+        }
+    });
+
+    nextBtn?.addEventListener("click", () => {
+        const currentIndex =
+            SIMULATOR_TAB_SEQUENCE.indexOf(getActiveSimulatorTabId());
+        const nextTabId =
+            SIMULATOR_TAB_SEQUENCE[currentIndex + 1];
+
+        if (nextTabId) {
+            setActiveSimulatorTab(nextTabId, {
+                scrollOnMobile: true
+            });
+        }
+    });
+
+    setActiveSimulatorTab(getActiveSimulatorTabId());
 
 }
 

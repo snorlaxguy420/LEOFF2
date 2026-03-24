@@ -1264,8 +1264,8 @@ EDIT INPUT BUTTON
     .dashboard-chart-header {
         flex-direction: column;
         align-items: stretch;
-        gap: 12px;
-        margin-bottom: 14px;
+        gap: 10px;
+        margin-bottom: 10px;
     }
 
     .dashboard-chart-actions {
@@ -1273,7 +1273,7 @@ EDIT INPUT BUTTON
         display: grid;
         grid-template-columns: 1fr;
         justify-content: stretch;
-        gap: 10px;
+        gap: 8px;
     }
 
     .dashboard-chart-actions > * {
@@ -1283,27 +1283,29 @@ EDIT INPUT BUTTON
 
     .dashboard-chart-title-block {
         display: grid;
-        gap: 10px;
+        gap: 6px;
+        flex: none;
+        min-width: 0;
     }
 
     .dashboard-chart-slider {
         max-width: none;
         margin-top: 0;
-        padding: 12px 12px 10px;
-        border-radius: 12px;
-        background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(239,231,220,0.86));
-        border: 1px solid rgba(63, 124, 133, 0.12);
+        padding: 0;
+        border-radius: 0;
+        background: transparent;
+        border: none;
     }
 
     .dashboard-chart-slider label {
         align-items: flex-start;
         flex-wrap: wrap;
-        margin-bottom: 10px;
+        margin-bottom: 6px;
         font-size: 13px;
     }
 
     #retirementAgeSlider {
-        min-height: 28px;
+        min-height: 20px;
     }
 
     .detail-subgrid {
@@ -1324,7 +1326,7 @@ EDIT INPUT BUTTON
     }
 
     .timeline-panel {
-        padding: 16px 14px 18px;
+        padding: 14px 12px 16px;
     }
 
     .timeline-panel canvas {
@@ -1335,7 +1337,7 @@ EDIT INPUT BUTTON
 
     .chart-scroll-shell {
         margin: 0 -2px;
-        padding: 0 2px 6px;
+        padding: 0 2px 2px;
     }
 
     #timelineLegend {

@@ -3,6 +3,7 @@ import {
     analyzeRetirementPlan,
     calculateReadinessScore
 } from "../analysis/retirementAnalysis.js";
+import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
 import { StateManager } from "../core/stateManager.js";
 import { runProjection } from "../core/projectionEngine.js";
 import {
@@ -12,19 +13,28 @@ import {
 import { buildPensionIncomeSources } from "./simulatorShared.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
+    buildMonteCarloContent,
+    buildExpenseBreakdownSummary,
     buildMarginOverviewText,
     buildPlanningLeverContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
+    buildShortfallSummary,
+    buildTaxSnapshotSummary,
+    buildTopRiskEntries,
     formatCurrency,
     formatMarginExtremeValue,
-    formatPercent,
     getDisplayedRecommendationAge,
     getReadinessGradeDescription,
     summarizeDashboardResults
 } from "../analysis/dashboardViewModel.js";
 
 let comparisonChartMode = "bar";
+let monteCarloRenderToken = 0;
+let monteCarloTimeoutId = null;
+
+const MONTE_CARLO_ITERATIONS = 250;
+const MONTE_CARLO_BASE_SEED = 424242;
 
 function getMinimumDashboardRetirementAge(inputs = {}) {
     const currentAge =
@@ -206,30 +216,25 @@ function renderExpenseBreakdown(retirementYear) {
         return;
     }
 
-    const breakdown = retirementYear?.expenseBreakdown || {};
+    const breakdown = buildExpenseBreakdownSummary(retirementYear);
 
-    setElementText("expenseEssential", formatCurrency(breakdown.essential || 0));
-    setElementText("expenseDiscretionary", formatCurrency(breakdown.discretionary || 0));
-    setElementText("expenseHousing", formatCurrency(breakdown.housing || 0));
-    setElementText("expenseHealthcare", formatCurrency(breakdown.healthcare || 0));
-    setElementText("expenseInsurance", formatCurrency(breakdown.insurance || 0));
-    setElementText("expenseGoodsServices", formatCurrency(breakdown.goodsServices || 0));
+    setElementText("expenseEssential", breakdown.essential);
+    setElementText("expenseDiscretionary", breakdown.discretionary);
+    setElementText("expenseHousing", breakdown.housing);
+    setElementText("expenseHealthcare", breakdown.healthcare);
+    setElementText("expenseInsurance", breakdown.insurance);
+    setElementText("expenseGoodsServices", breakdown.goodsServices);
 }
 
 function renderTaxSnapshot(retirementYear) {
-    const taxes = retirementYear?.taxes || 0;
-    const taxableIncome = retirementYear?.taxableIncome || 0;
-    const grossIncome = retirementYear?.income || 0;
-    const taxDrag = grossIncome > 0 ? taxes / grossIncome : 0;
+    const taxSnapshot = buildTaxSnapshotSummary(retirementYear);
 
-    setElementText("taxesAtRetirement", formatCurrency(taxes));
-    setElementText("taxableIncomeAtRetirement", formatCurrency(taxableIncome));
-    setElementText("taxDragRatio", formatPercent(taxDrag));
+    setElementText("taxesAtRetirement", taxSnapshot.taxesAtRetirement);
+    setElementText("taxableIncomeAtRetirement", taxSnapshot.taxableIncomeAtRetirement);
+    setElementText("taxDragRatio", taxSnapshot.taxDragRatio);
     setElementText(
         "taxSnapshotNarrative",
-        grossIncome > 0
-            ? `In the selected retirement year, taxes consume about ${Math.round(taxDrag * 100)}% of projected income.`
-            : "No retirement-year income is currently projected, so tax drag is effectively zero."
+        taxSnapshot.narrative
     );
 }
 
@@ -237,24 +242,14 @@ function renderTopRisks(vulnerabilityAnalysis) {
     const container = document.getElementById("topRisksList");
     if (!container) return;
 
-    const topRisks = (vulnerabilityAnalysis?.risks || []).slice(0, 3);
-
-    if (!topRisks.length) {
-        container.innerHTML = `
-            <div class="report-risk-item">
-                <h4>Low current stress signal</h4>
-                <p>The current report did not surface three major retirement risks.</p>
-            </div>
-        `;
-        return;
-    }
+    const topRisks = buildTopRiskEntries(vulnerabilityAnalysis);
 
     container.innerHTML = topRisks.map(risk => `
         <div class="report-risk-item">
-            <div class="report-risk-meta">${risk.severityTier} Severity | Score ${risk.severityScore}</div>
+            ${risk.severityMeta ? `<div class="report-risk-meta">${risk.severityMeta}</div>` : ""}
             <h4>${risk.label}</h4>
             <p>${risk.explanation}</p>
-            <p><strong>Best mitigation:</strong> ${risk.mitigation}</p>
+            ${risk.mitigation ? `<p><strong>Best mitigation:</strong> ${risk.mitigation}</p>` : ""}
         </div>
     `).join("");
 }
@@ -264,26 +259,90 @@ function renderShortfallSummary(projection, analysis) {
         return;
     }
 
-    const results = projection?.results || [];
-    let worstAnnualDeficit = 0;
-
-    results.forEach(result => {
-        if ((result?.surplus || 0) < 0) {
-            worstAnnualDeficit = Math.max(
-                worstAnnualDeficit,
-                Math.abs(result.surplus)
-            );
-        }
+    const shortfallSummary = buildShortfallSummary({
+        projection,
+        analysis
     });
 
-    setElementText("reportFirstDeficitAge", analysis.retirementFailureAge ?? "Never");
-    setElementText("reportCumulativeShortfall", formatCurrency(projection?.cumulativeShortfall || 0));
+    setElementText("reportFirstDeficitAge", shortfallSummary.firstDeficitAge);
+    setElementText("reportCumulativeShortfall", shortfallSummary.cumulativeShortfall);
+    setElementText("reportWorstAnnualDeficit", shortfallSummary.worstAnnualDeficit);
+}
+
+function setMonteCarloLoadingState() {
+    setElementText("monteCarloHeadline", "Monte Carlo success rate loading...");
     setElementText(
-        "reportWorstAnnualDeficit",
-        worstAnnualDeficit > 0
-            ? formatCurrency(worstAnnualDeficit)
-            : "None"
+        "monteCarloSummary",
+        "The Monte Carlo engine is running different market and inflation scenarios for this retirement age."
     );
+    setElementText("monteCarloSuccessRate", "--");
+    setElementText("monteCarloEssentialSuccessRate", "--");
+    setElementText("monteCarloConfidenceLabel", "Running trials");
+    setElementText(
+        "monteCarloNarrative",
+        "We are stress-testing this plan under many different market and inflation scenarios now."
+    );
+    setElementText("monteCarloMedianReadiness", "--");
+    setElementText("monteCarloMedianFailureAge", "--");
+    setElementText("monteCarloMedianAssetDepletionAge", "--");
+    setElementText("monteCarloP10NetWorth", "--");
+    setElementText("monteCarloMedianNetWorth", "--");
+    setElementText("monteCarloP90NetWorth", "--");
+    setElementText("monteCarloIterations", String(MONTE_CARLO_ITERATIONS));
+}
+
+function renderMonteCarloSection({
+    simulationState,
+    retireAge
+}) {
+    monteCarloRenderToken += 1;
+    const currentToken = monteCarloRenderToken;
+
+    if (monteCarloTimeoutId) {
+        window.clearTimeout(monteCarloTimeoutId);
+    }
+
+    setMonteCarloLoadingState();
+
+    monteCarloTimeoutId = window.setTimeout(() => {
+        const monteCarlo = runMonteCarloSimulation({
+            simulationState,
+            iterations: MONTE_CARLO_ITERATIONS,
+            seed: MONTE_CARLO_BASE_SEED + (retireAge || 0)
+        });
+
+        if (currentToken !== monteCarloRenderToken) {
+            return;
+        }
+
+        const content = buildMonteCarloContent(monteCarlo);
+
+        setElementText("monteCarloHeadline", content.headline);
+        setElementText("monteCarloSummary", content.summary);
+        setElementText("monteCarloSuccessRate", content.successRate);
+        setElementText(
+            "monteCarloEssentialSuccessRate",
+            content.essentialSuccessRate
+        );
+        setElementText("monteCarloConfidenceLabel", content.confidenceLabel);
+        setElementText("monteCarloNarrative", content.narrative);
+        setElementText(
+            "monteCarloMedianReadiness",
+            content.medianReadinessScore
+        );
+        setElementText(
+            "monteCarloMedianFailureAge",
+            content.medianFailureAge
+        );
+        setElementText(
+            "monteCarloMedianAssetDepletionAge",
+            content.medianAssetDepletionAge
+        );
+        setElementText("monteCarloP10NetWorth", content.percentile10EndingNetWorth);
+        setElementText("monteCarloMedianNetWorth", content.medianEndingNetWorth);
+        setElementText("monteCarloP90NetWorth", content.percentile90EndingNetWorth);
+        setElementText("monteCarloIterations", content.iterations);
+    }, 60);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -371,7 +430,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             currentInputs,
             currentIncomeSources,
-            currentProjection: runProjection(simulationState)
+            currentProjection: runProjection(simulationState),
+            currentSimulationState: simulationState
         };
     }
 
@@ -405,7 +465,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const {
             currentInputs,
             currentIncomeSources,
-            currentProjection
+            currentProjection,
+            currentSimulationState
         } = buildProjectionForAge(retireAge);
         const results = currentProjection.results;
         const analysis = analyzeRetirementPlan({
@@ -563,6 +624,10 @@ document.addEventListener("DOMContentLoaded", () => {
         renderExpenseBreakdown(retirementYear);
         renderTaxSnapshot(retirementYear);
         renderShortfallSummary(currentProjection, analysis);
+        renderMonteCarloSection({
+            simulationState: currentSimulationState,
+            retireAge
+        });
     }
 
     document.getElementById("editInputsBtn").onclick = () => {

@@ -160,7 +160,7 @@ depletion in the same planning flow as the simulator.
           </div>
       </section>
 
-      <section class="dashboard-overview-card">
+      <section class="dashboard-overview-card dashboard-margin-card">
           <div class="dashboard-card-header">
               <div>
                   <div class="dashboard-card-kicker">Retirement-Year Margin</div>
@@ -255,6 +255,53 @@ depletion in the same planning flow as the simulator.
                   We will describe the main planning lever for this scenario once the dashboard finishes loading.
               </p>
           </section>
+      </div>
+  </section>
+
+  <section class="dashboard-recommendation-panel monte-carlo-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Monte Carlo Outlook</div>
+              <h2 id="monteCarloHeadline">Monte Carlo success rate: --</h2>
+          </div>
+          <button
+              class="detail-toggle"
+              data-detail-target="monteCarloDetail"
+              aria-expanded="false"
+          >
+              + Show Detail
+          </button>
+      </div>
+      <p id="monteCarloSummary" class="dashboard-card-summary">
+          Probabilistic retirement results will appear here once the Monte Carlo engine finishes running.
+      </p>
+      <div class="report-highlight-grid monte-carlo-highlight-grid">
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Success Rate</div>
+              <div id="monteCarloSuccessRate" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Essential Coverage</div>
+              <div id="monteCarloEssentialSuccessRate" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Confidence View</div>
+              <div id="monteCarloConfidenceLabel" class="report-highlight-value">--</div>
+          </div>
+      </div>
+      <div id="monteCarloDetail" class="dashboard-card-detail">
+          <p id="monteCarloNarrative" class="dashboard-card-summary">
+              We will summarize the Monte Carlo engine's stress-tested range once the dashboard finishes loading.
+          </p>
+          <div class="report-stat-list">
+              <div><span>Median Readiness</span><strong id="monteCarloMedianReadiness">--</strong></div>
+              <div><span>Median Failure Age</span><strong id="monteCarloMedianFailureAge">--</strong></div>
+              <div><span>Median Asset Depletion</span><strong id="monteCarloMedianAssetDepletionAge">--</strong></div>
+              <div><span>10th Percentile Net Worth (Today's $)</span><strong id="monteCarloP10NetWorth">--</strong></div>
+              <div><span>Median Net Worth (Today's $)</span><strong id="monteCarloMedianNetWorth">--</strong></div>
+              <div><span>90th Percentile Net Worth (Today's $)</span><strong id="monteCarloP90NetWorth">--</strong></div>
+              <div><span>Trials Run</span><strong id="monteCarloIterations">--</strong></div>
+          </div>
       </div>
   </section>
 

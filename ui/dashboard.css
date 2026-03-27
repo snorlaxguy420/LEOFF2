@@ -406,33 +406,55 @@ SCORE PANEL
     color: rgba(255, 255, 255, 0.94);
 }
 
+.dashboard-margin-card .dashboard-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.dashboard-margin-card .dashboard-card-header > div {
+    width: 100%;
+}
+
+.dashboard-margin-card .dashboard-card-value {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+}
+
+.dashboard-margin-card .detail-toggle {
+    align-self: flex-start;
+}
+
 .detail-toggle {
 
     flex-shrink: 0;
     min-height: 40px;
     padding: 0 14px;
     border-radius: 999px;
-    border: 1px solid rgba(31, 77, 58, 0.16);
-    background: rgba(255,255,255,0.72);
-    color: var(--pnw-evergreen);
+    border: 1px solid rgba(63, 124, 133, 0.28);
+    background: linear-gradient(180deg, rgba(99, 160, 173, 0.98), rgba(63, 124, 133, 0.98));
+    color: white;
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform .15s ease, background .15s ease;
+    box-shadow: 0 8px 18px rgba(63, 124, 133, 0.18);
+    transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
 
 }
 
 .detail-toggle:hover {
 
     transform: translateY(-1px);
-    background: rgba(255,255,255,0.92);
+    background: linear-gradient(180deg, rgba(84, 145, 158, 1), rgba(52, 107, 117, 1));
+    box-shadow: 0 10px 22px rgba(63, 124, 133, 0.24);
 
 }
 
 .detail-toggle-light {
 
-    border-color: rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.12);
+    border-color: rgba(63, 124, 133, 0.28);
+    background: linear-gradient(180deg, rgba(99, 160, 173, 0.98), rgba(63, 124, 133, 0.98));
     color: white;
 
 }
@@ -495,6 +517,19 @@ SCORE PANEL
 
     margin-bottom: var(--space-lg);
 
+}
+
+.monte-carlo-highlight-grid {
+    margin-top: 18px;
+}
+
+.monte-carlo-panel .report-highlight-card {
+    background: linear-gradient(180deg, rgba(246,250,248,0.9), rgba(239,231,220,0.86));
+    border-color: rgba(31, 77, 58, 0.12);
+}
+
+.monte-carlo-panel .report-highlight-value {
+    font-size: 24px;
 }
 
 .score-panel {
@@ -1237,6 +1272,10 @@ EDIT INPUT BUTTON
         min-height: auto;
     }
 
+    .monte-carlo-panel .report-highlight-value {
+        font-size: 21px;
+    }
+
     .dashboard-card-header {
         gap: 10px;
         margin-bottom: 10px;
@@ -1250,6 +1289,10 @@ EDIT INPUT BUTTON
     .dashboard-card-value {
         font-size: 30px;
         line-height: 1.08;
+    }
+
+    .dashboard-margin-card .dashboard-card-value {
+        font-size: clamp(28px, 10vw, 40px);
     }
 
     .dashboard-card-value-risk {

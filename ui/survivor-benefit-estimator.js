@@ -88,7 +88,7 @@ function sumGrowingAnnualPayments(annualAmount, growthRate, years) {
     return annualAmount * ((Math.pow(1 + growthRate, wholeYears) - 1) / growthRate);
 }
 
-function interpolateReduction(optionKey, ageGap) {
+export function interpolateReduction(optionKey, ageGap) {
     const points = AGE_GAP_REDUCTION_TABLE[optionKey];
 
     if (!points?.length) {
@@ -116,7 +116,7 @@ function interpolateReduction(optionKey, ageGap) {
     return points[points.length - 1].reduction;
 }
 
-function buildDeathAges(retirementAge) {
+export function buildDeathAges(retirementAge) {
     const firstAge = Math.max(55, Math.ceil((retirementAge + 1) / 5) * 5);
     const ages = [];
 
@@ -131,7 +131,7 @@ function buildDeathAges(retirementAge) {
     return ages;
 }
 
-function pickScenarioAges(deathAges) {
+export function pickScenarioAges(deathAges) {
     const picks = [];
     const targets = [deathAges[0], 75, 90];
 
@@ -152,7 +152,7 @@ function pickScenarioAges(deathAges) {
     return picks;
 }
 
-function estimateSurvivorOptions(inputs) {
+export function estimateSurvivorOptions(inputs) {
     const singleLife = calculateLEOFF2({
         serviceYears: inputs.serviceYears,
         retirementAge: inputs.retirementAge,
@@ -190,7 +190,7 @@ function estimateSurvivorOptions(inputs) {
     });
 }
 
-function buildScenarioValues(option, inputs, deathAges) {
+export function buildScenarioValues(option, inputs, deathAges) {
     return deathAges.map(deathAge => {
         const retireeYears = Math.max(0, deathAge - inputs.retirementAge);
         return {
@@ -435,7 +435,7 @@ function readInputs() {
     };
 }
 
-function validateInputs(inputs) {
+export function validateInputs(inputs) {
     if (inputs.retirementAge < 50 || inputs.retirementAge > 75) {
         throw new Error("Retirement age must be between 50 and 75.");
     }

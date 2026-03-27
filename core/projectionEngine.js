@@ -56,21 +56,29 @@ export function runProjection(simulationState) {
         },
         inflation: assumptions.inflationRate ?? state.inflation ?? 0,
         inflationModel: {
+            overallPath:
+                assumptions.inflationPath ?? null,
             goodsServices:
                 assumptions.goodsServicesInflationRate ??
                 assumptions.inflationRate ??
                 state.inflation ??
                 0,
+            goodsServicesPath:
+                assumptions.goodsServicesInflationPath ?? null,
             housing:
                 assumptions.housingInflationRate ??
                 assumptions.inflationRate ??
                 state.inflation ??
                 0,
+            housingPath:
+                assumptions.housingInflationPath ?? null,
             healthcare:
                 assumptions.healthcareInflationRate ??
                 assumptions.inflationRate ??
                 state.inflation ??
-                0
+                0,
+            healthcarePath:
+                assumptions.healthcareInflationPath ?? null
         },
         showReal: state.showReal ?? state.toggles?.showReal ?? false,
         marketFirst: state.marketFirst ?? state.toggles?.marketFirst ?? false

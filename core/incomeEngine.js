@@ -393,44 +393,126 @@ export function projectTotalRetirement({
         housingAnnual > 0 ||
         healthcareAnnual > 0 ||
         insuranceAnnual > 0;
+    const inflationPath =
+        assumptionsOrNullArray(inflationModel?.overallPath);
+    const goodsServicesInflationPath =
+        assumptionsOrNullArray(inflationModel?.goodsServicesPath);
+    const housingInflationPath =
+        assumptionsOrNullArray(inflationModel?.housingPath);
+    const healthcareInflationPath =
+        assumptionsOrNullArray(inflationModel?.healthcarePath);
+
+    function assumptionsOrNullArray(value) {
+        return Array.isArray(value) ? value : null;
+    }
+
+    function getRateForYear({
+        baseRate = 0,
+        path = null,
+        yearIndex = 0
+    }) {
+        if (
+            Array.isArray(path) &&
+            Number.isFinite(path[yearIndex])
+        ) {
+            return path[yearIndex];
+        }
+
+        return baseRate || 0;
+    }
+
+    function buildCumulativeFactorSeries({
+        baseRate = 0,
+        path = null,
+        length = 0
+    }) {
+        const series = [1];
+
+        for (let yearIndex = 0; yearIndex < length; yearIndex += 1) {
+            const annualRate = getRateForYear({
+                baseRate,
+                path,
+                yearIndex
+            });
+
+            series.push(series[yearIndex] * (1 + annualRate));
+        }
+
+        return series;
+    }
+
+    function compoundSourceGrowth(source, periods) {
+        let factor = 1;
+
+        for (let yearIndex = 0; yearIndex < periods; yearIndex += 1) {
+            const annualRate = getRateForYear({
+                baseRate: source?.growthRate || 0,
+                path: source?.growthRatePath,
+                yearIndex
+            });
+
+            factor *= (1 + annualRate);
+        }
+
+        return factor;
+    }
+
+    function getSourceGrowthRateForYear(source, yearIndex) {
+        return getRateForYear({
+            baseRate: source?.growthRate || 0,
+            path: source?.growthRatePath,
+            yearIndex
+        });
+    }
+
+    const inflationFactorSeries =
+        buildCumulativeFactorSeries({
+            baseRate: inflation,
+            path: inflationPath,
+            length: years + 1
+        });
+    const goodsServicesInflationSeries =
+        buildCumulativeFactorSeries({
+            baseRate: inflationModel?.goodsServices ?? inflation,
+            path: goodsServicesInflationPath,
+            length: years + 1
+        });
+    const housingInflationSeries =
+        buildCumulativeFactorSeries({
+            baseRate: inflationModel?.housing ?? inflation,
+            path: housingInflationPath,
+            length: years + 1
+        });
+    const healthcareInflationSeries =
+        buildCumulativeFactorSeries({
+            baseRate: inflationModel?.healthcare ?? inflation,
+            path: healthcareInflationPath,
+            length: years + 1
+        });
 
     function calculateAnnualExpenses(year) {
         if (!useExpenseModel) {
             return {
                 total:
-                    baseExpenses * Math.pow(1 + inflation, year),
+                    baseExpenses * inflationFactorSeries[year],
                 breakdown: null
             };
         }
-
-        const goodsServicesInflation =
-            inflationModel?.goodsServices ?? inflation;
-        const housingInflation =
-            inflationModel?.housing ?? inflation;
-        const healthcareInflation =
-            inflationModel?.healthcare ?? inflation;
         const breakdown = {
             groceries:
-                groceriesAnnual *
-                Math.pow(1 + goodsServicesInflation, year),
+                groceriesAnnual * goodsServicesInflationSeries[year],
             bills:
-                billsAnnual *
-                Math.pow(1 + goodsServicesInflation, year),
+                billsAnnual * goodsServicesInflationSeries[year],
             auto:
-                autoAnnual *
-                Math.pow(1 + goodsServicesInflation, year),
+                autoAnnual * goodsServicesInflationSeries[year],
             other:
-                otherAnnual *
-                Math.pow(1 + goodsServicesInflation, year),
+                otherAnnual * goodsServicesInflationSeries[year],
             housing:
-                housingAnnual *
-                Math.pow(1 + housingInflation, year),
+                housingAnnual * housingInflationSeries[year],
             healthcare:
-                healthcareAnnual *
-                Math.pow(1 + healthcareInflation, year),
+                healthcareAnnual * healthcareInflationSeries[year],
             insurance:
-                insuranceAnnual *
-                Math.pow(1 + goodsServicesInflation, year)
+                insuranceAnnual * goodsServicesInflationSeries[year]
         };
 
         breakdown.goodsServices =
@@ -590,7 +672,7 @@ if (source.type === "real_estate") {
 
     const value =
         source.value *
-        Math.pow(1 + (source.growthRate || 0), year);
+        compoundSourceGrowth(source, year);
 
     realEstateAssets[source.name] = value;
 
@@ -626,8 +708,7 @@ if (source.type === "real_estate") {
                 ) {
                     const yearsActive = currentAge - source.startAge;
                     supplementalExpenses +=
-                        source.annualAmount *
-                        Math.pow(1 + (source.growthRate || 0), yearsActive);
+                        source.annualAmount * compoundSourceGrowth(source, yearsActive);
                 }
 
                 return;
@@ -655,7 +736,7 @@ if (source.type === "real_estate") {
                     portfolioBalances[source.name] =
                         advancePortfolioBalance({
                             balance,
-                            growthRate: source.growthRate,
+                            growthRate: getSourceGrowthRateForYear(source, year),
                             annualContribution
                         });
                     return;
@@ -665,6 +746,7 @@ if (source.type === "real_estate") {
 
                     const sustainableForever =
                         source.withdrawalType === "percent" &&
+                        !Array.isArray(source.growthRatePath) &&
                         source.growthRate >= source.withdrawalRate;
 
                     if (sustainableForever) {
@@ -672,7 +754,7 @@ if (source.type === "real_estate") {
                     }
 
                     if (marketFirst) {
-                        balance *= (1 + source.growthRate);
+                        balance *= (1 + getSourceGrowthRateForYear(source, year));
                     }
 
                     const distributionRules =
@@ -699,7 +781,7 @@ if (source.type === "real_estate") {
                     balance -= withdrawal;
 
                     if (!marketFirst) {
-                        balance *= (1 + source.growthRate);
+                        balance *= (1 + getSourceGrowthRateForYear(source, year));
                     }
 
                     if (balance < 1) balance = 0;
@@ -745,7 +827,7 @@ if (source.type === "real_estate") {
 
                     income =
                         source.annualAmount *
-                        Math.pow(1 + source.growthRate, yearsActive);
+                        compoundSourceGrowth(source, yearsActive);
                 }
             }
 
@@ -767,7 +849,7 @@ if (source.type === "real_estate") {
             annualExpenseResult.total + supplementalExpenses;
 
         if (showReal) {
-            const inflationFactor = Math.pow(1 + inflation, year);
+            const inflationFactor = inflationFactorSeries[year];
             totalIncome /= inflationFactor;
             adjustedExpenses /= inflationFactor;
         }
@@ -783,7 +865,7 @@ if (source.type === "real_estate") {
         }
 
         let yearlyPortfolios = {};
-        let realEstateValue =
+let realEstateValue =
     Object.values(realEstateAssets)
         .reduce((s,v)=>s+(v||0),0);
 
@@ -795,10 +877,34 @@ let netWorth =
     realEstateValue +
     Object.values(portfolioBalances).reduce((s,v)=>s+(v||0),0) -
     mortgageBalance;
+        const displayedExpenseBreakdown =
+            annualExpenseResult.breakdown
+                ? structuredClone(annualExpenseResult.breakdown)
+                : null;
 
-        Object.keys(portfolioBalances).forEach(name => {
-            yearlyPortfolios[name] = portfolioBalances[name];
-        });
+        if (showReal) {
+            const inflationFactor = inflationFactorSeries[year];
+
+            if (displayedExpenseBreakdown) {
+                Object.keys(displayedExpenseBreakdown).forEach(key => {
+                    displayedExpenseBreakdown[key] =
+                        (displayedExpenseBreakdown[key] || 0) / inflationFactor;
+                });
+            }
+
+            Object.keys(portfolioBalances).forEach(name => {
+                yearlyPortfolios[name] =
+                    (portfolioBalances[name] || 0) / inflationFactor;
+            });
+
+            realEstateValue /= inflationFactor;
+            mortgageBalance /= inflationFactor;
+            netWorth /= inflationFactor;
+        } else {
+            Object.keys(portfolioBalances).forEach(name => {
+                yearlyPortfolios[name] = portfolioBalances[name];
+            });
+        }
 
        results.push({
     age: currentAge,
@@ -809,7 +915,7 @@ let netWorth =
     expenses: adjustedExpenses,
     surplus,
     breakdown: yearlyBreakdown,
-    expenseBreakdown: annualExpenseResult.breakdown,
+    expenseBreakdown: displayedExpenseBreakdown,
     portfolios: yearlyPortfolios,
     realEstateValue,
     mortgageBalance,

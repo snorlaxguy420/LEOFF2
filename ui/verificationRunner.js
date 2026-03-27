@@ -20,6 +20,8 @@ import {
     normalizeSocialSecurityFraBenefit
 } from "../core/socialSecurityEngine.js";
 import { compareRetirementAges } from "../analysis/retirementScenarios.js";
+import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
+import { analyzeRetirementPlan } from "../analysis/retirementAnalysis.js";
 import { calculateReadinessScore } from "../analysis/readinessScore.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
@@ -27,6 +29,27 @@ import {
     getProjectionPreviewMetrics
 } from "./simulatorUiShared.js";
 import { createCollapsibleCard } from "../core/createCollapsibleCard.js";
+import {
+    buildExpenseBreakdownSummary,
+    buildMonteCarloContent,
+    buildPlanningLeverContent,
+    buildRecommendedAgeSummary,
+    buildRecommendationContent,
+    buildShortfallSummary,
+    buildTaxSnapshotSummary,
+    buildTopRiskEntries,
+    getDisplayedRecommendationAge
+} from "../analysis/dashboardViewModel.js";
+import {
+    deriveCurrentAgeFromBirthYear,
+    parseRetirementAges,
+    buildScenario as buildRetirementComparisonScenario,
+    enrichComparisonRows
+} from "./retirement-age-comparison.js";
+import {
+    estimateSurvivorOptions,
+    validateInputs as validateSurvivorEstimatorInputs
+} from "./survivor-benefit-estimator.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -72,6 +95,7 @@ const SMOKE_TEST_PAGES = [
             "#retirementAgeSlider",
             "#downloadPdfBtn",
             "#recommendationHeadline",
+            "#monteCarloHeadline",
             "#planningLeverHeadline",
             "#readinessCoverageScore",
             "#expenseEssential",
@@ -1177,6 +1201,595 @@ function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
     logResult("Retirement recommendation current-age floor passed");
 }
 
+function testDashboardRecommendationConsistency() {
+    const analysis = {
+        recommendedRetirementAge: null,
+        financialFreedomAge: 55,
+        earliestRetirementAge: 54,
+        retirementFailureAge: null,
+        assetDepletionAge: null
+    };
+    const vulnerabilityAnalysis = {
+        primaryRisk: {
+            id: "withdrawal_dependency_risk",
+            label: "Withdrawal Dependency Risk"
+        }
+    };
+    const results = [
+        { age: 55, income: 95000, expenses: 82000 },
+        { age: 56, income: 97000, expenses: 83000 },
+        { age: 57, income: 99000, expenses: 84500 }
+    ];
+    const displayedAge =
+        getDisplayedRecommendationAge(analysis, 55);
+    const recommendationContent = buildRecommendationContent({
+        retireAge: 55,
+        analysis,
+        vulnerabilityAnalysis,
+        results
+    });
+    const recommendationSummary =
+        buildRecommendedAgeSummary({
+            retireAge: 55,
+            analysis
+        });
+    const planningLever = buildPlanningLeverContent({
+        retireAge: 55,
+        analysis,
+        vulnerabilityAnalysis,
+        avgMargin: 15000,
+        retirementYear: {
+            income: 95000,
+            expenses: 82000
+        }
+    });
+
+    assert(
+        displayedAge === 55,
+        "Dashboard recommendation fallback should use financial freedom age when strict recommendation is unavailable"
+    );
+    assert(
+        recommendationContent.headline.includes("55") &&
+        recommendationContent.shortText.includes("planned portfolio withdrawals") &&
+        recommendationContent.narrative.includes("planned portfolio withdrawals"),
+        "Dashboard recommendation copy should stay consistent for withdrawal-dependent plans"
+    );
+    assert(
+        !recommendationContent.shortText.includes("Not Achievable") &&
+        !recommendationSummary.includes("Not Achievable"),
+        "Dashboard recommendation copy should not regress to misleading failure wording for workable plans"
+    );
+    assert(
+        planningLever.headline.toLowerCase().includes("portfolio dependence"),
+        "Dashboard planning lever should align with the primary withdrawal-dependence risk"
+    );
+
+    logResult("Dashboard recommendation consistency passed");
+}
+
+function testRetirementAgeComparisonMonotonicity() {
+    const baseInputs = {
+        profile: {
+            currentAge: 45,
+            birthYear: 1981
+        },
+        retireAge: 53,
+        lifetimeValueAge: 90,
+        pension: {
+            leoffStartYear: 2001,
+            finalAverageSalary: 110000,
+            cola: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            survivorOption: "none",
+            survivorAge: null
+        },
+        socialSecurity: {
+            birthYear: 1981,
+            claimAge: 67,
+            cola: 0,
+            fraBenefit: 0
+        }
+    };
+    const rows =
+        [53, 55, 57, 60]
+            .map(age => buildRetirementComparisonScenario(age, baseInputs));
+    const enrichedRows = enrichComparisonRows(rows, baseInputs);
+
+    for (let index = 1; index < enrichedRows.length; index += 1) {
+        const previous = enrichedRows[index - 1];
+        const current = enrichedRows[index];
+
+        assert(
+            current.serviceYears >= previous.serviceYears,
+            "Retirement age comparison should not lose service credit at later retirement ages"
+        );
+        assert(
+            current.annualPension >= previous.annualPension,
+            "Retirement age comparison should not lower annual pension at later retirement ages"
+        );
+        assert(
+            current.bridgeYears <= previous.bridgeYears,
+            "Retirement age comparison should not increase Social Security bridge years at later retirement ages"
+        );
+    }
+
+    logResult("Retirement age comparison monotonicity passed");
+}
+
+function testSurvivorEstimatorOrdering() {
+    const optionResults = estimateSurvivorOptions({
+        retirementAge: 53,
+        serviceYears: 25,
+        finalAverageSalary: 144000,
+        colaRate: 0.02,
+        benefitEnhancement: "tiered_multiplier",
+        spouseAge: 48,
+        survivorYearsAfterDeath: 10
+    });
+    const singleLife = optionResults.find(option => option.key === "SINGLE");
+    const joint50 = optionResults.find(option => option.key === "JOINT_50");
+    const joint66 = optionResults.find(option => option.key === "JOINT_66");
+    const joint100 = optionResults.find(option => option.key === "JOINT_100");
+
+    assert(
+        singleLife &&
+        joint50 &&
+        joint66 &&
+        joint100,
+        "Survivor estimator should return all expected survivor options"
+    );
+    assert(
+        singleLife.monthlyBenefit > joint50.monthlyBenefit &&
+        joint50.monthlyBenefit > joint66.monthlyBenefit &&
+        joint66.monthlyBenefit > joint100.monthlyBenefit,
+        "Survivor estimator retiree income ordering should be Single > 50% > 66.67% > 100%"
+    );
+    assert(
+        singleLife.survivorMonthlyBenefit < joint50.survivorMonthlyBenefit &&
+        joint50.survivorMonthlyBenefit < joint66.survivorMonthlyBenefit &&
+        joint66.survivorMonthlyBenefit < joint100.survivorMonthlyBenefit,
+        "Survivor estimator survivor income ordering should increase with stronger survivor protection"
+    );
+    assert(
+        singleLife.reductionApplied < joint50.reductionApplied &&
+        joint50.reductionApplied < joint66.reductionApplied &&
+        joint66.reductionApplied < joint100.reductionApplied,
+        "Survivor estimator reduction ordering should increase with stronger survivor protection"
+    );
+
+    logResult("Survivor estimator ordering passed");
+}
+
+function buildDashboardVerificationInputs() {
+    return {
+        profile: {
+            currentAge: 52
+        },
+        retireAge: 55,
+        lifeExpectancy: 92,
+        pension: {
+            serviceYears: 28,
+            finalAverageSalary: 132000,
+            currentAnnualPay: 128000,
+            cola: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            survivorOption: "none",
+            survivorAge: null
+        },
+        socialSecurity: {
+            birthYear: 1974,
+            claimAge: 67,
+            cola: 0.02,
+            mode: "fraBenefit",
+            fraBenefit: 24000
+        },
+        expenses: {
+            monthly: 6400,
+            annual: 76800,
+            essentialMonthly: 4800,
+            essentialAnnual: 57600,
+            discretionaryMonthly: 1600,
+            discretionaryAnnual: 19200,
+            housing: 1800,
+            groceries: 900,
+            bills: 600,
+            auto: 500,
+            healthcare: 800,
+            insurance: 450,
+            other: 1350
+        },
+        assumptions: {
+            inflationRate: 0.03,
+            goodsServicesInflationRate: 0.03,
+            housingInflationRate: 0.035,
+            healthcareInflationRate: 0.05
+        },
+        toggles: {
+            showReal: true,
+            marketFirst: false
+        }
+    };
+}
+
+function testDashboardAgeOrderIntegrity() {
+    const strongInputs = {
+        profile: {
+            currentAge: 54
+        },
+        retireAge: 56,
+        lifeExpectancy: 90,
+        pension: {
+            serviceYears: 28,
+            finalAverageSalary: 145000,
+            cola: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            survivorOption: "none",
+            survivorAge: null
+        },
+        socialSecurity: {
+            birthYear: 1972,
+            claimAge: 67,
+            cola: 0.02,
+            mode: "fraBenefit",
+            fraBenefit: 26000
+        },
+        expenses: {
+            monthly: 3200,
+            annual: 38400,
+            essentialMonthly: 2600,
+            essentialAnnual: 31200,
+            discretionaryMonthly: 600,
+            discretionaryAnnual: 7200
+        },
+        assumptions: {
+            inflationRate: 0.03,
+            goodsServicesInflationRate: 0.03,
+            housingInflationRate: 0.03,
+            healthcareInflationRate: 0.04
+        }
+    };
+    const strongIncomeSources =
+        buildSimulationIncomeSources({
+            inputs: strongInputs,
+            assetRegistry
+        });
+    const comparison =
+        compareRetirementAges({
+            inputs: strongInputs,
+            incomeSources: strongIncomeSources
+        });
+    const displayedAge =
+        getDisplayedRecommendationAge(comparison, strongInputs.retireAge);
+    const recommendedSummary =
+        buildRecommendedAgeSummary({
+            retireAge: strongInputs.retireAge,
+            analysis: comparison
+        });
+    const fallbackAnalysis = {
+        recommendedRetirementAge: null,
+        financialFreedomAge: 58,
+        earliestRetirementAge: 57
+    };
+    const fallbackDisplayedAge =
+        getDisplayedRecommendationAge(
+            fallbackAnalysis,
+            strongInputs.retireAge
+        );
+
+    assert(
+        comparison.earliestSustainableAge !== null,
+        "Dashboard age-order verification should produce an earliest sustainable age"
+    );
+
+    if (comparison.financialFreedomAge !== null) {
+        assert(
+            comparison.earliestSustainableAge <= comparison.financialFreedomAge,
+            "Dashboard age ordering should keep earliest sustainable age at or before financial freedom age"
+        );
+    }
+
+    if (
+        comparison.recommendedRetirementAge !== null &&
+        comparison.financialFreedomAge !== null
+    ) {
+        assert(
+            comparison.financialFreedomAge <= comparison.recommendedRetirementAge,
+            "Dashboard age ordering should keep financial freedom age at or before recommended retirement age"
+        );
+    }
+
+    assert(
+        displayedAge >= strongInputs.profile.currentAge,
+        "Dashboard displayed recommendation age should never fall below the user's current age"
+    );
+    assert(
+        recommendedSummary.includes(String(displayedAge)),
+        "Dashboard recommended age summary should reference the same displayed retirement age"
+    );
+    assert(
+        fallbackDisplayedAge >= strongInputs.profile.currentAge,
+        "Dashboard fallback recommendation age should stay at or above the user's current age"
+    );
+
+    logResult("Dashboard age-order integrity passed");
+}
+
+function testDashboardReportSectionPopulation() {
+    const inputs = buildDashboardVerificationInputs();
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const projection = runProjection(simulationState);
+    const analysis = analyzeRetirementPlan({
+        inputs,
+        incomeSources,
+        projection
+    });
+    const vulnerabilityAnalysis =
+        runRetirementVulnerabilityAnalysis({
+            inputs,
+            incomeSources,
+            projection,
+            assumedInflationRate:
+                inputs?.assumptions?.goodsServicesInflationRate ??
+                inputs?.assumptions?.inflationRate ??
+                0.03
+        });
+    const retirementYear =
+        projection.results.find(result => result.age === inputs.retireAge) ||
+        projection.results[0];
+    const expenseSummary =
+        buildExpenseBreakdownSummary(retirementYear);
+    const taxSnapshot =
+        buildTaxSnapshotSummary(retirementYear);
+    const topRisks =
+        buildTopRiskEntries(vulnerabilityAnalysis);
+    const shortfallSummary =
+        buildShortfallSummary({
+            projection,
+            analysis
+        });
+
+    assert(
+        projection.results.length > 0,
+        "Dashboard report verification fixture should produce projection results"
+    );
+    assert(
+        expenseSummary.essential !== "--" &&
+        expenseSummary.housing !== "--",
+        "Dashboard expense breakdown summary should produce formatted values"
+    );
+    assert(
+        taxSnapshot.narrative &&
+        !taxSnapshot.narrative.includes("will appear here once the dashboard finishes loading"),
+        "Dashboard tax snapshot summary should replace placeholder copy"
+    );
+    assert(
+        topRisks.length > 0 &&
+        topRisks[0].label !== "Loading risks",
+        "Dashboard top risk summary should resolve real risk-card data"
+    );
+    assert(
+        shortfallSummary.cumulativeShortfall !== "--" &&
+        shortfallSummary.firstDeficitAge !== "--",
+        "Dashboard shortfall summary should resolve real report values"
+    );
+    assert(
+        typeof shortfallSummary.worstAnnualDeficit === "string" &&
+        shortfallSummary.worstAnnualDeficit.length > 0,
+        "Dashboard shortfall summary should provide a worst-deficit label"
+    );
+
+    logResult("Dashboard report section population passed");
+}
+
+function testToolEdgeCaseValidation() {
+    const currentYear = new Date().getFullYear();
+    const derivedCurrentAge =
+        deriveCurrentAgeFromBirthYear(currentYear - 47);
+    const parsedAges =
+        parseRetirementAges("49, 53, 53, abc, 55, 71, 60", 52);
+    const emptyParsedAges =
+        parseRetirementAges("abc, , 48", 52);
+    const wideGapOptions =
+        estimateSurvivorOptions({
+            retirementAge: 53,
+            serviceYears: 25,
+            finalAverageSalary: 144000,
+            colaRate: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            spouseAge: 72,
+            survivorYearsAfterDeath: 10
+        });
+    const wideGapSingle =
+        wideGapOptions.find(option => option.key === "SINGLE");
+
+    assert(
+        wideGapSingle,
+        "Survivor estimator edge-case verification should include the single-life option"
+    );
+
+    assert(
+        derivedCurrentAge === 47,
+        "Retirement age comparison should derive the current age from birth year correctly"
+    );
+    assert(
+        JSON.stringify(parsedAges) === JSON.stringify([53, 55, 60]),
+        "Retirement age comparison should discard invalid or duplicate ages and respect the current-age floor"
+    );
+    assert(
+        emptyParsedAges.length === 0,
+        "Retirement age comparison should return no rows when every requested age is invalid"
+    );
+
+    let survivorValidationMessage = "";
+
+    try {
+        validateSurvivorEstimatorInputs({
+            retirementAge: 53,
+            serviceYears: 25,
+            finalAverageSalary: 144000,
+            colaRate: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            spouseAge: 48,
+            survivorYearsAfterDeath: 0
+        });
+    } catch (error) {
+        survivorValidationMessage = error.message;
+    }
+
+    assert(
+        survivorValidationMessage === "Survivor years after death must be at least 1.",
+        "Survivor estimator should reject zero survivor years with a clear validation message"
+    );
+
+    wideGapOptions.forEach(option => {
+        assert(
+            Number.isFinite(option.monthlyBenefit) &&
+            Number.isFinite(option.survivorMonthlyBenefit) &&
+            Number.isFinite(option.reductionApplied),
+            "Survivor estimator should keep outputs finite even for unusual spouse age gaps"
+        );
+        assert(
+            option.monthlyBenefit >= 0 &&
+            option.survivorMonthlyBenefit >= 0,
+            "Survivor estimator should not produce negative benefit values"
+        );
+        assert(
+            option.monthlyBenefit <= wideGapSingle.monthlyBenefit ||
+            option.key === "SINGLE",
+            "Survivor estimator should not pay more to the retiree than the single-life option"
+        );
+    });
+
+    logResult("Tool edge-case validation passed");
+}
+
+function testMonteCarloEngine() {
+    const inputs = buildDashboardVerificationInputs();
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const firstRun = runMonteCarloSimulation({
+        simulationState,
+        iterations: 40,
+        seed: 12345
+    });
+    const secondRun = runMonteCarloSimulation({
+        simulationState,
+        iterations: 40,
+        seed: 12345
+    });
+    const wealthStressSimulationState = structuredClone(simulationState);
+    wealthStressSimulationState.incomeSources = [
+        ...(wealthStressSimulationState.incomeSources || []),
+        {
+            type: "portfolio",
+            name: "Verification Growth Portfolio",
+            balance: 500000,
+            startAge: inputs.retireAge,
+            growthRate: 0.07,
+            withdrawalType: "percent",
+            withdrawalRate: 0.03,
+            taxable: true
+        }
+    ];
+    const exaggeratedRun = runMonteCarloSimulation({
+        simulationState: wealthStressSimulationState,
+        iterations: 12,
+        seed: 9876,
+        config: {
+            portfolioReturn: {
+                mean: 0,
+                stdDev: 0,
+                min: 0.6,
+                max: 0.6,
+                fallbackBase: 0.6
+            },
+            realEstateReturn: {
+                mean: 0,
+                stdDev: 0,
+                min: 0.25,
+                max: 0.25,
+                fallbackBase: 0.25
+            }
+        }
+    });
+    const exaggeratedContent =
+        buildMonteCarloContent(exaggeratedRun);
+
+    assert(
+        firstRun.iterations === 40 &&
+        firstRun.trials.length === 40,
+        "Monte Carlo engine should produce one trial summary per iteration"
+    );
+    assert(
+        firstRun.successRate >= 0 &&
+        firstRun.successRate <= 1 &&
+        firstRun.essentialSuccessRate >= 0 &&
+        firstRun.essentialSuccessRate <= 1,
+        "Monte Carlo engine success rates should stay within probability bounds"
+    );
+    assert(
+        firstRun.essentialSuccessRate >= firstRun.successRate,
+        "Monte Carlo essential-expense coverage rate should never be lower than full-solvency success rate"
+    );
+    assert(
+        JSON.stringify(firstRun) === JSON.stringify(secondRun),
+        "Monte Carlo engine should be deterministic for a fixed seed"
+    );
+    assert(
+        firstRun.model === "monte_carlo_regime_v2",
+        "Monte Carlo engine should report the upgraded annual-scenario model version"
+    );
+    assert(
+        typeof firstRun.wealthMetricsTrusted === "boolean",
+        "Monte Carlo engine should expose whether ending-wealth metrics are trustworthy enough to display"
+    );
+
+    firstRun.trials.forEach(trial => {
+        assert(
+            Number.isFinite(trial.readinessScore),
+            "Monte Carlo engine should produce numeric readiness scores for each trial"
+        );
+        assert(
+            Number.isFinite(trial.sampledRates.inflationRate) &&
+            trial.sampledRates.inflationRate >= 0 &&
+            trial.sampledRates.inflationRate <= 0.08,
+            "Monte Carlo engine should keep sampled inflation within configured bounds"
+        );
+        assert(
+            Number.isFinite(trial.sampledRates.healthcareInflationRate) &&
+            trial.sampledRates.healthcareInflationRate >= 0.01 &&
+            trial.sampledRates.healthcareInflationRate <= 0.12,
+            "Monte Carlo engine should keep sampled healthcare inflation within configured bounds"
+        );
+    });
+    assert(
+        exaggeratedRun.wealthMetricsTrusted === false,
+        "Monte Carlo engine should flag implausibly wide ending-wealth ranges instead of treating them as trustworthy"
+    );
+    assert(
+        exaggeratedContent.medianEndingNetWorth === "Range too wide" &&
+        exaggeratedContent.percentile10EndingNetWorth === "Range too wide",
+        "Dashboard Monte Carlo copy should suppress wealth values when the engine marks them as unreliable"
+    );
+
+    logResult("Monte Carlo engine passed");
+}
+
 async function testLiquidAssetModules() {
     await import("../modules/assets/liquidAccounts.js");
 
@@ -1699,6 +2312,13 @@ async function runVerification() {
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
+        testDashboardRecommendationConsistency();
+        testDashboardAgeOrderIntegrity();
+        testDashboardReportSectionPopulation();
+        testMonteCarloEngine();
+        testRetirementAgeComparisonMonotonicity();
+        testSurvivorEstimatorOrdering();
+        testToolEdgeCaseValidation();
         testMultipleRetirementAccountPayloads();
         testInputPopulationAndPreviewMetrics();
         testModuleRestorePlacement();

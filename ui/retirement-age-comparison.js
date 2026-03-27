@@ -17,7 +17,7 @@ function parseStringValue(id, fallback = "") {
     return document.getElementById(id)?.value || fallback;
 }
 
-function deriveCurrentAgeFromBirthYear(birthYear) {
+export function deriveCurrentAgeFromBirthYear(birthYear) {
     const currentYear = new Date().getFullYear();
 
     if (!birthYear || birthYear < 1900 || birthYear > currentYear) {
@@ -27,7 +27,7 @@ function deriveCurrentAgeFromBirthYear(birthYear) {
     return currentYear - birthYear;
 }
 
-function parseRetirementAges(value, minimumAge = 50) {
+export function parseRetirementAges(value, minimumAge = 50) {
     return Array.from(
         new Set(
             String(value || "")
@@ -62,7 +62,7 @@ function formatSignedMoney(value) {
     return `${rounded > 0 ? "+" : "-"}${formatMoney(Math.abs(rounded))}`;
 }
 
-function deriveServiceYearsForRetirement({
+export function deriveServiceYearsForRetirement({
     birthYear,
     retirementAge,
     leoffStartYear
@@ -76,7 +76,7 @@ function deriveServiceYearsForRetirement({
     return retirementYear - leoffStartYear;
 }
 
-function calculateLifetimePensionValue(annualPension, colaRate, retirementAge, targetAge) {
+export function calculateLifetimePensionValue(annualPension, colaRate, retirementAge, targetAge) {
     const years = Math.max(0, Math.round((targetAge || retirementAge) - retirementAge));
 
     if (years === 0 || annualPension <= 0) {
@@ -90,7 +90,7 @@ function calculateLifetimePensionValue(annualPension, colaRate, retirementAge, t
     return annualPension * ((Math.pow(1 + colaRate, years) - 1) / colaRate);
 }
 
-function calculateExtraSalaryEarned({
+export function calculateExtraSalaryEarned({
     baselineAge,
     comparisonAge,
     currentAge,
@@ -130,7 +130,7 @@ function buildBaseInputs() {
     };
 }
 
-function buildScenario(age, baseInputs) {
+export function buildScenario(age, baseInputs) {
     const serviceYears = deriveServiceYearsForRetirement({
         birthYear: baseInputs.profile.birthYear,
         retirementAge: age,
@@ -181,7 +181,7 @@ function buildScenario(age, baseInputs) {
     };
 }
 
-function enrichComparisonRows(rows, baseInputs) {
+export function enrichComparisonRows(rows, baseInputs) {
     const baselineAge = rows[0]?.age;
     const baselineMonthlyPension = rows[0]?.monthlyPension || 0;
     const baselineLifetimeValue = rows[0]?.lifetimePensionValue || 0;

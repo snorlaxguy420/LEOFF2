@@ -344,3 +344,158 @@ export function formatMarginExtremeValue(entry) {
         ? `${formatCurrency(entry.margin)} at ${entry.age}`
         : "--";
 }
+
+export function buildExpenseBreakdownSummary(retirementYear = {}) {
+    const breakdown = retirementYear?.expenseBreakdown || {};
+
+    return {
+        essential: formatCurrency(breakdown.essential || 0),
+        discretionary: formatCurrency(breakdown.discretionary || 0),
+        housing: formatCurrency(breakdown.housing || 0),
+        healthcare: formatCurrency(breakdown.healthcare || 0),
+        insurance: formatCurrency(breakdown.insurance || 0),
+        goodsServices: formatCurrency(breakdown.goodsServices || 0)
+    };
+}
+
+export function buildTaxSnapshotSummary(retirementYear = {}) {
+    const taxes = retirementYear?.taxes || 0;
+    const taxableIncome = retirementYear?.taxableIncome || 0;
+    const grossIncome = retirementYear?.income || 0;
+    const taxDrag = grossIncome > 0 ? taxes / grossIncome : 0;
+
+    return {
+        taxesAtRetirement: formatCurrency(taxes),
+        taxableIncomeAtRetirement: formatCurrency(taxableIncome),
+        taxDragRatio: formatPercent(taxDrag),
+        narrative:
+            grossIncome > 0
+                ? `In the selected retirement year, taxes consume about ${Math.round(taxDrag * 100)}% of projected income.`
+                : "No retirement-year income is currently projected, so tax drag is effectively zero."
+    };
+}
+
+export function buildTopRiskEntries(vulnerabilityAnalysis = {}) {
+    const topRisks = (vulnerabilityAnalysis?.risks || []).slice(0, 3);
+
+    if (!topRisks.length) {
+        return [
+            {
+                severityMeta: null,
+                label: "Low current stress signal",
+                explanation: "The current report did not surface three major retirement risks.",
+                mitigation: null
+            }
+        ];
+    }
+
+    return topRisks.map(risk => ({
+        severityMeta: `${risk.severityTier} Severity | Score ${risk.severityScore}`,
+        label: risk.label,
+        explanation: risk.explanation,
+        mitigation: risk.mitigation
+    }));
+}
+
+export function buildShortfallSummary({
+    projection = {},
+    analysis = {}
+}) {
+    const results = projection?.results || [];
+    let worstAnnualDeficit = 0;
+
+    results.forEach(result => {
+        if ((result?.surplus || 0) < 0) {
+            worstAnnualDeficit = Math.max(
+                worstAnnualDeficit,
+                Math.abs(result.surplus)
+            );
+        }
+    });
+
+    return {
+        firstDeficitAge: analysis.retirementFailureAge ?? "Never",
+        cumulativeShortfall: formatCurrency(projection?.cumulativeShortfall || 0),
+        worstAnnualDeficit:
+            worstAnnualDeficit > 0
+                ? formatCurrency(worstAnnualDeficit)
+                : "None"
+    };
+}
+
+function formatAgeValue(age) {
+    return Number.isFinite(age)
+        ? `Age ${age}`
+        : "None";
+}
+
+function getMonteCarloConfidenceLabel(successRate = 0) {
+    if (successRate >= 0.85) {
+        return "High-confidence outlook";
+    }
+
+    if (successRate >= 0.7) {
+        return "Resilient under stress";
+    }
+
+    if (successRate >= 0.5) {
+        return "Mixed under stress";
+    }
+
+    return "Fragile under stress";
+}
+
+export function buildMonteCarloContent(monteCarlo = {}) {
+    const successRate = monteCarlo?.successRate ?? 0;
+    const essentialSuccessRate =
+        monteCarlo?.essentialSuccessRate ?? 0;
+    const iterations =
+        monteCarlo?.iterations ?? 0;
+    const medianFailureAge =
+        formatAgeValue(monteCarlo?.medianFailureAge);
+    const medianAssetDepletionAge =
+        formatAgeValue(monteCarlo?.medianAssetDepletionAge);
+    const medianReadinessScore =
+        Number.isFinite(monteCarlo?.medianReadinessScore)
+            ? `${Math.round(monteCarlo.medianReadinessScore)} / 100`
+            : "--";
+    const percentile10EndingNetWorth =
+        monteCarlo?.wealthMetricsTrusted !== false &&
+        Number.isFinite(monteCarlo?.percentile10EndingNetWorth)
+            ? formatCurrency(monteCarlo.percentile10EndingNetWorth)
+            : "Range too wide";
+    const medianEndingNetWorth =
+        monteCarlo?.wealthMetricsTrusted !== false &&
+        Number.isFinite(monteCarlo?.medianEndingNetWorth)
+            ? formatCurrency(monteCarlo.medianEndingNetWorth)
+            : "Range too wide";
+    const percentile90EndingNetWorth =
+        monteCarlo?.wealthMetricsTrusted !== false &&
+        Number.isFinite(monteCarlo?.percentile90EndingNetWorth)
+            ? formatCurrency(monteCarlo.percentile90EndingNetWorth)
+            : "Range too wide";
+    const confidenceLabel =
+        getMonteCarloConfidenceLabel(successRate);
+    const wealthNarrative =
+        monteCarlo?.wealthMetricsTrusted === false
+            ? "The ending net worth range is still too wide to summarize cleanly, so we are emphasizing success odds instead of precise wealth figures."
+            : `The median readiness score across trials is ${medianReadinessScore}, the downside 10th percentile ending net worth is ${percentile10EndingNetWorth}, and the median ending net worth is ${medianEndingNetWorth}.`;
+
+    return {
+        headline: `${formatPercent(successRate)} Success Rate`,
+        summary:
+            `Across ${iterations} simulated different market and inflation scenarios, this plan stays fully solvent in ${formatPercent(successRate)} of trials and still covers essential expenses in ${formatPercent(essentialSuccessRate)} of trials.`,
+        narrative:
+            `This standalone Monte Carlo view tests the current plan against many different market and inflation scenarios. ${wealthNarrative}`,
+        confidenceLabel,
+        successRate: formatPercent(successRate),
+        essentialSuccessRate: formatPercent(essentialSuccessRate),
+        medianReadinessScore,
+        medianFailureAge,
+        medianAssetDepletionAge,
+        percentile10EndingNetWorth,
+        medianEndingNetWorth,
+        percentile90EndingNetWorth,
+        iterations: String(iterations || 0)
+    };
+}

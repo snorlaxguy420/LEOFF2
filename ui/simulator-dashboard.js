@@ -233,6 +233,119 @@ function setupDisclaimerGate() {
     });
 }
 
+function buildCurrentSimulationPayload() {
+    const inputs = collectInputs();
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions:
+            inputs.assumptions ||
+            {
+                inflationRate: 0.0329
+            }
+    });
+
+    simulationState.incomeSources = incomeSources;
+
+    return {
+        inputs,
+        incomeSources,
+        simulationState
+    };
+}
+
+function buildPortablePlanFileName() {
+    const stamp =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    return `leoff-helper-plan-${stamp}.json`;
+}
+
+function downloadPortablePlan(portablePlan) {
+    const blob = new Blob(
+        [JSON.stringify(portablePlan, null, 2)],
+        { type: "application/json" }
+    );
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = buildPortablePlanFileName();
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+    }, 0);
+}
+
+async function importPortablePlanFile(file) {
+    if (!file) {
+        return;
+    }
+
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    const importedState =
+        StateManager.importPortablePlan(payload);
+
+    loadProfileModule(assetRegistry);
+    sessionStorage.removeItem("retirementProjection");
+    populateStandardInputs(
+        simulationStateToInputs(importedState.simulationState)
+    );
+    setActiveSimulatorTab("profile", {
+        scrollOnMobile: isPhoneChartLayout()
+    });
+    runProjection(importedState.simulationState);
+}
+
+function setupPlanTransferUi() {
+    const exportBtn = document.getElementById("exportPlanBtn");
+    const importBtn = document.getElementById("importPlanBtn");
+    const importInput = document.getElementById("importPlanInput");
+
+    exportBtn?.addEventListener("click", () => {
+        const { simulationState } = buildCurrentSimulationPayload();
+        const portablePlan =
+            StateManager.buildPortablePlan({
+                simulationState
+            });
+
+        StateManager.saveWorkspaceState({
+            simulationState
+        });
+        downloadPortablePlan(portablePlan);
+    });
+
+    importBtn?.addEventListener("click", () => {
+        importInput?.click();
+    });
+
+    importInput?.addEventListener("change", async event => {
+        const file = event.target?.files?.[0] || null;
+
+        try {
+            await importPortablePlanFile(file);
+            alert("Plan imported successfully.");
+        } catch (error) {
+            console.error("Plan import failed", error);
+            alert("That file could not be imported. Please use a LEOFF Helper plan export.");
+        } finally {
+            if (importInput) {
+                importInput.value = "";
+            }
+        }
+    });
+}
+
 /* ------------------------------------------------
 APP BOOT
 ------------------------------------------------ */
@@ -255,6 +368,7 @@ async function init(){
     setupAdditionalPensionUi();
     setupSocialSecurityUi();
     setupInflationDefaultsUi();
+    setupPlanTransferUi();
     setupReportButton();   // add this line
     syncMobileSimulatorMode();
     setupDisclaimerGate();
@@ -389,17 +503,11 @@ PROJECTION ENGINE
 ------------------------------------------------ */
 
 function runProjection(existingSimulationState = null){
-
-    const inputs = collectInputs();
-    const simulationState = buildSimulationState({
+    const {
         inputs,
-        incomeSources: [],
-        assumptions:
-            inputs.assumptions ||
-            {
-                inflationRate: 0.0329
-            }
-    });
+        incomeSources,
+        simulationState
+    } = buildCurrentSimulationPayload();
 
     StateManager.saveWorkspaceState({
         simulationState: {
@@ -422,12 +530,6 @@ function runProjection(existingSimulationState = null){
         sessionStorage.removeItem("retirementProjection");
         return;
     }
-
-    const incomeSources = buildSimulationIncomeSources({
-        inputs,
-        assetRegistry
-    });
-    simulationState.incomeSources = incomeSources;
 
     const projection = runProjectionEngine(simulationState);
     lastIncomeSources = incomeSources;

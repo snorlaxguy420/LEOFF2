@@ -16,3 +16,6 @@ Desktop.ini
 *.tmp
 *.temp
 *.bak
+
+# Backend runtime data
+backend/data/store.json

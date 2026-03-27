@@ -388,6 +388,32 @@ box-shadow:0 8px 18px rgba(30,47,68,.16);
 display:block;
 }
 
+.plan-transfer-row{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+}
+
+.plan-transfer-row .secondary-btn{
+background:var(--pnw-evergreen);
+border:1px solid var(--pnw-evergreen);
+color:white;
+box-shadow:0 8px 18px rgba(30,47,68,.16);
+}
+
+.plan-transfer-row .secondary-btn:hover{
+background:var(--pnw-evergreen);
+color:white;
+transform:translateY(-1px);
+}
+
+.plan-transfer-note{
+margin:0;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
 #assetButtonBar,
 #retirementButtonBar,
 #debtButtonBar{
@@ -743,6 +769,11 @@ body.mobile-simulator .planner-preview{
 
 body.mobile-simulator .planner-preview a{
  grid-column:1 / -1;
+}
+
+body.mobile-simulator .plan-transfer-row{
+grid-template-columns:1fr;
+gap:10px;
 }
 
 body.mobile-simulator .mobile-section-progress{

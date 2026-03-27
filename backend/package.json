@@ -1,0 +1,14 @@
+{
+  "name": "leoff-helper-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Initial backend scaffold for LEOFF Helper saved plans and authentication.",
+  "scripts": {
+    "start": "node ./src/server.js",
+    "dev": "node ./src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

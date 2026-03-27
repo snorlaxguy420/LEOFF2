@@ -160,6 +160,10 @@ export function buildRecommendationContent({
         analysis.earliestRetirementAge;
     const financialFreedomAge =
         analysis.financialFreedomAge;
+    const monteCarloThreshold =
+        Math.round(
+            (analysis.recommendedMonteCarloSuccessThreshold ?? 0.9) * 100
+        );
     const marginSentence =
         buildMarginRangeSentence(results);
     const supportPoints = [];
@@ -179,7 +183,7 @@ export function buildRecommendationContent({
     const shortText =
         analysis.recommendedRetirementAge == null &&
         analysis.financialFreedomAge != null
-            ? `Age ${recommendedAge} appears to cover expenses throughout the plan, but it still depends on planned portfolio withdrawals. ${marginSentence} The main pressure point is ${primaryRiskShort}.`
+            ? `Age ${recommendedAge} appears to cover expenses throughout the plan, but it still depends on planned portfolio withdrawals and does not yet clear the ${monteCarloThreshold}% Monte Carlo confidence target for a strict recommendation. ${marginSentence} The main pressure point is ${primaryRiskShort}.`
             : `Age ${recommendedAge} appears to be the strongest current balance of sustainability and resilience. ${marginSentence} The main pressure point is ${primaryRiskShort}.`;
 
     if (
@@ -191,7 +195,7 @@ export function buildRecommendationContent({
             headline: `Recommended retirement age: ${recommendedAge}`,
             shortText,
             narrative:
-                `Age ${recommendedAge} appears to be the strongest current timing for full expense coverage in this plan, even though the projection still relies on planned portfolio withdrawals in some years. ${supportPoints.length ? `${supportPoints.join(", ")}, and ` : ""}${marginSentence} The main risk to keep watching is ${primaryRiskLong}.`
+                `Age ${recommendedAge} appears to be the strongest current timing for full expense coverage in this plan, even though the projection still relies on planned portfolio withdrawals in some years and does not yet clear the ${monteCarloThreshold}% Monte Carlo confidence target for a strict recommendation. ${supportPoints.length ? `${supportPoints.join(", ")}, and ` : ""}${marginSentence} The main risk to keep watching is ${primaryRiskLong}.`
         };
     }
 
@@ -201,7 +205,7 @@ export function buildRecommendationContent({
         recommendedAge > financialFreedomAge
     ) {
         supportPoints.push(
-            "the later recommendation reflects a stricter goal of covering expenses without relying on portfolio withdrawals"
+            `the later recommendation reflects a stricter goal of covering expenses without relying on portfolio withdrawals while still clearing the ${monteCarloThreshold}% Monte Carlo confidence target`
         );
     }
 
@@ -310,12 +314,16 @@ export function buildRecommendedAgeSummary({
         analysis.earliestRetirementAge ?? "Not Sustainable";
     const freedomAge =
         analysis.financialFreedomAge ?? "Requires Drawdown";
+    const monteCarloThreshold =
+        Math.round(
+            (analysis.recommendedMonteCarloSuccessThreshold ?? 0.9) * 100
+        );
 
     if (
         analysis.recommendedRetirementAge === null &&
         typeof analysis.financialFreedomAge === "number"
     ) {
-        return `Age ${recommendedRetirement} is the first age currently projected to cover expenses year by year, but it still appears to rely on planned portfolio withdrawals. Earliest sustainable timing is ${earliestSustainable}, and projected income fully covers expenses by age ${freedomAge}.`;
+        return `Age ${recommendedRetirement} is the first age currently projected to cover expenses year by year, but it still appears to rely on planned portfolio withdrawals and does not yet clear the ${monteCarloThreshold}% Monte Carlo confidence target for a strict recommendation. Earliest sustainable timing is ${earliestSustainable}, and projected income fully covers expenses by age ${freedomAge}.`;
     }
 
     if (
@@ -323,7 +331,7 @@ export function buildRecommendedAgeSummary({
         typeof analysis.financialFreedomAge === "number" &&
         analysis.recommendedRetirementAge > analysis.financialFreedomAge
     ) {
-        return `Age ${recommendedRetirement} is the current model favorite because it is the first age that appears to cover expenses without relying on portfolio withdrawals. Age ${earliestSustainable} is the earliest sustainable timing, and age ${freedomAge} is the first age projected income fully covers expenses.`;
+        return `Age ${recommendedRetirement} is the current model favorite because it is the first age that appears to cover expenses without relying on portfolio withdrawals and still clears the ${monteCarloThreshold}% Monte Carlo confidence target. Age ${earliestSustainable} is the earliest sustainable timing, and age ${freedomAge} is the first age projected income fully covers expenses.`;
     }
 
     return `Age ${recommendedRetirement} is the current model favorite. Earliest sustainable timing is ${earliestSustainable}, and projected income fully covers expenses by age ${freedomAge}.`;

@@ -2,21 +2,52 @@ import CONSTANTS from "../pensions/LEOFF2/leoff2Constants.js";
 import { runProjection } from "../core/projectionEngine.js";
 import { calculateReadinessScore } from "../analysis/readinessScore.js";
 import { buildSimulationState } from "../core/simulationState.js";
+import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
+import {
+    buildDashboardAgeAdjustedIncomeSources,
+    buildDashboardAgeAdjustedInputs
+} from "./dashboardViewModel.js";
 import { buildPensionIncomeSources } from "../ui/simulatorShared.js";
 
 /* =========================================================
 LEOFF 2 RETIREMENT RECOMMENDATION ENGINE
 ========================================================= */
 
-export function compareRetirementAges({ inputs, incomeSources }) {
+const DEFAULT_RECOMMENDATION_MONTE_CARLO_SUCCESS_THRESHOLD = 0.9;
+const DEFAULT_RECOMMENDATION_MONTE_CARLO_ITERATIONS = 250;
+const DEFAULT_RECOMMENDATION_MONTE_CARLO_SEED = 424242;
+
+export function compareRetirementAges({
+    inputs,
+    incomeSources,
+    options = {}
+}) {
 
     const pension = inputs?.pension;
     const expenses = inputs?.expenses;
+    const monteCarloSuccessThreshold =
+        options?.monteCarloSuccessThreshold ??
+        DEFAULT_RECOMMENDATION_MONTE_CARLO_SUCCESS_THRESHOLD;
+    const monteCarloIterations =
+        options?.monteCarloIterations ??
+        DEFAULT_RECOMMENDATION_MONTE_CARLO_ITERATIONS;
+    const monteCarloSeed =
+        options?.monteCarloSeed ??
+        DEFAULT_RECOMMENDATION_MONTE_CARLO_SEED;
+    const monteCarloEvaluator =
+        options?.monteCarloEvaluator ??
+        (({ simulationState, iterations, seed }) =>
+            runMonteCarloSimulation({
+                simulationState,
+                iterations,
+                seed
+            }));
 
     if (!pension || !expenses) {
         return {
             recommendedAge: null,
-            scenarios: []
+            scenarios: [],
+            recommendedMonteCarloSuccessThreshold: monteCarloSuccessThreshold
         };
     }
 
@@ -102,16 +133,20 @@ export function compareRetirementAges({ inputs, incomeSources }) {
 
     for (let age = minAge; age <= maxAge; age++) {
         try {
-            const pensionNames = new Set([
-                "LEOFF Pension",
-                "PERS Plan 2 Pension"
-            ]);
-            const pensionSources = buildPensionIncomeSources({
-                inputs,
+            const currentInputs = buildDashboardAgeAdjustedInputs({
+                baseInputs: inputs,
                 retireAge: age
             });
-            const nonPensionSources = (incomeSources || [])
-                .filter(source => !pensionNames.has(source.name));
+            const pensionSources = buildPensionIncomeSources({
+                inputs: currentInputs,
+                retireAge: age
+            });
+            const nonPensionSources =
+                buildDashboardAgeAdjustedIncomeSources({
+                    baseSources: incomeSources || [],
+                    baseInputs: inputs,
+                    retireAge: age
+                });
             const adjustedSources = [
                 ...pensionSources,
                 ...nonPensionSources
@@ -119,7 +154,7 @@ export function compareRetirementAges({ inputs, incomeSources }) {
             const portfolioIncomeNames =
                 buildPortfolioIncomeNameSet(adjustedSources);
             const simulationState = buildSimulationState({
-                inputs,
+                inputs: currentInputs,
                 incomeSources: adjustedSources,
                 assumptions: inflationAssumptions,
                 overrides: {
@@ -149,12 +184,33 @@ export function compareRetirementAges({ inputs, incomeSources }) {
 
                     return nonPortfolioIncome >= (result.expenses || 0);
                 });
+            const deterministicRecommended =
+                noPortfolioWithdrawalNeeded &&
+                !assetDepletion;
+            let monteCarloSuccessRate = null;
+            let monteCarloPassesRecommendation = false;
+
+            if (deterministicRecommended) {
+                const monteCarloResult = monteCarloEvaluator({
+                    simulationState,
+                    retireAge: age,
+                    iterations: monteCarloIterations,
+                    seed: monteCarloSeed
+                });
+
+                monteCarloSuccessRate =
+                    monteCarloResult?.successRate ?? null;
+                monteCarloPassesRecommendation =
+                    Number.isFinite(monteCarloSuccessRate) &&
+                    monteCarloSuccessRate >= monteCarloSuccessThreshold;
+            }
 
             scenarios.push({
                 age,
                 readinessScore: readiness.score,
                 grade: readiness.grade,
                 firstDeficitAge: firstDeficit?.age ?? null,
+                monteCarloSuccessRate,
                 sustainable:
                     projection.results.every(result =>
                         (result.income || 0) >= getEssentialExpenses(result)
@@ -165,8 +221,8 @@ export function compareRetirementAges({ inputs, incomeSources }) {
                     projection.results.every(r => r.income >= r.expenses) &&
                     !assetDepletion,
                 recommended:
-                    noPortfolioWithdrawalNeeded &&
-                    !assetDepletion
+                    deterministicRecommended &&
+                    monteCarloPassesRecommendation
             });
         } catch (error) {
             continue;
@@ -192,7 +248,8 @@ if (scenarios.length === 0) {
         earliestSustainableAge: null,
         financialFreedomAge: null,
         recommendedRetirementAge: null,
-        scenarios: []
+        scenarios: [],
+        recommendedMonteCarloSuccessThreshold: monteCarloSuccessThreshold
     };
 }
 
@@ -207,6 +264,7 @@ return {
     recommendedRetirementAge:
         recommendedRetirement?.age ?? null,
 
-    scenarios
+    scenarios,
+    recommendedMonteCarloSuccessThreshold: monteCarloSuccessThreshold
 };
 }

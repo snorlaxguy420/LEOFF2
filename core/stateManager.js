@@ -7,6 +7,8 @@ Central source of truth for simulator
 ****************************************************************/
 
 const STATE_KEY = "leoffSimulationState";
+const PORTABLE_PLAN_FORMAT = "leoff_helper_plan";
+const PORTABLE_PLAN_VERSION = 1;
 
 export const StateManager = {
 
@@ -26,6 +28,21 @@ export const StateManager = {
 
     save() {
         localStorage.setItem(STATE_KEY, JSON.stringify(this.state));
+    },
+    normalizeWorkspaceState(workspaceState = {}) {
+        const defaults = this.defaultState();
+        const nextState = workspaceState || {};
+        const simulationState = {
+            ...defaults.simulationState,
+            ...(nextState.simulationState || {})
+        };
+
+        return {
+            ...defaults,
+            ...nextState,
+            simulationState,
+            moduleState: nextState.moduleState || {}
+        };
     },
     collectModuleState() {
 
@@ -55,15 +72,14 @@ export const StateManager = {
 
     saveWorkspaceState({ simulationState = null } = {}) {
 
-        const nextState = {
-            ...this.defaultState(),
+        const nextState = this.normalizeWorkspaceState({
             ...this.state,
             simulationState:
                 simulationState ??
                 this.state.simulationState ??
                 null,
             moduleState: this.collectModuleState()
-        };
+        });
 
         this.state = nextState;
         this.save();
@@ -74,6 +90,51 @@ export const StateManager = {
 
     saveAll({ simulationState = null } = {}){
         return this.saveWorkspaceState({ simulationState });
+    },
+    buildPortablePlan({ simulationState = null } = {}) {
+        const workspaceState =
+            this.normalizeWorkspaceState({
+                ...this.state,
+                simulationState:
+                    simulationState ??
+                    this.state.simulationState ??
+                    null,
+                moduleState: this.collectModuleState()
+            });
+
+        return {
+            format: PORTABLE_PLAN_FORMAT,
+            version: PORTABLE_PLAN_VERSION,
+            exportedAt: new Date().toISOString(),
+            workspaceState
+        };
+    },
+    importPortablePlan(payload = {}) {
+        const workspaceState =
+            payload?.workspaceState ||
+            payload;
+
+        if (
+            !workspaceState ||
+            (
+                !workspaceState.simulationState &&
+                !workspaceState.moduleState
+            )
+        ) {
+            throw new Error("Invalid LEOFF Helper plan file.");
+        }
+
+        const nextState =
+            this.normalizeWorkspaceState(workspaceState);
+
+        this.state = nextState;
+        this.save();
+
+        if (Object.keys(nextState.moduleState || {}).length > 0) {
+            assetRegistry.restore(nextState.moduleState);
+        }
+
+        return nextState;
     },
 
 loadAll(){
@@ -87,10 +148,9 @@ loadAll(){
         parsed?.moduleState ||
         (parsed && !parsed.simulationState ? parsed : null);
 
-    this.state = {
-        ...this.defaultState(),
-        ...(parsed?.simulationState ? parsed : {})
-    };
+    this.state = this.normalizeWorkspaceState(
+        parsed?.simulationState ? parsed : {}
+    );
 
     if (moduleState) {
         assetRegistry.restore(moduleState);

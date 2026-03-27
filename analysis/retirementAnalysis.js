@@ -46,12 +46,8 @@ export function analyzeRetirementPlan({
 }) {
 
     const results = projection?.results || [];
-    const earliestRetirementAge =
-        calculateEarliestRetirementAge({ inputs, incomeSources });
-    const financialFreedomAge =
-        calculateFinancialFreedomAge({ inputs, incomeSources });
-    const recommendedRetirementAge =
-        calculateRecommendedRetirementAge({ inputs, incomeSources });
+    const comparison =
+        compareRetirementAges({ inputs, incomeSources });
     const retirementFailureAge =
         calculateRetirementFailureAge(results);
     const readiness =
@@ -61,9 +57,14 @@ export function analyzeRetirementPlan({
         ?? null;
 
     return {
-        earliestRetirementAge,
-        financialFreedomAge,
-        recommendedRetirementAge,
+        earliestRetirementAge:
+            comparison.earliestSustainableAge,
+        financialFreedomAge:
+            comparison.financialFreedomAge,
+        recommendedRetirementAge:
+            comparison.recommendedRetirementAge,
+        recommendedMonteCarloSuccessThreshold:
+            comparison.recommendedMonteCarloSuccessThreshold,
         retirementFailureAge,
         assetDepletionAge,
         readinessScore: readiness.score,

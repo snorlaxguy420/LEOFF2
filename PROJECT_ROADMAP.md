@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 23, 2026
+Last updated: March 27, 2026
 
 ## Current Status
 
@@ -58,6 +58,7 @@ Completed:
 - Dashboard now consumes the analysis engine instead of recomputing key values inline
 - V1 retirement vulnerability engine exists in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
 - Retirement vulnerability analysis now includes richer stress categories, severity tiers, and mitigation guidance in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
+- Shared dashboard view-model helpers now own more of the dashboard-specific recommendation, report, and summary derivation in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), reducing inline business logic in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 
 Remaining:
 - Revisit readiness scoring once Monte Carlo modeling exists so the dashboard can shift from an interim deterministic composite toward a probability-informed readiness view
@@ -79,6 +80,7 @@ Completed:
 - Verification runner now exercises shared simulator helpers and preview metrics in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 - Verification runner now checks differentiated retirement-account tax handling in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 - Level 1 browser smoke testing now exists in [ui/verification.html](/D:/LEOFF%202/ui/verification.html) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js), covering key page loads, key DOM surfaces, and image-load checks across the main public pages
+- Verification coverage now includes dashboard recommendation consistency, dashboard age-order integrity, dashboard age-adjusted pension/source behavior, retirement-age comparison monotonicity, survivor-estimator ordering, and Monte Carlo regression checks in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 ### Phase 5 - Asset Modules
 Status: Partially implemented
@@ -123,6 +125,9 @@ Completed:
 - Retirement-age recommendations no longer scan or recommend ages below the user's current age in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with browser verification coverage in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 - Dashboard recommendation messaging now avoids showing `Not Achievable` for scenarios that still cover expenses but rely on planned portfolio withdrawals, instead falling back to the strongest available displayed timing in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 - Dashboard retirement-age slider and related actions now live within the timeline/chart panel instead of a separate top control bar, improving chart-context alignment in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- Dashboard now includes a dedicated Monte Carlo Outlook section, separate from the deterministic chart toggle, with stress-tested success, essential-coverage, failure-age, depletion-age, and net-worth-range summaries in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js)
+- Dashboard retirement-age slider modeling now adjusts pension service credit, pension salary assumptions, and retirement-linked portfolio withdrawal timing so later retirement ages compare against the correct retirement start assumptions in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js)
+- Recommended retirement age now requires the earliest age that both avoids portfolio-withdrawal dependence and clears a `90%` Monte Carlo success threshold in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with supporting dashboard copy and regression coverage in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 Remaining:
 - Continue removing remaining inline business logic from the dashboard loader
@@ -189,6 +194,7 @@ Completed:
 - Existing article pages now link to the Retirement Age Comparison Tool where relevant, strengthening internal linking density across the article library
 - The survivor-options article now links directly into the Survivor Benefit Estimator where relevant, extending internal linking into the new Phase 7 tool
 - Homepage hero CTA stack now links directly into the Survivor Benefit Comparison tool, extending internal linking and tool discovery from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
+- The article library now includes a dedicated Monte Carlo guide in [ui/articles/article-monte-carlo-retirement-modeling.html](/D:/LEOFF%202/ui/articles/article-monte-carlo-retirement-modeling.html), and the dashboard Monte Carlo panel plus related retirement guides now link into it from [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), [ui/articles/article-recession-before-retirement.html](/D:/LEOFF%202/ui/articles/article-recession-before-retirement.html), and [ui/articles/article-leoff-retirement.html](/D:/LEOFF%202/ui/articles/article-leoff-retirement.html)
 
 Planned:
 - Technical SEO improvements for non-article pages
@@ -197,15 +203,23 @@ Planned:
 - Additional content support for calculator and article pages
 
 ### Phase 11 - Premium Modeling
-Status: Not implemented
+Status: In progress
 
-Planned:
-- Monte Carlo simulation
+Completed / In progress:
+- Monte Carlo simulation now exists as a separate engine in [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js) rather than being mixed into the deterministic projection path
+- Monte Carlo now samples year-by-year market and inflation scenarios, reuses the shared projection engine, and reports aggregated success, essential-coverage, readiness, depletion-age, failure-age, and ending-wealth summaries
+- Monte Carlo is now surfaced on the dashboard as its own `Monte Carlo Outlook` section rather than as a deterministic chart mode in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- Monte Carlo dashboard comparisons now use a stable seed across retirement ages and evaluate retirement-year outcomes against age-adjusted pension and withdrawal timing assumptions, improving slider-to-slider comparability in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), and [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js)
+- Monte Carlo-backed recommendation policy now uses a `90%` success-rate threshold for the earliest strict recommended age, separating `workable` retirement ages from more durable `recommended` ones in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js)
+
+Remaining:
 - Probability-informed retirement readiness / success scoring layered on top of Monte Carlo results
 - Social Security optimizer
 - Estate projection
 - Withdrawal strategy optimizer
 - Scenario comparison
+- Continue hardening Monte Carlo assumptions, presentation, and trust language for live beta use
+- Consider adding explicit recession/regime clustering beyond the current independent year-by-year shocks
 
 ### Phase 12 - Other Device Support (Phone/Tablet)
 Status: In progress
@@ -297,5 +311,6 @@ Remaining:
 
 -> 1. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
 2. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
-3. Verify the updated essential-versus-discretionary expense behavior in real UI runs and decide whether users need manual category overrides.
-4. Keep deepening Phase 8 report polish now that printable report, PDF export, and report detail sections are in place.
+3. Keep validating Monte Carlo outputs in real beta scenarios and continue tightening any remaining assumptions or display rules that can produce counterintuitive results.
+4. Verify the updated essential-versus-discretionary expense behavior in real UI runs and decide whether users need manual category overrides.
+5. Keep deepening Phase 8 report polish now that printable report, PDF export, and report detail sections are in place.

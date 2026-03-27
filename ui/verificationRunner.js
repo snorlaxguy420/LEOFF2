@@ -2,6 +2,7 @@ import {
     buildSimulationState,
     simulationStateToInputs
 } from "../core/simulationState.js";
+import { StateManager } from "../core/stateManager.js";
 import { runProjection } from "../core/projectionEngine.js";
 import {
     applyRetirementAccountTaxTreatment,
@@ -317,6 +318,69 @@ function testSimulationStateRoundTrip() {
     assert(roundTrip.toggles.showReal === true, "Toggle round-trip failed");
 
     logResult("Simulation state round-trip passed");
+}
+
+function testPortablePlanExportImport() {
+    const originalStorage =
+        localStorage.getItem("leoffSimulationState");
+    const originalState =
+        structuredClone(StateManager.state || {});
+    const portablePlan =
+        StateManager.buildPortablePlan({
+            simulationState: {
+                ...StateManager.defaultState().simulationState,
+                profile: {
+                    currentAge: 46,
+                    retirementAge: 55,
+                    lifeExpectancy: 90,
+                    spouse: null
+                },
+                pension: {
+                    ...StateManager.defaultState().simulationState.pension,
+                    yearsOfService: 21,
+                    currentAnnualPay: 118000,
+                    finalAverageSalary: 128000,
+                    retirementAge: 55
+                },
+                expenses: {
+                    ...StateManager.defaultState().simulationState.expenses,
+                    annual: 54000
+                }
+            }
+        });
+
+    const importedState =
+        StateManager.importPortablePlan(portablePlan);
+
+    assert(
+        portablePlan.format === "leoff_helper_plan",
+        "Portable plan export should mark the expected LEOFF Helper file format"
+    );
+    assert(
+        portablePlan.version === 1,
+        "Portable plan export should include a schema version"
+    );
+    assert(
+        importedState.simulationState.profile.currentAge === 46,
+        "Portable plan import should restore the exported simulation state"
+    );
+    assert(
+        importedState.simulationState.pension.currentAnnualPay === 118000,
+        "Portable plan import should preserve pension pay inputs"
+    );
+
+    if (originalStorage === null) {
+        localStorage.removeItem("leoffSimulationState");
+    } else {
+        localStorage.setItem("leoffSimulationState", originalStorage);
+    }
+
+    StateManager.state =
+        Object.keys(originalState || {}).length
+            ? originalState
+            : StateManager.defaultState();
+
+    logResult("Portable plan export/import passed");
 }
 
 function testProjectionChartModes() {
@@ -1201,6 +1265,71 @@ function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
     }
 
     logResult("Retirement recommendation current-age floor passed");
+}
+
+function testRecommendedRetirementAgeRequiresMonteCarloThreshold() {
+    const comparison = compareRetirementAges({
+        inputs: {
+            profile: {
+                currentAge: 55
+            },
+            retireAge: 55,
+            lifeExpectancy: 90,
+            pension: {
+                serviceYears: 28,
+                currentAnnualPay: 120000,
+                finalAverageSalary: 135000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "none",
+                survivorAge: null
+            },
+            expenses: {
+                monthly: 0,
+                annual: 24000,
+                essentialMonthly: 0,
+                essentialAnnual: 24000
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.03,
+                housingInflationRate: 0.03,
+                healthcareInflationRate: 0.04
+            }
+        },
+        incomeSources: [],
+        options: {
+            monteCarloSuccessThreshold: 0.9,
+            monteCarloEvaluator: ({ retireAge }) => ({
+                successRate: retireAge >= 60 ? 0.93 : 0.86
+            })
+        }
+    });
+    const age55Scenario =
+        comparison.scenarios.find(scenario => scenario.age === 55);
+    const age60Scenario =
+        comparison.scenarios.find(scenario => scenario.age === 60);
+
+    assert(
+        comparison.financialFreedomAge === 55,
+        "Financial freedom age should still reflect the earliest full-coverage deterministic age"
+    );
+    assert(
+        comparison.recommendedRetirementAge === 60,
+        "Recommended retirement age should wait until Monte Carlo confidence clears the configured threshold"
+    );
+    assert(
+        age55Scenario?.monteCarloSuccessRate === 0.86 &&
+        age55Scenario?.recommended === false,
+        "A scenario below the Monte Carlo threshold should not be treated as recommended"
+    );
+    assert(
+        age60Scenario?.monteCarloSuccessRate === 0.93 &&
+        age60Scenario?.recommended === true,
+        "A scenario above the Monte Carlo threshold should qualify as recommended when the deterministic rules already pass"
+    );
+
+    logResult("Retirement recommendation Monte Carlo threshold passed");
 }
 
 function testDashboardRecommendationConsistency() {
@@ -2389,6 +2518,7 @@ async function runVerification() {
         await testLiquidAssetModules();
         await testDebtModuleCardFlow();
         testSimulationStateRoundTrip();
+        testPortablePlanExportImport();
         testProjectionChartModes();
         testProjectionChartDatasets();
         testSharedSimulatorHelpers();
@@ -2405,11 +2535,12 @@ async function runVerification() {
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
-    testDashboardRecommendationConsistency();
-    testDashboardAgeOrderIntegrity();
-    testDashboardAgeAdjustedPensionInputs();
-    testDashboardAgeAdjustedIncomeSources();
-    testDashboardReportSectionPopulation();
+        testRecommendedRetirementAgeRequiresMonteCarloThreshold();
+        testDashboardRecommendationConsistency();
+        testDashboardAgeOrderIntegrity();
+        testDashboardAgeAdjustedPensionInputs();
+        testDashboardAgeAdjustedIncomeSources();
+        testDashboardReportSectionPopulation();
         testMonteCarloEngine();
         testRetirementAgeComparisonMonotonicity();
         testSurvivorEstimatorOrdering();

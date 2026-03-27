@@ -690,6 +690,20 @@ TIMELINE PANEL
 
 }
 
+.report-inline-note a {
+
+    color: var(--pnw-evergreen);
+    font-weight: 700;
+    text-decoration: none;
+
+}
+
+.report-inline-note a:hover {
+
+    text-decoration: underline;
+
+}
+
 .report-risk-list {
 
     display: grid;

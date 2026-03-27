@@ -830,6 +830,10 @@ BOTTOM GRID
 
 }
 
+.dashboard-bottom + .dashboard-bottom {
+    margin-top: var(--space-lg);
+}
+
 
 /* ======================================================
 FINANCIAL SNAPSHOT

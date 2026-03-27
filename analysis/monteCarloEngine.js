@@ -150,16 +150,31 @@ function totalPortfolio(result) {
         .reduce((sum, value) => sum + (value || 0), 0);
 }
 
-function findFailureAge(results = []) {
-    return (results || [])
+function getRetirementEvaluationYears(results = [], retireAge = null) {
+    const retirementYears = (results || [])
+        .filter(result => {
+            if (retireAge == null) {
+                return true;
+            }
+
+            return (result?.age ?? retireAge) >= retireAge;
+        });
+
+    return retirementYears.length
+        ? retirementYears
+        : (results || []);
+}
+
+function findFailureAge(results = [], retireAge = null) {
+    return getRetirementEvaluationYears(results, retireAge)
         .find(result => (result?.income || 0) < (result?.expenses || 0))
         ?.age ?? null;
 }
 
-function findAssetDepletionAge(results = []) {
+function findAssetDepletionAge(results = [], retireAge = null) {
     let hadPositivePortfolio = false;
 
-    for (const result of results) {
+    for (const result of getRetirementEvaluationYears(results, retireAge)) {
         const total = totalPortfolio(result);
 
         if (total > 0) {
@@ -178,29 +193,35 @@ function getEndingNetWorth(results = []) {
     return results[results.length - 1]?.netWorth || 0;
 }
 
-function computeCoverageRate(results = []) {
-    if (!results.length) {
+function computeCoverageRate(results = [], retireAge = null) {
+    const evaluationYears =
+        getRetirementEvaluationYears(results, retireAge);
+
+    if (!evaluationYears.length) {
         return 0;
     }
 
-    return results.filter(result => {
+    return evaluationYears.filter(result => {
         return (result?.income || 0) >= (result?.expenses || 0);
-    }).length / results.length;
+    }).length / evaluationYears.length;
 }
 
-function computeEssentialCoverageRate(results = []) {
-    if (!results.length) {
+function computeEssentialCoverageRate(results = [], retireAge = null) {
+    const evaluationYears =
+        getRetirementEvaluationYears(results, retireAge);
+
+    if (!evaluationYears.length) {
         return 0;
     }
 
-    return results.filter(result => {
+    return evaluationYears.filter(result => {
         const essentialExpenses =
             result?.expenseBreakdown?.essential ??
             result?.expenses ??
             0;
 
         return (result?.income || 0) >= essentialExpenses;
-    }).length / results.length;
+    }).length / evaluationYears.length;
 }
 
 function computePercentile(values = [], percentile = 0.5) {
@@ -406,12 +427,12 @@ function summarizeTrial({
 }) {
     const results = projection?.results || [];
     const readiness = calculateReadinessScore(results, retireAge);
-    const failureAge = findFailureAge(results);
-    const assetDepletionAge = findAssetDepletionAge(results);
+    const failureAge = findFailureAge(results, retireAge);
+    const assetDepletionAge = findAssetDepletionAge(results, retireAge);
     const essentialCoverageRate =
-        computeEssentialCoverageRate(results);
+        computeEssentialCoverageRate(results, retireAge);
     const coverageRate =
-        computeCoverageRate(results);
+        computeCoverageRate(results, retireAge);
 
     return {
         success:

@@ -13,6 +13,8 @@ import {
 import { buildPensionIncomeSources } from "./simulatorShared.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
+    buildDashboardAgeAdjustedInputs,
+    buildDashboardAgeAdjustedIncomeSources,
     buildMonteCarloContent,
     buildExpenseBreakdownSummary,
     buildMarginOverviewText,
@@ -308,7 +310,7 @@ function renderMonteCarloSection({
         const monteCarlo = runMonteCarloSimulation({
             simulationState,
             iterations: MONTE_CARLO_ITERATIONS,
-            seed: MONTE_CARLO_BASE_SEED + (retireAge || 0)
+            seed: MONTE_CARLO_BASE_SEED
         });
 
         if (currentToken !== monteCarloRenderToken) {
@@ -370,12 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } = stored ? JSON.parse(stored) : fallbackPayload;
 
     const baseInputs = structuredClone(inputs);
-    const pensionNames = new Set([
-        "LEOFF Pension",
-        "PERS Plan 2 Pension"
-    ]);
-    const baseNonPensionSources = (incomeSources || [])
-        .filter(source => !pensionNames.has(source.name));
+    const baseSavedSources = incomeSources || [];
     const assumedInflationRate =
         savedSimulationState?.assumptions?.goodsServicesInflationRate ??
         savedSimulationState?.assumptions?.inflationRate ??
@@ -402,16 +399,22 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     function buildProjectionForAge(retireAge) {
-        const currentInputs = {
-            ...baseInputs,
+        const currentInputs = buildDashboardAgeAdjustedInputs({
+            baseInputs,
             retireAge
-        };
+        });
+        const currentNonPensionSources =
+            buildDashboardAgeAdjustedIncomeSources({
+                baseSources: baseSavedSources,
+                baseInputs,
+                retireAge
+            });
         const currentIncomeSources = [
             ...buildPensionIncomeSources({
                 inputs: currentInputs,
                 retireAge
             }),
-            ...baseNonPensionSources
+            ...currentNonPensionSources
         ];
         const longevityAge = Math.max(
             currentInputs.lifeExpectancy || 0,

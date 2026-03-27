@@ -499,3 +499,94 @@ export function buildMonteCarloContent(monteCarlo = {}) {
         iterations: String(iterations || 0)
     };
 }
+
+export function buildDashboardAgeAdjustedInputs({
+    baseInputs = {},
+    retireAge
+}) {
+    const nextInputs = structuredClone(baseInputs || {});
+    const currentAge = nextInputs?.profile?.currentAge ?? null;
+    const baseRetireAge =
+        baseInputs?.retireAge ??
+        baseInputs?.profile?.retirementAge ??
+        retireAge;
+    const baseServiceYears =
+        baseInputs?.pension?.serviceYears ?? 0;
+    const serviceYearDelta =
+        Number.isFinite(baseRetireAge) && Number.isFinite(retireAge)
+            ? retireAge - baseRetireAge
+            : 0;
+    const currentAnnualPay =
+        baseInputs?.pension?.currentAnnualPay ?? 0;
+    const baseFinalAverageSalary =
+        baseInputs?.pension?.finalAverageSalary ?? currentAnnualPay;
+    const yearsUntilBaseRetirement =
+        Number.isFinite(currentAge) &&
+        Number.isFinite(baseRetireAge)
+            ? Math.max(0, baseRetireAge - currentAge)
+            : 0;
+    const annualSalaryStep =
+        yearsUntilBaseRetirement > 0
+            ? (baseFinalAverageSalary - currentAnnualPay) / yearsUntilBaseRetirement
+            : 0;
+    const yearsUntilSelectedRetirement =
+        Number.isFinite(currentAge) &&
+        Number.isFinite(retireAge)
+            ? Math.max(0, retireAge - currentAge)
+            : yearsUntilBaseRetirement;
+    const adjustedServiceYears =
+        Math.max(0, baseServiceYears + serviceYearDelta);
+    const adjustedFinalAverageSalary =
+        Math.max(
+            0,
+            currentAnnualPay + (annualSalaryStep * yearsUntilSelectedRetirement)
+        ) || baseFinalAverageSalary;
+
+    nextInputs.retireAge = retireAge;
+    nextInputs.pension = {
+        ...(nextInputs.pension || {}),
+        serviceYears: adjustedServiceYears,
+        finalAverageSalary: adjustedFinalAverageSalary
+    };
+
+    return nextInputs;
+}
+
+function agesMatch(left, right) {
+    if (!Number.isFinite(left) || !Number.isFinite(right)) {
+        return false;
+    }
+
+    return Math.abs(left - right) < 0.01;
+}
+
+export function buildDashboardAgeAdjustedIncomeSources({
+    baseSources = [],
+    baseInputs = {},
+    retireAge
+}) {
+    const baseRetireAge =
+        baseInputs?.retireAge ??
+        baseInputs?.profile?.retirementAge ??
+        retireAge;
+    const pensionSourceNames = new Set([
+        "LEOFF Pension",
+        "LEOFF Lump Sum",
+        "PERS Plan 2 Pension"
+    ]);
+
+    return (baseSources || [])
+        .filter(source => !pensionSourceNames.has(source?.name))
+        .map(source => {
+            const nextSource = structuredClone(source || {});
+
+            if (
+                nextSource?.type === "portfolio" &&
+                agesMatch(nextSource.startAge, baseRetireAge)
+            ) {
+                nextSource.startAge = retireAge;
+            }
+
+            return nextSource;
+        });
+}

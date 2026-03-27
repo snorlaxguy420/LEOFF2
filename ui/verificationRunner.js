@@ -30,6 +30,8 @@ import {
 } from "./simulatorUiShared.js";
 import { createCollapsibleCard } from "../core/createCollapsibleCard.js";
 import {
+    buildDashboardAgeAdjustedInputs,
+    buildDashboardAgeAdjustedIncomeSources,
     buildExpenseBreakdownSummary,
     buildMonteCarloContent,
     buildPlanningLeverContent,
@@ -1514,6 +1516,98 @@ function testDashboardAgeOrderIntegrity() {
     logResult("Dashboard age-order integrity passed");
 }
 
+function testDashboardAgeAdjustedPensionInputs() {
+    const baseInputs = {
+        profile: {
+            currentAge: 50
+        },
+        retireAge: 55,
+        pension: {
+            serviceYears: 25,
+            currentAnnualPay: 100000,
+            finalAverageSalary: 110000
+        }
+    };
+    const earlierInputs = buildDashboardAgeAdjustedInputs({
+        baseInputs,
+        retireAge: 52
+    });
+    const laterInputs = buildDashboardAgeAdjustedInputs({
+        baseInputs,
+        retireAge: 60
+    });
+
+    assert(
+        earlierInputs.pension.serviceYears === 22,
+        "Dashboard age adjustment should reduce service years when the selected retirement age moves earlier"
+    );
+    assert(
+        laterInputs.pension.serviceYears === 30,
+        "Dashboard age adjustment should add service years when the selected retirement age moves later"
+    );
+    assert(
+        earlierInputs.pension.finalAverageSalary < baseInputs.pension.finalAverageSalary,
+        "Dashboard age adjustment should lower final average salary for earlier retirement ages"
+    );
+    assert(
+        laterInputs.pension.finalAverageSalary > baseInputs.pension.finalAverageSalary,
+        "Dashboard age adjustment should raise final average salary for later retirement ages"
+    );
+
+    logResult("Dashboard age-adjusted pension inputs passed");
+}
+
+function testDashboardAgeAdjustedIncomeSources() {
+    const baseInputs = {
+        profile: {
+            currentAge: 50
+        },
+        retireAge: 55
+    };
+    const baseSources = [
+        {
+            type: "portfolio",
+            name: "457(b)",
+            startAge: 55,
+            balance: 250000,
+            growthRate: 0.05,
+            withdrawalType: "percent",
+            withdrawalRate: 0.04
+        },
+        {
+            type: "portfolio",
+            name: "Bridge Brokerage",
+            startAge: 53,
+            balance: 120000,
+            growthRate: 0.04,
+            withdrawalType: "amount",
+            withdrawal: 12000
+        },
+        {
+            type: "fixed",
+            name: "LEOFF Lump Sum",
+            startAge: 55,
+            annualAmount: 12000
+        }
+    ];
+
+    const adjustedSources = buildDashboardAgeAdjustedIncomeSources({
+        baseSources,
+        baseInputs,
+        retireAge: 60
+    });
+    const shiftedPortfolio =
+        adjustedSources.find(source => source.name === "457(b)");
+    const bridgePortfolio =
+        adjustedSources.find(source => source.name === "Bridge Brokerage");
+
+    assert(adjustedSources.length === 2, "Dashboard should exclude pension-derived saved sources");
+    assert(shiftedPortfolio?.startAge === 60, "Dashboard should retime retirement-linked portfolio withdrawals");
+    assert(bridgePortfolio?.startAge === 53, "Dashboard should preserve manually offset portfolio withdrawal ages");
+
+    logResult("Dashboard age-adjusted income sources passed");
+}
+
 function testDashboardReportSectionPopulation() {
     const inputs = buildDashboardVerificationInputs();
     const incomeSources = buildSimulationIncomeSources({
@@ -1786,7 +1880,6 @@ function testMonteCarloEngine() {
         exaggeratedContent.percentile10EndingNetWorth === "Range too wide",
         "Dashboard Monte Carlo copy should suppress wealth values when the engine marks them as unreliable"
     );
-
     logResult("Monte Carlo engine passed");
 }
 
@@ -2312,9 +2405,11 @@ async function runVerification() {
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
-        testDashboardRecommendationConsistency();
-        testDashboardAgeOrderIntegrity();
-        testDashboardReportSectionPopulation();
+    testDashboardRecommendationConsistency();
+    testDashboardAgeOrderIntegrity();
+    testDashboardAgeAdjustedPensionInputs();
+    testDashboardAgeAdjustedIncomeSources();
+    testDashboardReportSectionPopulation();
         testMonteCarloEngine();
         testRetirementAgeComparisonMonotonicity();
         testSurvivorEstimatorOrdering();

@@ -1,8 +1,10 @@
 import {
-    getCurrentUser,
+    changeAccountPassword,
+    getAccountContext,
     loginAccount,
     logoutAccount,
-    registerAccount
+    registerAccount,
+    updateAccountProfile
 } from "./apiClient.js";
 
 const MODE_COPY = {
@@ -15,10 +17,15 @@ const MODE_SUBMIT_LABEL = {
     register: "Create Account"
 };
 
+const AUTH_SYNC_KEY = "leoffHelperAuthSync";
+
 const state = {
     mode: "login",
     user: null,
-    pending: false
+    session: null,
+    pending: false,
+    profilePending: false,
+    passwordPending: false
 };
 
 const elements = {
@@ -32,8 +39,75 @@ const elements = {
     copy: document.querySelector("[data-auth-copy]"),
     authenticatedPanel: document.querySelector("[data-authenticated-panel]"),
     authenticatedEmail: document.querySelector("[data-auth-email]"),
-    modeButtons: Array.from(document.querySelectorAll("[data-auth-mode-toggle]"))
+    authenticatedDisplayName: document.querySelector("[data-auth-display-name]"),
+    authenticatedCreatedAt: document.querySelector("[data-auth-created-at]"),
+    sessionStatus: document.querySelector("[data-session-status]"),
+    sessionExpiry: document.querySelector("[data-session-expiry]"),
+    sessionRefreshButton: document.querySelector("[data-session-refresh]"),
+    modeButtons: Array.from(document.querySelectorAll("[data-auth-mode-toggle]")),
+    profileForm: document.querySelector("[data-profile-form]"),
+    profileSubmit: document.querySelector("[data-profile-submit]"),
+    displayNameInput: document.querySelector('[data-profile-form] input[name="displayName"]'),
+    passwordForm: document.querySelector("[data-password-form]"),
+    passwordSubmit: document.querySelector("[data-password-submit]")
 };
+
+function broadcastAuthChange(type, user = null) {
+    try {
+        localStorage.setItem(
+            AUTH_SYNC_KEY,
+            JSON.stringify({
+                type,
+                at: Date.now()
+            })
+        );
+    } catch (error) {
+        console.warn("Auth sync broadcast failed", error);
+    }
+
+    window.dispatchEvent(
+        new CustomEvent("leoff-auth-state", {
+            detail: {
+                type,
+                user
+            }
+        })
+    );
+}
+
+function formatDisplayName(user) {
+    if (user?.displayName?.trim()) {
+        return user.displayName.trim();
+    }
+
+    const localPart = String(user?.email || "").split("@")[0] || "Member";
+
+    return localPart
+        .replace(/[._-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, character => character.toUpperCase());
+}
+
+function formatTimestamp(value) {
+    if (!value) {
+        return "Unavailable";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "Unavailable";
+    }
+
+    return date.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
 
 function setStatus(message, tone = "neutral") {
     if (!elements.status) {
@@ -79,6 +153,41 @@ function setPending(pending) {
     });
 }
 
+function setProfilePending(pending) {
+    state.profilePending = pending;
+
+    if (elements.displayNameInput) {
+        elements.displayNameInput.disabled = pending;
+    }
+
+    if (elements.profileSubmit) {
+        elements.profileSubmit.disabled = pending;
+        elements.profileSubmit.textContent = pending
+            ? "Saving..."
+            : "Save Settings";
+    }
+}
+
+function setPasswordPending(pending) {
+    state.passwordPending = pending;
+
+    if (!elements.passwordForm) {
+        return;
+    }
+
+    Array.from(elements.passwordForm.querySelectorAll("input"))
+        .forEach(input => {
+            input.disabled = pending;
+        });
+
+    if (elements.passwordSubmit) {
+        elements.passwordSubmit.disabled = pending;
+        elements.passwordSubmit.textContent = pending
+            ? "Updating..."
+            : "Update Password";
+    }
+}
+
 function updateMode(mode) {
     state.mode = mode;
 
@@ -104,10 +213,27 @@ function updateMode(mode) {
     setStatus("");
 }
 
-function renderAuthenticatedState(user) {
-    state.user = user;
+function renderSessionInfo(session) {
+    if (elements.sessionStatus) {
+        elements.sessionStatus.textContent = session
+            ? `Active (${session.idleTimeoutMinutes || 15}-minute inactivity timeout)`
+            : "Signed out";
+    }
 
+    if (elements.sessionExpiry) {
+        elements.sessionExpiry.textContent = session
+            ? formatTimestamp(session.expiresAt)
+            : "Unavailable";
+    }
+}
+
+function renderAuthenticatedState(accountContext = null) {
+    const user = accountContext?.user || null;
+    const session = accountContext?.session || null;
     const authenticated = Boolean(user);
+
+    state.user = user;
+    state.session = session;
 
     if (elements.form) {
         elements.form.hidden = authenticated;
@@ -121,9 +247,13 @@ function renderAuthenticatedState(user) {
         elements.logoutButton.hidden = !authenticated;
     }
 
+    if (elements.sessionRefreshButton) {
+        elements.sessionRefreshButton.hidden = !authenticated;
+    }
+
     if (elements.footer) {
         elements.footer.textContent = authenticated
-            ? "You can stay signed in here while the saved-plan account UI expands."
+            ? "Your account is active. Settings and password management are available here while synced planning continues to expand."
             : "New here? Create an account now so your saved-plan flow is ready as frontend syncing rolls out.";
     }
 
@@ -131,17 +261,40 @@ function renderAuthenticatedState(user) {
         elements.authenticatedEmail.textContent = user?.email || "";
     }
 
-    if (authenticated) {
-        setStatus("You're signed in successfully.", "success");
+    if (elements.authenticatedDisplayName) {
+        elements.authenticatedDisplayName.textContent = authenticated
+            ? formatDisplayName(user)
+            : "";
     }
 
+    if (elements.authenticatedCreatedAt) {
+        elements.authenticatedCreatedAt.textContent = authenticated
+            ? formatTimestamp(user.createdAt)
+            : "Unavailable";
+    }
+
+    if (elements.displayNameInput) {
+        elements.displayNameInput.value = user?.displayName || "";
+    }
+
+    renderSessionInfo(session);
     setPending(false);
+    setProfilePending(false);
+    setPasswordPending(false);
 }
 
-async function refreshSession() {
+async function refreshAccountContext(statusMessage = "", tone = "success") {
     try {
-        const user = await getCurrentUser();
-        renderAuthenticatedState(user);
+        const accountContext = await getAccountContext();
+        renderAuthenticatedState(accountContext);
+
+        if (statusMessage) {
+            setStatus(statusMessage, tone);
+        } else if (accountContext?.user) {
+            setStatus("You're signed in successfully.", "success");
+        } else {
+            setStatus("");
+        }
     } catch (error) {
         renderAuthenticatedState(null);
         setStatus("");
@@ -177,11 +330,19 @@ async function handleSubmit(event) {
     );
 
     try {
-        const user = state.mode === "register"
-            ? await registerAccount(email, password)
-            : await loginAccount(email, password);
+        if (state.mode === "register") {
+            await registerAccount(email, password);
+        } else {
+            await loginAccount(email, password);
+        }
 
-        renderAuthenticatedState(user);
+        await refreshAccountContext(
+            state.mode === "register"
+                ? "Your account is ready."
+                : "You're signed in successfully.",
+            "success"
+        );
+        broadcastAuthChange("login", state.user);
     } catch (error) {
         setPending(false);
         setStatus(error.message || "Authentication failed.", "error");
@@ -198,17 +359,94 @@ async function handleLogout() {
 
     try {
         await logoutAccount();
-        if (elements.form) {
-            elements.form.hidden = false;
-            elements.form.reset();
-        }
+
+        elements.form?.reset();
+        elements.passwordForm?.reset();
         renderAuthenticatedState(null);
         updateMode("login");
         setStatus("You have been signed out.", "success");
+        broadcastAuthChange("logout", null);
     } catch (error) {
         setPending(false);
         setStatus(error.message || "Unable to sign out right now.", "error");
     }
+}
+
+async function handleProfileSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user || state.profilePending) {
+        return;
+    }
+
+    const displayName = elements.displayNameInput?.value?.trim() || "";
+
+    setProfilePending(true);
+    setStatus("Saving account settings...", "neutral");
+
+    try {
+        const accountContext = await updateAccountProfile({ displayName });
+        renderAuthenticatedState(accountContext);
+        setStatus("Account settings updated.", "success");
+        broadcastAuthChange("profile", accountContext?.user || null);
+    } catch (error) {
+        setProfilePending(false);
+        setStatus(error.message || "Account settings could not be saved.", "error");
+    }
+}
+
+async function handlePasswordSubmit(event) {
+    event.preventDefault();
+
+    if (!state.user || state.passwordPending || !elements.passwordForm) {
+        return;
+    }
+
+    const currentPassword =
+        elements.passwordForm.querySelector('input[name="currentPassword"]')?.value || "";
+    const newPassword =
+        elements.passwordForm.querySelector('input[name="newPassword"]')?.value || "";
+    const confirmPassword =
+        elements.passwordForm.querySelector('input[name="confirmPassword"]')?.value || "";
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        setStatus("Fill out all password fields before updating.", "error");
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        setStatus("New password must be at least 8 characters.", "error");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        setStatus("New password and confirmation must match.", "error");
+        return;
+    }
+
+    setPasswordPending(true);
+    setStatus("Updating your password...", "neutral");
+
+    try {
+        await changeAccountPassword(currentPassword, newPassword);
+        elements.passwordForm.reset();
+        await refreshAccountContext(
+            "Password updated successfully. Your active session remains signed in.",
+            "success"
+        );
+    } catch (error) {
+        setPasswordPending(false);
+        setStatus(error.message || "Password could not be updated.", "error");
+    }
+}
+
+async function handleSessionRefresh() {
+    if (!state.user) {
+        return;
+    }
+
+    setStatus("Refreshing your active session...", "neutral");
+    await refreshAccountContext("Session refreshed.", "success");
 }
 
 function bindEvents() {
@@ -224,8 +462,28 @@ function bindEvents() {
 
     elements.form?.addEventListener("submit", handleSubmit);
     elements.logoutButton?.addEventListener("click", handleLogout);
+    elements.profileForm?.addEventListener("submit", handleProfileSubmit);
+    elements.passwordForm?.addEventListener("submit", handlePasswordSubmit);
+    elements.sessionRefreshButton?.addEventListener("click", handleSessionRefresh);
+
+    window.addEventListener("leoff-auth-state", event => {
+        const type = event.detail?.type || "";
+
+        if (type === "logout" || type === "expired") {
+            elements.form?.reset();
+            elements.passwordForm?.reset();
+            renderAuthenticatedState(null);
+            updateMode("login");
+            setStatus(
+                type === "expired"
+                    ? "Your session timed out after 15 minutes of inactivity."
+                    : "You have been signed out.",
+                type === "expired" ? "error" : "success"
+            );
+        }
+    });
 }
 
 updateMode("login");
 bindEvents();
-refreshSession();
+refreshAccountContext();

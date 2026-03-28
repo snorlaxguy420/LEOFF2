@@ -369,6 +369,86 @@ body {
     color: var(--text-soft);
 }
 
+.login-account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.login-account-card {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(31, 77, 58, 0.10);
+}
+
+.login-account-card-kicker {
+    margin-bottom: 8px;
+    color: var(--pnw-evergreen);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.login-account-card h4 {
+    margin: 0 0 10px;
+    color: var(--pnw-navy);
+    font-size: 22px;
+}
+
+.login-account-copy {
+    margin: 0 0 14px;
+    line-height: 1.6;
+    color: var(--text-soft);
+}
+
+.login-account-meta,
+.login-session-meta {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--text-soft);
+}
+
+.login-account-meta strong,
+.login-session-meta strong {
+    color: var(--pnw-navy);
+}
+
+.login-settings-form {
+    display: grid;
+    gap: 14px;
+}
+
+.login-settings-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--pnw-navy);
+}
+
+.login-settings-form input[type="text"],
+.login-settings-form input[type="password"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 13px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    background: rgba(255,255,255,0.92);
+    font-size: 15px;
+}
+
+.login-password-card {
+    margin-top: 16px;
+}
+
 @media (max-width: 980px) {
     .login-layout {
         grid-template-columns: 1fr;
@@ -392,6 +472,10 @@ body {
     .login-info-card,
     .login-card {
         padding: 20px 18px;
+    }
+
+    .login-account-grid {
+        grid-template-columns: 1fr;
     }
 
     .login-row {

@@ -44,6 +44,6 @@ export const config = {
         "SESSION_COOKIE_NAME",
         "leoff_helper_session"
     ),
-    sessionTtlDays: readNumberEnv("SESSION_TTL_DAYS", 30),
+    sessionTtlMinutes: readNumberEnv("SESSION_TTL_MINUTES", 15),
     dataFilePath: path.join(projectRoot, "data", "store.json")
 };

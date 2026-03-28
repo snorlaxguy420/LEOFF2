@@ -54,6 +54,7 @@ const SUGGESTED_INFLATION_DEFAULTS = {
 };
 const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
 const ACCOUNT_PLAN_META_KEY = "leoffHelperAccountPlanMeta";
+const AUTH_SYNC_KEY = "leoffHelperAuthSync";
 let currentAccountUser = null;
 let currentAccountPlans = [];
 
@@ -755,6 +756,18 @@ function setupAccountPlansUi() {
         if (action === "delete") {
             await deleteAccountPlanById(planId);
         }
+    });
+
+    window.addEventListener("leoff-auth-state", async () => {
+        await refreshAccountPlans();
+    });
+
+    window.addEventListener("storage", async event => {
+        if (event.key !== AUTH_SYNC_KEY) {
+            return;
+        }
+
+        await refreshAccountPlans();
     });
 }
 

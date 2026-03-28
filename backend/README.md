@@ -30,7 +30,7 @@ server reads:
 - `HOST`
 - `CORS_ORIGINS`
 - `SESSION_COOKIE_NAME`
-- `SESSION_TTL_DAYS`
+- `SESSION_TTL_MINUTES`
 
 ## Current endpoints
 
@@ -38,7 +38,9 @@ server reads:
 - `POST /auth/register`
 - `POST /auth/login`
 - `POST /auth/logout`
+- `POST /auth/change-password`
 - `GET /me`
+- `PATCH /me`
 - `GET /plans`
 - `POST /plans`
 - `GET /plans/:id`
@@ -49,6 +51,8 @@ server reads:
 
 - Passwords are hashed with Node's `scrypt`.
 - Sessions are stored server-side and referenced by an HTTP-only cookie.
+- Sessions now use a 15-minute idle timeout by default, with authenticated API
+  activity refreshing the active session window.
 - Plans store the canonical `simulationState` and can also persist full
   `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so it can

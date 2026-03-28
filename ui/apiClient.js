@@ -37,10 +37,14 @@ async function request(path, options = {}) {
     return payload;
 }
 
-export async function getCurrentUser() {
-    const payload = await request("/me", {
+export async function getAccountContext() {
+    return request("/me", {
         method: "GET"
     });
+}
+
+export async function getCurrentUser() {
+    const payload = await getAccountContext();
 
     return payload?.user || null;
 }
@@ -67,6 +71,27 @@ export async function logoutAccount() {
     await request("/auth/logout", {
         method: "POST"
     });
+}
+
+export async function updateAccountProfile(updates = {}) {
+    const payload = await request("/me", {
+        method: "PATCH",
+        body: JSON.stringify(updates)
+    });
+
+    return payload || null;
+}
+
+export async function changeAccountPassword(currentPassword, newPassword) {
+    const payload = await request("/auth/change-password", {
+        method: "POST",
+        body: JSON.stringify({
+            currentPassword,
+            newPassword
+        })
+    });
+
+    return payload || null;
 }
 
 export async function listPlans() {

@@ -25,10 +25,31 @@ function getCookieSecurity(req) {
     return Boolean(encrypted || forwardedProto === "https");
 }
 
+function getSessionMaxAgeSeconds() {
+    return config.sessionTtlMinutes * 60;
+}
+
+function buildSessionExpiryIso() {
+    return new Date(
+        Date.now() + (getSessionMaxAgeSeconds() * 1000)
+    ).toISOString();
+}
+
+function buildSessionCookieOptions(req) {
+    return {
+        httpOnly: true,
+        path: "/",
+        sameSite: "Lax",
+        secure: getCookieSecurity(req),
+        maxAge: getSessionMaxAgeSeconds()
+    };
+}
+
 function sanitizeUser(user) {
     return {
         id: user.id,
         email: user.email,
+        displayName: user.displayName || "",
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
     };
@@ -143,7 +164,8 @@ async function getAuthenticatedSession(req) {
     return {
         user,
         session,
-        tokenHash
+        tokenHash,
+        sessionToken
     };
 }
 
@@ -174,9 +196,7 @@ async function handleRegister(req, res) {
     const sessionToken = createSessionToken();
     const tokenHash = hashSessionToken(sessionToken);
     const now = new Date().toISOString();
-    const expiresAt = new Date(
-        Date.now() + (config.sessionTtlDays * 24 * 60 * 60 * 1000)
-    ).toISOString();
+    const expiresAt = buildSessionExpiryIso();
     const user = {
         id: createId("user"),
         email,
@@ -201,13 +221,11 @@ async function handleRegister(req, res) {
 
     res.setHeader(
         "Set-Cookie",
-        buildCookie(config.sessionCookieName, sessionToken, {
-            httpOnly: true,
-            path: "/",
-            sameSite: "Lax",
-            secure: getCookieSecurity(req),
-            maxAge: config.sessionTtlDays * 24 * 60 * 60
-        })
+        buildCookie(
+            config.sessionCookieName,
+            sessionToken,
+            buildSessionCookieOptions(req)
+        )
     );
 
     sendJson(res, 201, {
@@ -241,9 +259,7 @@ async function handleLogin(req, res) {
     const sessionToken = createSessionToken();
     const tokenHash = hashSessionToken(sessionToken);
     const now = new Date().toISOString();
-    const expiresAt = new Date(
-        Date.now() + (config.sessionTtlDays * 24 * 60 * 60 * 1000)
-    ).toISOString();
+    const expiresAt = buildSessionExpiryIso();
     const session = {
         id: createId("session"),
         userId: user.id,
@@ -262,13 +278,11 @@ async function handleLogin(req, res) {
 
     res.setHeader(
         "Set-Cookie",
-        buildCookie(config.sessionCookieName, sessionToken, {
-            httpOnly: true,
-            path: "/",
-            sameSite: "Lax",
-            secure: getCookieSecurity(req),
-            maxAge: config.sessionTtlDays * 24 * 60 * 60
-        })
+        buildCookie(
+            config.sessionCookieName,
+            sessionToken,
+            buildSessionCookieOptions(req)
+        )
     );
 
     sendJson(res, 200, {
@@ -310,7 +324,38 @@ async function requireAuth(req, res) {
         return null;
     }
 
-    return sessionContext;
+    const refreshedExpiresAt = buildSessionExpiryIso();
+
+    await withStore(store => ({
+        ...store,
+        sessions: store.sessions.map(entry => {
+            if (entry.id !== sessionContext.session.id) {
+                return entry;
+            }
+
+            return {
+                ...entry,
+                expiresAt: refreshedExpiresAt
+            };
+        })
+    }));
+
+    res.setHeader(
+        "Set-Cookie",
+        buildCookie(
+            config.sessionCookieName,
+            sessionContext.sessionToken,
+            buildSessionCookieOptions(req)
+        )
+    );
+
+    return {
+        ...sessionContext,
+        session: {
+            ...sessionContext.session,
+            expiresAt: refreshedExpiresAt
+        }
+    };
 }
 
 async function handleGetMe(req, res) {
@@ -321,7 +366,114 @@ async function handleGetMe(req, res) {
     }
 
     sendJson(res, 200, {
-        user: sanitizeUser(sessionContext.user)
+        user: sanitizeUser(sessionContext.user),
+        session: {
+            expiresAt: sessionContext.session.expiresAt,
+            idleTimeoutMinutes: config.sessionTtlMinutes
+        }
+    });
+}
+
+async function handleUpdateMe(req, res) {
+    const sessionContext = await requireAuth(req, res);
+
+    if (!sessionContext) {
+        return;
+    }
+
+    const body = await readJsonBody(req);
+    const nextDisplayName = String(body.displayName || "").trim();
+    let updatedUser = null;
+
+    if (nextDisplayName.length > 80) {
+        sendError(res, 400, "Display name must be 80 characters or fewer.");
+        return;
+    }
+
+    await withStore(store => ({
+        ...store,
+        users: store.users.map(user => {
+            if (user.id !== sessionContext.user.id) {
+                return user;
+            }
+
+            updatedUser = {
+                ...user,
+                displayName: nextDisplayName,
+                updatedAt: new Date().toISOString()
+            };
+
+            return updatedUser;
+        })
+    }));
+
+    if (!updatedUser) {
+        sendError(res, 404, "User not found.");
+        return;
+    }
+
+    sendJson(res, 200, {
+        user: sanitizeUser(updatedUser),
+        session: {
+            expiresAt: sessionContext.session.expiresAt,
+            idleTimeoutMinutes: config.sessionTtlMinutes
+        }
+    });
+}
+
+async function handleChangePassword(req, res) {
+    const sessionContext = await requireAuth(req, res);
+
+    if (!sessionContext) {
+        return;
+    }
+
+    const body = await readJsonBody(req);
+    const currentPassword = String(body.currentPassword || "");
+    const nextPassword = String(body.newPassword || "");
+
+    if (!currentPassword || !nextPassword) {
+        sendError(res, 400, "Current password and new password are required.");
+        return;
+    }
+
+    if (nextPassword.length < 8) {
+        sendError(res, 400, "New password must be at least 8 characters.");
+        return;
+    }
+
+    const validPassword = await verifyPassword(
+        currentPassword,
+        sessionContext.user.passwordHash,
+        sessionContext.user.passwordSalt
+    );
+
+    if (!validPassword) {
+        sendError(res, 401, "Current password is incorrect.");
+        return;
+    }
+
+    const passwordRecord = await hashPassword(nextPassword);
+    const updatedAt = new Date().toISOString();
+
+    await withStore(store => ({
+        ...store,
+        users: store.users.map(user => {
+            if (user.id !== sessionContext.user.id) {
+                return user;
+            }
+
+            return {
+                ...user,
+                passwordHash: passwordRecord.hash,
+                passwordSalt: passwordRecord.salt,
+                updatedAt
+            };
+        })
+    }));
+
+    sendJson(res, 200, {
+        message: "Password updated successfully."
     });
 }
 
@@ -559,6 +711,16 @@ export async function handleRequest(req, res) {
 
         if (req.method === "GET" && pathname === "/me") {
             await handleGetMe(req, res);
+            return;
+        }
+
+        if (req.method === "PATCH" && pathname === "/me") {
+            await handleUpdateMe(req, res);
+            return;
+        }
+
+        if (req.method === "POST" && pathname === "/auth/change-password") {
+            await handleChangePassword(req, res);
             return;
         }
 

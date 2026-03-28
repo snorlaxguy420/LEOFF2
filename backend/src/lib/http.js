@@ -102,6 +102,6 @@ export function applyCors(req, res, corsOrigins = []) {
     );
     res.setHeader(
         "Access-Control-Allow-Methods",
-        "GET,POST,PUT,DELETE,OPTIONS"
+        "GET,POST,PUT,PATCH,DELETE,OPTIONS"
     );
 }

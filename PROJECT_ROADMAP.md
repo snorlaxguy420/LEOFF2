@@ -169,12 +169,34 @@ Remaining:
 - Optional true one-click PDF generation beyond the browser print-to-PDF flow
 
 ### Phase 9 - Accounts (Premium Feature)
-Status: Not implemented
+Status: In progress
 
-Planned:
-- Authentication
-- Saved plans
-- Scenario comparison persistence
+Completed / In progress:
+- A standalone backend service now exists in [backend/src/server.js](/D:/LEOFF%202/backend/src/server.js) and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), with session-based auth and plan CRUD routes for account work
+- The live API is now deployed behind `https://api.leoffhelper.com`, giving the project a real backend entry point for account features
+- The login page now supports real email/password account creation, sign-in, session restore, and logout through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
+- Simulator import/export remains available as a non-backend backup path, while account-backed plan syncing is now wired into the simulator shell through [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html) and [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js)
+- Account plans can now persist full `workspaceState`, not just `simulationState`, so asset/debt module cards restore more faithfully across saved sessions in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
+- Shared site headers now support logged-in account state, showing `Welcome, <username>` plus `LOG OUT` instead of `LOG IN`, through [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js) and the public page shells
+- Accounts now use a 15-minute inactivity timeout with backend sliding-session refresh behavior in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js), and [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js)
+- The account page now includes a real settings surface for preferred name, visible session-policy details, session refresh, and in-session password updates through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js), and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
+
+Remaining:
+- Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
+- Add a more intentional `My Plans` management experience beyond the current simulator-side list/open/delete controls
+- Add scenario comparison persistence tied to the authenticated account
+- Add premium billing and payment collection, including checkout/subscription management for `$1.49/month` or `$14.99/year` premium accounts
+- Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
+- Add premium saved-scenario comparison so users can compare retirement ages, survivor elections, spending assumptions, and strategy variants side by side
+- Add premium strategy optimization features such as Social Security timing guidance, bridge-year funding suggestions, withdrawal sequencing, and tax-aware income planning
+- Add premium estate-planning / estate-advising options so long-term household planning can extend beyond retirement income alone
+- Add premium advanced printable reports and cleaner export packages for spouse, household, or professional planning discussions
+- Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together
+- Add premium tax-detail views with stronger year-by-year taxable-income and withdrawal-impact visibility
+- Add premium custom stress testing so users can define harsher inflation, recession, healthcare, or sequence-of-returns cases directly
+- Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
+- Replace the temporary file-backed backend store with PostgreSQL once the route contract is stable enough to migrate
+- Add out-of-session password recovery via email or another recovery channel once outbound messaging exists
 
 ### Phase 10 - Search Engine Optimization
 Status: In progress
@@ -253,6 +275,7 @@ Completed:
 - DNS and domain routing are now configured for the live site
 - The site is now published to a live production environment on GitHub Pages with the custom domain in place
 - A basic deployment/update workflow now exists through Git pushes to `main`
+- A live backend service now exists on Lightsail behind `https://api.leoffhelper.com`, with HTTPS, reverse proxying, and persistent service management in place for the new accounts foundation
 
 Remaining:
 - Prioritize core domains:
@@ -309,8 +332,8 @@ Remaining:
 
 ## Immediate Next Steps
 
--> 1. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
-2. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
-3. Keep validating Monte Carlo outputs in real beta scenarios and continue tightening any remaining assumptions or display rules that can produce counterintuitive results.
-4. Verify the updated essential-versus-discretionary expense behavior in real UI runs and decide whether users need manual category overrides.
-5. Keep deepening Phase 8 report polish now that printable report, PDF export, and report detail sections are in place.
+-> 1. Deploy and live-verify the new frontend accounts flow so login, account creation, and synced plan save/load all work end to end against `api.leoffhelper.com`.
+2. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
+3. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
+4. Keep validating Monte Carlo outputs in real beta scenarios and continue tightening any remaining assumptions or display rules that can produce counterintuitive results.
+5. Replace the temporary backend JSON store with PostgreSQL once the accounts flow has passed enough live testing to freeze the first persistence contract.

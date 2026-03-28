@@ -102,11 +102,67 @@ Password
 
 <div class="login-authenticated" data-authenticated-panel hidden>
 <div class="login-authenticated-kicker">Signed In</div>
-<h3>Account ready for <span data-auth-email></span></h3>
+<h3>Account ready for <span data-auth-display-name></span></h3>
 <p>
-Your secure account session is active. Local import/export still works today,
-and account-backed plan management is the next frontend step.
+Your secure account session is active. You can manage your account settings
+here while saved-plan syncing continues to expand.
 </p>
+
+<div class="login-account-grid">
+<section class="login-account-card">
+<div class="login-account-card-kicker">Account Profile</div>
+<h4>Settings</h4>
+<div class="login-account-meta">
+<div><strong>Email:</strong> <span data-auth-email></span></div>
+<div><strong>Member since:</strong> <span data-auth-created-at></span></div>
+</div>
+<form class="login-settings-form" data-profile-form>
+<label>
+Preferred Name
+<input type="text" name="displayName" placeholder="How your name should appear">
+</label>
+<button type="submit" class="login-submit" data-profile-submit>Save Settings</button>
+</form>
+</section>
+
+<section class="login-account-card">
+<div class="login-account-card-kicker">Session Management</div>
+<h4>Security</h4>
+<p class="login-account-copy">
+Your account signs out after 15 minutes of inactivity. Any activity on the
+site refreshes the session automatically while you are using it.
+</p>
+<div class="login-session-meta">
+<div><strong>Session status:</strong> <span data-session-status>Active</span></div>
+<div><strong>Current expiry:</strong> <span data-session-expiry>Refreshing...</span></div>
+</div>
+<button type="button" class="login-secondary-btn" data-session-refresh>Refresh Session</button>
+</section>
+</div>
+
+<section class="login-account-card login-password-card">
+<div class="login-account-card-kicker">Password Reset</div>
+<h4>Update Password</h4>
+<p class="login-account-copy">
+For now, password resets happen from an active signed-in session. Recovery
+email links can be added later without changing the rest of this account flow.
+</p>
+<form class="login-settings-form" data-password-form>
+<label>
+Current Password
+<input type="password" name="currentPassword" placeholder="Enter current password" autocomplete="current-password">
+</label>
+<label>
+New Password
+<input type="password" name="newPassword" placeholder="Enter new password" autocomplete="new-password" minlength="8">
+</label>
+<label>
+Confirm New Password
+<input type="password" name="confirmPassword" placeholder="Confirm new password" autocomplete="new-password" minlength="8">
+</label>
+<button type="submit" class="login-submit" data-password-submit>Update Password</button>
+</form>
+</section>
 </div>
 
 <p class="login-footer-note" data-auth-footer>
@@ -164,6 +220,7 @@ New here? Create an account now so your saved-plan flow is ready as frontend syn
 
 </footer>
 
+<script type="module" src="/ui/authHeader.js"></script>
 <script type="module" src="/ui/login.js"></script>
 </body>
 </html>

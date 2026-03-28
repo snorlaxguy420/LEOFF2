@@ -51,8 +51,8 @@ work organized in one place as account features roll out.
 <div class="login-note">
 <strong>Current status</strong>
 <p>
-Accounts are now live on the backend. You can create an account and sign in
-today, and frontend saved-plan syncing will build on this flow next.
+Accounts and synced plan saving are now live. Email-based password recovery
+can now plug into the same account flow as outbound delivery is configured.
 </p>
 </div>
 </div>
@@ -60,11 +60,11 @@ today, and frontend saved-plan syncing will build on this flow next.
 <div class="login-card">
 <div class="login-card-head">
 <div class="login-card-kicker">LEOFF Helper</div>
-<h2>Log In</h2>
+<h2 data-auth-title>Log In</h2>
 <p class="login-card-copy" data-auth-copy>Use your account email to access your saved retirement work.</p>
 </div>
 
-<div class="login-mode-toggle" role="tablist" aria-label="Authentication mode">
+<div class="login-mode-toggle" data-auth-mode-controls role="tablist" aria-label="Authentication mode">
 <button type="button" class="login-mode-btn is-active" data-auth-mode-toggle="login" aria-pressed="true">Log In</button>
 <button type="button" class="login-mode-btn" data-auth-mode-toggle="register" aria-pressed="false">Create Account</button>
 </div>
@@ -87,15 +87,45 @@ Password
 <input type="checkbox" name="remember" checked>
 <span>Remember me</span>
 </label>
-<span class="login-inline-note">Use at least 8 characters for new accounts.</span>
+<button type="button" class="login-link login-link-button" data-forgot-password-trigger>Forgot password?</button>
 </div>
+
+<span class="login-inline-note">Use at least 8 characters for new accounts.</span>
 
 <button type="submit" class="login-submit" data-auth-submit>Log In</button>
 </form>
 
-<div class="login-divider"><span>or</span></div>
+<form class="login-form" data-reset-request-form hidden>
+<label>
+Account Email
+<input type="email" name="recoveryEmail" placeholder="name@example.com" autocomplete="email">
+</label>
+<p class="login-inline-note">
+If the email exists, we will send a recovery link that expires after 60 minutes.
+</p>
+<button type="submit" class="login-submit" data-reset-request-submit>Send Reset Link</button>
+<button type="button" class="login-secondary-btn" data-reset-back>Back to Log In</button>
+</form>
 
-<div class="login-secondary-actions">
+<form class="login-form" data-reset-password-form hidden>
+<label>
+New Password
+<input type="password" name="resetNewPassword" placeholder="Enter a new password" autocomplete="new-password" minlength="8">
+</label>
+<label>
+Confirm New Password
+<input type="password" name="resetConfirmPassword" placeholder="Confirm your new password" autocomplete="new-password" minlength="8">
+</label>
+<p class="login-inline-note">
+Choose a new password for your LEOFF Helper account before this recovery link expires.
+</p>
+<button type="submit" class="login-submit" data-reset-password-submit>Save New Password</button>
+<button type="button" class="login-secondary-btn" data-reset-back>Back to Log In</button>
+</form>
+
+<div class="login-divider" data-auth-divider><span>or</span></div>
+
+<div class="login-secondary-actions" data-auth-secondary-actions>
 <a href="/ui/simulator.html" class="login-secondary-btn">Open Calculator</a>
 <button type="button" class="login-secondary-btn" data-auth-logout hidden>Log Out</button>
 </div>
@@ -144,8 +174,8 @@ site refreshes the session automatically while you are using it.
 <div class="login-account-card-kicker">Password Reset</div>
 <h4>Update Password</h4>
 <p class="login-account-copy">
-For now, password resets happen from an active signed-in session. Recovery
-email links can be added later without changing the rest of this account flow.
+Already signed in? Use this form to change your password immediately. If you
+are signed out later, the Forgot Password flow above can send a recovery link.
 </p>
 <form class="login-settings-form" data-password-form>
 <label>

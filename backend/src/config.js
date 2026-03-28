@@ -45,5 +45,13 @@ export const config = {
         "leoff_helper_session"
     ),
     sessionTtlMinutes: readNumberEnv("SESSION_TTL_MINUTES", 15),
-    dataFilePath: path.join(projectRoot, "data", "store.json")
+    passwordResetTtlMinutes: readNumberEnv("PASSWORD_RESET_TTL_MINUTES", 60),
+    publicSiteUrl: readEnv("PUBLIC_SITE_URL", "https://leoffhelper.com"),
+    supportEmail: readEnv("SUPPORT_EMAIL", "leoffhelper@gmail.com"),
+    emailFrom: readEnv("EMAIL_FROM", ""),
+    resendApiKey: readEnv("RESEND_API_KEY", ""),
+    dataFilePath: readEnv(
+        "DATA_FILE_PATH",
+        path.join(projectRoot, "data", "store.json")
+    )
 };

@@ -94,6 +94,27 @@ export async function changeAccountPassword(currentPassword, newPassword) {
     return payload || null;
 }
 
+export async function requestPasswordReset(email) {
+    const payload = await request("/auth/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email })
+    });
+
+    return payload || null;
+}
+
+export async function resetAccountPassword(token, newPassword) {
+    const payload = await request("/auth/reset-password", {
+        method: "POST",
+        body: JSON.stringify({
+            token,
+            newPassword
+        })
+    });
+
+    return payload || null;
+}
+
 export async function listPlans() {
     const payload = await request("/plans", {
         method: "GET"

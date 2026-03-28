@@ -5,7 +5,8 @@ import { config } from "../config.js";
 const DEFAULT_STORE = Object.freeze({
     users: [],
     sessions: [],
-    plans: []
+    plans: [],
+    passwordResetTokens: []
 });
 
 let writeQueue = Promise.resolve();
@@ -41,7 +42,10 @@ export async function readStore() {
         ...parsed,
         users: Array.isArray(parsed?.users) ? parsed.users : [],
         sessions: Array.isArray(parsed?.sessions) ? parsed.sessions : [],
-        plans: Array.isArray(parsed?.plans) ? parsed.plans : []
+        plans: Array.isArray(parsed?.plans) ? parsed.plans : [],
+        passwordResetTokens: Array.isArray(parsed?.passwordResetTokens)
+            ? parsed.passwordResetTokens
+            : []
     };
 }
 

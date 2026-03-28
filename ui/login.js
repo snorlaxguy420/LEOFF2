@@ -4,6 +4,8 @@ import {
     loginAccount,
     logoutAccount,
     registerAccount,
+    requestPasswordReset,
+    resetAccountPassword,
     updateAccountProfile
 } from "./apiClient.js";
 
@@ -12,23 +14,45 @@ const MODE_COPY = {
     register: "Create your account now so saved-plan syncing can attach to your retirement work."
 };
 
-const MODE_SUBMIT_LABEL = {
+const MODE_TITLE = {
     login: "Log In",
     register: "Create Account"
+};
+
+const VIEW_COPY = {
+    forgot:
+        "Enter your account email and we will send a recovery link if that address is registered.",
+    reset:
+        "Choose a new password to regain access to your saved retirement planning work."
+};
+
+const VIEW_TITLE = {
+    forgot: "Forgot Password",
+    reset: "Reset Password"
 };
 
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
 
 const state = {
     mode: "login",
+    view: "auth",
     user: null,
     session: null,
     pending: false,
     profilePending: false,
-    passwordPending: false
+    passwordPending: false,
+    recoveryPending: false,
+    recoveryPendingType: "",
+    resetToken: readResetTokenFromUrl()
 };
 
+if (state.resetToken) {
+    state.view = "reset";
+}
+
 const elements = {
+    authTitle: document.querySelector("[data-auth-title]"),
+    modeControls: document.querySelector("[data-auth-mode-controls]"),
     form: document.querySelector("[data-auth-form]"),
     emailInput: document.querySelector('input[name="email"]'),
     passwordInput: document.querySelector('input[name="password"]'),
@@ -37,6 +61,15 @@ const elements = {
     status: document.querySelector("[data-auth-status]"),
     footer: document.querySelector("[data-auth-footer]"),
     copy: document.querySelector("[data-auth-copy]"),
+    divider: document.querySelector("[data-auth-divider]"),
+    secondaryActions: document.querySelector("[data-auth-secondary-actions]"),
+    forgotPasswordTrigger: document.querySelector("[data-forgot-password-trigger]"),
+    resetRequestForm: document.querySelector("[data-reset-request-form]"),
+    resetRequestEmailInput: document.querySelector('input[name="recoveryEmail"]'),
+    resetRequestSubmit: document.querySelector("[data-reset-request-submit]"),
+    resetPasswordForm: document.querySelector("[data-reset-password-form]"),
+    resetPasswordSubmit: document.querySelector("[data-reset-password-submit]"),
+    resetBackButtons: Array.from(document.querySelectorAll("[data-reset-back]")),
     authenticatedPanel: document.querySelector("[data-authenticated-panel]"),
     authenticatedEmail: document.querySelector("[data-auth-email]"),
     authenticatedDisplayName: document.querySelector("[data-auth-display-name]"),
@@ -51,6 +84,30 @@ const elements = {
     passwordForm: document.querySelector("[data-password-form]"),
     passwordSubmit: document.querySelector("[data-password-submit]")
 };
+
+function readResetTokenFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        return url.searchParams.get("resetToken") || "";
+    } catch (error) {
+        console.warn("Reset token could not be read from the URL", error);
+        return "";
+    }
+}
+
+function clearResetTokenFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("resetToken");
+        window.history.replaceState(
+            {},
+            document.title,
+            `${url.pathname}${url.search}${url.hash}`
+        );
+    } catch (error) {
+        console.warn("Reset token could not be removed from the URL", error);
+    }
+}
 
 function broadcastAuthChange(type, user = null) {
     try {
@@ -126,6 +183,84 @@ function setStatus(message, tone = "neutral") {
     elements.status.dataset.tone = tone;
 }
 
+function getAnonymousTitle() {
+    if (state.view === "forgot" || state.view === "reset") {
+        return VIEW_TITLE[state.view];
+    }
+
+    return MODE_TITLE[state.mode];
+}
+
+function getAnonymousCopy() {
+    if (state.view === "forgot" || state.view === "reset") {
+        return VIEW_COPY[state.view];
+    }
+
+    return MODE_COPY[state.mode];
+}
+
+function getAnonymousFooter() {
+    if (state.view === "forgot") {
+        return "If the email is recognized, the recovery link will help you get back into your account without contacting support.";
+    }
+
+    if (state.view === "reset") {
+        return "After you save a new password, you can sign back in and continue working from your synced plans.";
+    }
+
+    return "New here? Create an account now so your saved-plan flow is ready as frontend syncing rolls out.";
+}
+
+function renderAnonymousView() {
+    const authenticated = Boolean(state.user);
+    const inAuthView = state.view === "auth";
+    const inForgotView = state.view === "forgot";
+    const inResetView = state.view === "reset";
+
+    if (elements.authTitle) {
+        elements.authTitle.textContent = getAnonymousTitle();
+    }
+
+    if (elements.copy) {
+        elements.copy.textContent = getAnonymousCopy();
+    }
+
+    if (elements.modeControls) {
+        elements.modeControls.hidden = authenticated || !inAuthView;
+    }
+
+    if (elements.form) {
+        elements.form.hidden = authenticated || !inAuthView;
+    }
+
+    if (elements.resetRequestForm) {
+        elements.resetRequestForm.hidden = authenticated || !inForgotView;
+    }
+
+    if (elements.resetPasswordForm) {
+        elements.resetPasswordForm.hidden = authenticated || !inResetView;
+    }
+
+    if (elements.divider) {
+        elements.divider.hidden = authenticated || !inAuthView;
+    }
+
+    if (elements.secondaryActions) {
+        elements.secondaryActions.hidden = authenticated || !inAuthView;
+    }
+
+    if (elements.forgotPasswordTrigger) {
+        elements.forgotPasswordTrigger.hidden =
+            authenticated ||
+            !inAuthView ||
+            state.mode !== "login";
+    }
+
+    if (!authenticated && elements.footer) {
+        elements.footer.textContent = getAnonymousFooter();
+    }
+}
+
 function setPending(pending) {
     state.pending = pending;
 
@@ -145,12 +280,14 @@ function setPending(pending) {
         elements.submitButton.disabled = disabled;
         elements.submitButton.textContent = pending
             ? (state.mode === "register" ? "Creating Account..." : "Logging In...")
-            : MODE_SUBMIT_LABEL[state.mode];
+            : MODE_TITLE[state.mode];
     }
 
     elements.modeButtons.forEach(button => {
         button.disabled = pending || Boolean(state.user);
     });
+
+    renderAnonymousView();
 }
 
 function setProfilePending(pending) {
@@ -188,7 +325,40 @@ function setPasswordPending(pending) {
     }
 }
 
-function updateMode(mode) {
+function setRecoveryPending(pending, type = "") {
+    state.recoveryPending = pending;
+    state.recoveryPendingType = pending ? type : "";
+
+    if (elements.resetRequestForm) {
+        Array.from(elements.resetRequestForm.querySelectorAll("input, button"))
+            .forEach(field => {
+                field.disabled = pending;
+            });
+    }
+
+    if (elements.resetPasswordForm) {
+        Array.from(elements.resetPasswordForm.querySelectorAll("input, button"))
+            .forEach(field => {
+                field.disabled = pending;
+            });
+    }
+
+    if (elements.resetRequestSubmit) {
+        elements.resetRequestSubmit.textContent =
+            pending && type === "request"
+                ? "Sending..."
+                : "Send Reset Link";
+    }
+
+    if (elements.resetPasswordSubmit) {
+        elements.resetPasswordSubmit.textContent =
+            pending && type === "reset"
+                ? "Saving..."
+                : "Save New Password";
+    }
+}
+
+function updateMode(mode, { preserveStatus = false } = {}) {
     state.mode = mode;
 
     elements.modeButtons.forEach(button => {
@@ -197,20 +367,25 @@ function updateMode(mode) {
         button.setAttribute("aria-pressed", String(active));
     });
 
-    if (elements.copy) {
-        elements.copy.textContent = MODE_COPY[mode];
-    }
-
-    if (elements.submitButton) {
-        elements.submitButton.textContent = MODE_SUBMIT_LABEL[mode];
-    }
-
     if (elements.passwordInput) {
         elements.passwordInput.autocomplete =
             mode === "register" ? "new-password" : "current-password";
     }
 
-    setStatus("");
+    renderAnonymousView();
+
+    if (!preserveStatus) {
+        setStatus("");
+    }
+}
+
+function setAnonymousView(view, { preserveStatus = false } = {}) {
+    state.view = view;
+    renderAnonymousView();
+
+    if (!preserveStatus) {
+        setStatus("");
+    }
 }
 
 function renderSessionInfo(session) {
@@ -235,9 +410,7 @@ function renderAuthenticatedState(accountContext = null) {
     state.user = user;
     state.session = session;
 
-    if (elements.form) {
-        elements.form.hidden = authenticated;
-    }
+    renderAnonymousView();
 
     if (elements.authenticatedPanel) {
         elements.authenticatedPanel.hidden = !authenticated;
@@ -254,7 +427,7 @@ function renderAuthenticatedState(accountContext = null) {
     if (elements.footer) {
         elements.footer.textContent = authenticated
             ? "Your account is active. Settings and password management are available here while synced planning continues to expand."
-            : "New here? Create an account now so your saved-plan flow is ready as frontend syncing rolls out.";
+            : getAnonymousFooter();
     }
 
     if (elements.authenticatedEmail) {
@@ -281,6 +454,7 @@ function renderAuthenticatedState(accountContext = null) {
     setPending(false);
     setProfilePending(false);
     setPasswordPending(false);
+    setRecoveryPending(false);
 }
 
 async function refreshAccountContext(statusMessage = "", tone = "success") {
@@ -297,14 +471,17 @@ async function refreshAccountContext(statusMessage = "", tone = "success") {
         }
     } catch (error) {
         renderAuthenticatedState(null);
-        setStatus("");
+
+        if (!statusMessage) {
+            setStatus("");
+        }
     }
 }
 
 async function handleSubmit(event) {
     event.preventDefault();
 
-    if (state.pending || state.user) {
+    if (state.pending || state.user || state.view !== "auth") {
         return;
     }
 
@@ -362,8 +539,9 @@ async function handleLogout() {
 
         elements.form?.reset();
         elements.passwordForm?.reset();
+        setAnonymousView("auth", { preserveStatus: true });
+        updateMode("login", { preserveStatus: true });
         renderAuthenticatedState(null);
-        updateMode("login");
         setStatus("You have been signed out.", "success");
         broadcastAuthChange("logout", null);
     } catch (error) {
@@ -440,19 +618,148 @@ async function handlePasswordSubmit(event) {
     }
 }
 
+function openForgotPasswordView() {
+    if (state.user || state.pending) {
+        return;
+    }
+
+    updateMode("login", { preserveStatus: true });
+
+    if (
+        elements.resetRequestEmailInput &&
+        !elements.resetRequestEmailInput.value.trim()
+    ) {
+        elements.resetRequestEmailInput.value =
+            elements.emailInput?.value?.trim() || "";
+    }
+
+    setAnonymousView("forgot");
+}
+
+function handleRecoveryBack() {
+    if (state.view === "reset") {
+        state.resetToken = "";
+        clearResetTokenFromUrl();
+        elements.resetPasswordForm?.reset();
+    }
+
+    setAnonymousView("auth", { preserveStatus: true });
+    updateMode("login", { preserveStatus: true });
+    setStatus("");
+}
+
+async function handleResetRequestSubmit(event) {
+    event.preventDefault();
+
+    if (state.user || state.recoveryPending) {
+        return;
+    }
+
+    const email = elements.resetRequestEmailInput?.value?.trim() || "";
+
+    if (!email) {
+        setStatus("Enter the email address tied to your account.", "error");
+        return;
+    }
+
+    setRecoveryPending(true, "request");
+    setStatus("Sending your recovery link...", "neutral");
+
+    try {
+        const payload = await requestPasswordReset(email);
+
+        if (elements.emailInput && !elements.emailInput.value.trim()) {
+            elements.emailInput.value = email;
+        }
+
+        elements.resetRequestForm?.reset();
+        setRecoveryPending(false);
+        setAnonymousView("auth", { preserveStatus: true });
+        updateMode("login", { preserveStatus: true });
+        setStatus(
+            payload?.message ||
+                "If that email is registered, a password reset link is on the way.",
+            "success"
+        );
+    } catch (error) {
+        setRecoveryPending(false);
+        setStatus(
+            error.message || "A password reset link could not be requested.",
+            "error"
+        );
+    }
+}
+
+async function handleResetPasswordSubmit(event) {
+    event.preventDefault();
+
+    if (state.user || state.recoveryPending || !state.resetToken) {
+        return;
+    }
+
+    const newPassword =
+        elements.resetPasswordForm
+            ?.querySelector('input[name="resetNewPassword"]')
+            ?.value || "";
+    const confirmPassword =
+        elements.resetPasswordForm
+            ?.querySelector('input[name="resetConfirmPassword"]')
+            ?.value || "";
+
+    if (!newPassword || !confirmPassword) {
+        setStatus("Fill out both password fields before saving.", "error");
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        setStatus("New password must be at least 8 characters.", "error");
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        setStatus("New password and confirmation must match.", "error");
+        return;
+    }
+
+    setRecoveryPending(true, "reset");
+    setStatus("Saving your new password...", "neutral");
+
+    try {
+        await resetAccountPassword(state.resetToken, newPassword);
+        elements.resetPasswordForm?.reset();
+        state.resetToken = "";
+        clearResetTokenFromUrl();
+        setRecoveryPending(false);
+        setAnonymousView("auth", { preserveStatus: true });
+        updateMode("login", { preserveStatus: true });
+        setStatus(
+            "Password reset successfully. You can log in with your new password now.",
+            "success"
+        );
+    } catch (error) {
+        setRecoveryPending(false);
+        setStatus(error.message || "Your password could not be reset.", "error");
+    }
+}
+
 async function handleSessionRefresh() {
     if (!state.user) {
         return;
     }
 
     setStatus("Refreshing your active session...", "neutral");
-    await refreshAccountContext("Session refreshed.", "success");
+
+    try {
+        await refreshAccountContext("Session refreshed.", "success");
+    } catch (error) {
+        setStatus(error.message || "The session could not be refreshed.", "error");
+    }
 }
 
 function bindEvents() {
     elements.modeButtons.forEach(button => {
         button.addEventListener("click", () => {
-            if (state.pending || state.user) {
+            if (state.pending || state.user || state.view !== "auth") {
                 return;
             }
 
@@ -465,6 +772,12 @@ function bindEvents() {
     elements.profileForm?.addEventListener("submit", handleProfileSubmit);
     elements.passwordForm?.addEventListener("submit", handlePasswordSubmit);
     elements.sessionRefreshButton?.addEventListener("click", handleSessionRefresh);
+    elements.forgotPasswordTrigger?.addEventListener("click", openForgotPasswordView);
+    elements.resetRequestForm?.addEventListener("submit", handleResetRequestSubmit);
+    elements.resetPasswordForm?.addEventListener("submit", handleResetPasswordSubmit);
+    elements.resetBackButtons.forEach(button => {
+        button.addEventListener("click", handleRecoveryBack);
+    });
 
     window.addEventListener("leoff-auth-state", event => {
         const type = event.detail?.type || "";
@@ -472,8 +785,9 @@ function bindEvents() {
         if (type === "logout" || type === "expired") {
             elements.form?.reset();
             elements.passwordForm?.reset();
+            setAnonymousView("auth", { preserveStatus: true });
+            updateMode("login", { preserveStatus: true });
             renderAuthenticatedState(null);
-            updateMode("login");
             setStatus(
                 type === "expired"
                     ? "Your session timed out after 15 minutes of inactivity."
@@ -484,6 +798,7 @@ function bindEvents() {
     });
 }
 
-updateMode("login");
+updateMode("login", { preserveStatus: true });
+setAnonymousView(state.view, { preserveStatus: true });
 bindEvents();
 refreshAccountContext();

@@ -196,6 +196,10 @@ body {
     gap: 16px;
 }
 
+.login-form p {
+    margin: 0;
+}
+
 .login-form label {
     display: flex;
     flex-direction: column;
@@ -249,6 +253,14 @@ body {
     text-decoration: none;
     font-size: 14px;
     font-weight: 600;
+}
+
+.login-link-button {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .login-link:hover {

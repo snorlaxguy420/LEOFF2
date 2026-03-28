@@ -1,5 +1,9 @@
 import { config } from "./config.js";
 import {
+    buildPasswordResetUrl,
+    sendPasswordResetEmail
+} from "./lib/email.js";
+import {
     applyCors,
     buildCookie,
     parseCookies,
@@ -32,6 +36,16 @@ function getSessionMaxAgeSeconds() {
 function buildSessionExpiryIso() {
     return new Date(
         Date.now() + (getSessionMaxAgeSeconds() * 1000)
+    ).toISOString();
+}
+
+function getPasswordResetMaxAgeMs() {
+    return config.passwordResetTtlMinutes * 60 * 1000;
+}
+
+function buildPasswordResetExpiryIso() {
+    return new Date(
+        Date.now() + getPasswordResetMaxAgeMs()
     ).toISOString();
 }
 
@@ -133,6 +147,22 @@ function getRouteParams(pathname, routePrefix) {
 
     const id = pathname.slice(routePrefix.length).trim();
     return id || null;
+}
+
+function filterActivePasswordResetTokens(tokens = []) {
+    const now = Date.now();
+
+    return tokens.filter(entry => {
+        if (!entry?.tokenHash || !entry?.userId || !entry?.expiresAt) {
+            return false;
+        }
+
+        if (entry.usedAt) {
+            return false;
+        }
+
+        return new Date(entry.expiresAt).getTime() > now;
+    });
 }
 
 async function getAuthenticatedSession(req) {
@@ -477,6 +507,130 @@ async function handleChangePassword(req, res) {
     });
 }
 
+async function handleForgotPassword(req, res) {
+    const body = await readJsonBody(req);
+    const email = normalizeEmail(body.email);
+    const genericMessage =
+        "If that email is registered, a password reset link is on the way.";
+
+    if (!email || !email.includes("@")) {
+        sendError(res, 400, "A valid email address is required.");
+        return;
+    }
+
+    const store = await readStore();
+    const user = store.users.find(entry => entry.email === email);
+
+    if (!user) {
+        sendJson(res, 200, {
+            message: genericMessage
+        });
+        return;
+    }
+
+    const resetToken = createSessionToken();
+    const tokenHash = hashSessionToken(resetToken);
+    const now = new Date().toISOString();
+    const expiresAt = buildPasswordResetExpiryIso();
+    const passwordResetRecord = {
+        id: createId("pwreset"),
+        userId: user.id,
+        tokenHash,
+        createdAt: now,
+        expiresAt
+    };
+
+    await withStore(nextStore => ({
+        ...nextStore,
+        passwordResetTokens: [
+            ...filterActivePasswordResetTokens(nextStore.passwordResetTokens)
+                .filter(entry => entry.userId !== user.id),
+            passwordResetRecord
+        ]
+    }));
+
+    try {
+        await sendPasswordResetEmail({
+            toEmail: user.email,
+            displayName: user.displayName || "",
+            resetUrl: buildPasswordResetUrl(resetToken)
+        });
+    } catch (error) {
+        await withStore(nextStore => ({
+            ...nextStore,
+            passwordResetTokens: filterActivePasswordResetTokens(
+                nextStore.passwordResetTokens
+            ).filter(entry => entry.tokenHash !== tokenHash)
+        }));
+        throw error;
+    }
+
+    sendJson(res, 200, {
+        message: genericMessage
+    });
+}
+
+async function handleResetPassword(req, res) {
+    const body = await readJsonBody(req);
+    const resetToken = String(body.token || "");
+    const nextPassword = String(body.newPassword || "");
+
+    if (!resetToken) {
+        sendError(res, 400, "A password reset token is required.");
+        return;
+    }
+
+    if (nextPassword.length < 8) {
+        sendError(res, 400, "New password must be at least 8 characters.");
+        return;
+    }
+
+    const tokenHash = hashSessionToken(resetToken);
+    const store = await readStore();
+    const activeResetToken = filterActivePasswordResetTokens(
+        store.passwordResetTokens
+    ).find(entry => entry.tokenHash === tokenHash);
+
+    if (!activeResetToken) {
+        sendError(res, 400, "That password reset link is invalid or has expired.");
+        return;
+    }
+
+    const user = store.users.find(entry => entry.id === activeResetToken.userId);
+
+    if (!user) {
+        sendError(res, 404, "User not found.");
+        return;
+    }
+
+    const passwordRecord = await hashPassword(nextPassword);
+    const updatedAt = new Date().toISOString();
+
+    await withStore(nextStore => ({
+        ...nextStore,
+        users: nextStore.users.map(entry => {
+            if (entry.id !== user.id) {
+                return entry;
+            }
+
+            return {
+                ...entry,
+                passwordHash: passwordRecord.hash,
+                passwordSalt: passwordRecord.salt,
+                updatedAt
+            };
+        }),
+        sessions: nextStore.sessions.filter(entry => entry.userId !== user.id),
+        passwordResetTokens: filterActivePasswordResetTokens(
+            nextStore.passwordResetTokens
+        ).filter(entry => entry.userId !== user.id)
+    }));
+
+    sendJson(res, 200, {
+        message: "Password reset successfully."
+    });
+}
+
 async function handleListPlans(req, res) {
     const sessionContext = await requireAuth(req, res);
 
@@ -724,6 +878,16 @@ export async function handleRequest(req, res) {
             return;
         }
 
+        if (req.method === "POST" && pathname === "/auth/forgot-password") {
+            await handleForgotPassword(req, res);
+            return;
+        }
+
+        if (req.method === "POST" && pathname === "/auth/reset-password") {
+            await handleResetPassword(req, res);
+            return;
+        }
+
         if (req.method === "GET" && pathname === "/plans") {
             await handleListPlans(req, res);
             return;
@@ -761,7 +925,12 @@ export async function handleRequest(req, res) {
         }
 
         if (error?.statusCode) {
-            sendError(res, error.statusCode, error.message || "Request failed.");
+            sendError(
+                res,
+                error.statusCode,
+                error.message || "Request failed.",
+                error.details || null
+            );
             return;
         }
 

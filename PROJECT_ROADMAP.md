@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 27, 2026
+Last updated: March 28, 2026
 
 ## Current Status
 
@@ -180,9 +180,11 @@ Completed / In progress:
 - Shared site headers now support logged-in account state, showing `Welcome, <username>` plus `LOG OUT` instead of `LOG IN`, through [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js) and the public page shells
 - Accounts now use a 15-minute inactivity timeout with backend sliding-session refresh behavior in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js), and [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js)
 - The account page now includes a real settings surface for preferred name, visible session-policy details, session refresh, and in-session password updates through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js), and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
+- Out-of-session password recovery now exists through token-based reset links, with configurable outbound email delivery plus a server-log fallback for local/dev testing, in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/lib/email.js](/D:/LEOFF%202/backend/src/lib/email.js), [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
+- Configure live transactional email delivery on the deployed backend and verify the production password-recovery flow end to end
 - Add a more intentional `My Plans` management experience beyond the current simulator-side list/open/delete controls
 - Add scenario comparison persistence tied to the authenticated account
 - Add premium billing and payment collection, including checkout/subscription management for `$1.49/month` or `$14.99/year` premium accounts
@@ -196,7 +198,6 @@ Remaining:
 - Add premium custom stress testing so users can define harsher inflation, recession, healthcare, or sequence-of-returns cases directly
 - Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
 - Replace the temporary file-backed backend store with PostgreSQL once the route contract is stable enough to migrate
-- Add out-of-session password recovery via email or another recovery channel once outbound messaging exists
 
 ### Phase 10 - Search Engine Optimization
 Status: In progress

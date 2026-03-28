@@ -58,6 +58,17 @@ const AUTH_SYNC_KEY = "leoffHelperAuthSync";
 let currentAccountUser = null;
 let currentAccountPlans = [];
 
+function buildDefaultAccountScenarioName() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    return `Scenario ${year}-${month}-${day} ${hours}${minutes}`;
+}
+
 function escapeHtml(value) {
     return String(value ?? "")
         .replaceAll("&", "&amp;")
@@ -123,6 +134,29 @@ function formatAccountPlanTimestamp(isoString) {
     });
 }
 
+function getAccountPlanDisplayName(plan) {
+    return String(plan?.name || "").trim() || "Untitled Scenario";
+}
+
+function getAccountPlansSummaryText() {
+    if (!currentAccountUser) {
+        return "Sign in to start building synced retirement scenarios.";
+    }
+
+    const scenarioCount = currentAccountPlans.length;
+    const countLabel =
+        scenarioCount === 1
+            ? "1 saved scenario"
+            : `${scenarioCount} saved scenarios`;
+    const currentPlanMeta = getStoredAccountPlanMeta();
+
+    if (currentPlanMeta?.name) {
+        return `${countLabel}. Current save target: ${currentPlanMeta.name}.`;
+    }
+
+    return `${countLabel}. Save the current workspace as a new scenario or pick one as your save target.`;
+}
+
 function setAccountPlansStatus(message, tone = "neutral") {
     const statusEl = document.getElementById("accountPlansStatus");
 
@@ -134,18 +168,33 @@ function setAccountPlansStatus(message, tone = "neutral") {
     statusEl.dataset.tone = tone;
 }
 
+function renderAccountPlansSummary() {
+    const summaryEl = document.getElementById("accountPlansSummary");
+
+    if (!summaryEl) {
+        return;
+    }
+
+    summaryEl.textContent = getAccountPlansSummaryText();
+}
+
 function renderAccountPlansList() {
     const listEl = document.getElementById("accountPlansList");
     const saveBtn = document.getElementById("saveAccountPlanBtn");
     const saveAsNewBtn = document.getElementById("saveAccountPlanAsNewBtn");
     const refreshBtn = document.getElementById("refreshAccountPlansBtn");
+    const currentPlanMeta = getStoredAccountPlanMeta();
 
     if (saveBtn) {
         saveBtn.disabled = !currentAccountUser;
+        saveBtn.textContent = currentPlanMeta?.id
+            ? "Update Current Scenario"
+            : "Save Current Scenario";
     }
 
     if (saveAsNewBtn) {
         saveAsNewBtn.disabled = !currentAccountUser;
+        saveAsNewBtn.textContent = "Save as New Scenario";
     }
 
     if (refreshBtn) {
@@ -159,47 +208,57 @@ function renderAccountPlansList() {
     if (!currentAccountUser) {
         listEl.innerHTML = `
             <div class="account-plan-empty">
-                Sign in from the account page to save plans to your account and reopen them here.
+                Sign in from the account page to save scenarios to your account and reopen them here.
             </div>
         `;
+        renderAccountPlansSummary();
         return;
     }
 
     if (!currentAccountPlans.length) {
         listEl.innerHTML = `
             <div class="account-plan-empty">
-                You do not have any synced plans yet. Save the current scenario to create your first one.
+                You do not have any synced scenarios yet. Save the current workspace to create your first one.
             </div>
         `;
+        renderAccountPlansSummary();
         return;
     }
 
-    const currentPlanId = getStoredAccountPlanMeta()?.id || null;
+    const currentPlanId = currentPlanMeta?.id || null;
 
     listEl.innerHTML = currentAccountPlans.map(plan => `
         <div class="account-plan-item ${plan.id === currentPlanId ? "is-current" : ""}">
             <div class="account-plan-top">
                 <div>
-                    <p class="account-plan-name">${escapeHtml(plan.name)}</p>
+                    <p class="account-plan-name">${escapeHtml(getAccountPlanDisplayName(plan))}</p>
                     <p class="account-plan-meta">Updated ${escapeHtml(formatAccountPlanTimestamp(plan.updatedAt))}</p>
+                    <p class="account-plan-meta">Created ${escapeHtml(formatAccountPlanTimestamp(plan.createdAt))}</p>
                 </div>
-                ${plan.id === currentPlanId
-                    ? '<span class="account-plan-badge">Current</span>'
-                    : ""}
+                <div class="account-plan-badges">
+                    ${plan.id === currentPlanId
+                        ? '<span class="account-plan-badge">Current Save Target</span>'
+                        : ""}
+                    <span class="account-plan-badge is-secondary">Synced</span>
+                </div>
             </div>
             <div class="account-plan-actions">
                 <button type="button" data-account-action="open" data-plan-id="${escapeHtml(plan.id)}">Open</button>
-                <button type="button" data-account-action="update-current-name" data-plan-id="${escapeHtml(plan.id)}">Use as Current Save Target</button>
+                <button type="button" data-account-action="set-current-target" data-plan-id="${escapeHtml(plan.id)}" ${plan.id === currentPlanId ? "disabled" : ""}>Set Save Target</button>
+                <button type="button" data-account-action="rename" data-plan-id="${escapeHtml(plan.id)}">Rename</button>
+                <button type="button" data-account-action="duplicate" data-plan-id="${escapeHtml(plan.id)}">Duplicate</button>
                 <button type="button" class="account-plan-delete" data-account-action="delete" data-plan-id="${escapeHtml(plan.id)}">Delete</button>
             </div>
         </div>
     `).join("");
+
+    renderAccountPlansSummary();
 }
 
 function renderDefaultAccountStatus() {
     if (!currentAccountUser) {
         setAccountPlansStatus(
-            "Sign in to save and reopen plans across devices.",
+            "Sign in to save and reopen scenarios across devices.",
             "neutral"
         );
         return;
@@ -209,14 +268,14 @@ function renderDefaultAccountStatus() {
 
     if (currentPlanMeta?.name) {
         setAccountPlansStatus(
-            `Signed in as ${currentAccountUser.email}. Current account save target: ${currentPlanMeta.name}.`,
+            `Signed in as ${currentAccountUser.email}. Current scenario save target: ${currentPlanMeta.name}.`,
             "success"
         );
         return;
     }
 
     setAccountPlansStatus(
-        `Signed in as ${currentAccountUser.email}. Save this scenario to create your first synced plan.`,
+        `Signed in as ${currentAccountUser.email}. Save this workspace to create your first synced scenario.`,
         "success"
     );
 }
@@ -271,7 +330,7 @@ async function refreshAccountPlans({ keepStatus = false } = {}) {
 async function saveCurrentPlanToAccount({ forceNew = false } = {}) {
     if (!currentAccountUser) {
         setAccountPlansStatus(
-            "Sign in first, then come back here to save this plan to your account.",
+            "Sign in first, then come back here to save this scenario to your account.",
             "error"
         );
         return;
@@ -286,18 +345,18 @@ async function saveCurrentPlanToAccount({ forceNew = false } = {}) {
     const currentPlanMeta = getStoredAccountPlanMeta();
     const defaultName =
         currentPlanMeta?.name ||
-        `Retirement Plan ${new Date().toISOString().slice(0, 10)}`;
+        buildDefaultAccountScenarioName();
 
     try {
         let savedPlan;
 
         if (forceNew || !currentPlanMeta?.id) {
             const requestedName =
-                window.prompt("Name this account plan:", defaultName) || "";
+                window.prompt("Name this scenario:", defaultName) || "";
             const trimmedName = requestedName.trim();
 
             if (!trimmedName) {
-                setAccountPlansStatus("Account save cancelled.", "neutral");
+                setAccountPlansStatus("Scenario save cancelled.", "neutral");
                 return;
             }
 
@@ -318,13 +377,13 @@ async function saveCurrentPlanToAccount({ forceNew = false } = {}) {
         });
         await refreshAccountPlans({ keepStatus: true });
         setAccountPlansStatus(
-            `${forceNew || !currentPlanMeta?.id ? "Saved" : "Updated"} "${savedPlan.name}" in your account.`,
+            `${forceNew || !currentPlanMeta?.id ? "Saved" : "Updated"} scenario "${savedPlan.name}" in your account.`,
             "success"
         );
     } catch (error) {
         console.error("Account plan save failed", error);
         setAccountPlansStatus(
-            error.message || "The account plan could not be saved right now.",
+            error.message || "The scenario could not be saved right now.",
             "error"
         );
     }
@@ -341,7 +400,7 @@ async function openAccountPlan(planId) {
             };
 
         if (!workspaceState?.simulationState) {
-            throw new Error("That account plan is missing its simulation state.");
+            throw new Error("That scenario is missing its simulation state.");
         }
 
         applyWorkspaceStateToSimulator(workspaceState, {
@@ -350,13 +409,118 @@ async function openAccountPlan(planId) {
         });
         await refreshAccountPlans({ keepStatus: true });
         setAccountPlansStatus(
-            `Loaded "${plan.name}" from your account.`,
+            `Loaded scenario "${plan.name}" from your account.`,
             "success"
         );
     } catch (error) {
         console.error("Account plan load failed", error);
         setAccountPlansStatus(
-            error.message || "That account plan could not be opened.",
+            error.message || "That scenario could not be opened.",
+            "error"
+        );
+    }
+}
+
+async function renameAccountPlanById(planId) {
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+
+    if (!plan) {
+        return;
+    }
+
+    const requestedName =
+        window.prompt(
+            "Rename this scenario:",
+            getAccountPlanDisplayName(plan)
+        ) || "";
+    const trimmedName = requestedName.trim();
+
+    if (!trimmedName) {
+        setAccountPlansStatus("Scenario rename cancelled.", "neutral");
+        return;
+    }
+
+    if (trimmedName === getAccountPlanDisplayName(plan)) {
+        setAccountPlansStatus("Scenario name unchanged.", "neutral");
+        return;
+    }
+
+    try {
+        const updatedPlan = await updateAccountPlan(planId, {
+            name: trimmedName
+        });
+
+        if (getStoredAccountPlanMeta()?.id === planId) {
+            storeAccountPlanMeta({
+                id: updatedPlan.id,
+                name: updatedPlan.name
+            });
+        }
+
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `Renamed scenario to "${updatedPlan.name}".`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account scenario rename failed", error);
+        setAccountPlansStatus(
+            error.message || "That scenario could not be renamed.",
+            "error"
+        );
+    }
+}
+
+async function duplicateAccountPlanById(planId) {
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+
+    if (!plan) {
+        return;
+    }
+
+    const requestedName =
+        window.prompt(
+            "Name the duplicated scenario:",
+            `${getAccountPlanDisplayName(plan)} Copy`
+        ) || "";
+    const trimmedName = requestedName.trim();
+
+    if (!trimmedName) {
+        setAccountPlansStatus("Scenario duplication cancelled.", "neutral");
+        return;
+    }
+
+    try {
+        const fullPlan = await fetchAccountPlan(planId);
+        const workspaceState =
+            fullPlan?.workspaceState ||
+            {
+                simulationState: fullPlan?.simulationState || null,
+                moduleState: {}
+            };
+
+        if (!workspaceState?.simulationState) {
+            throw new Error("That scenario is missing its simulation state.");
+        }
+
+        const duplicatedPlan = await createAccountPlan(trimmedName, {
+            simulationState: workspaceState.simulationState,
+            workspaceState
+        });
+
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `Duplicated "${getAccountPlanDisplayName(plan)}" as "${duplicatedPlan.name}".`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account scenario duplicate failed", error);
+        setAccountPlansStatus(
+            error.message || "That scenario could not be duplicated.",
             "error"
         );
     }
@@ -367,7 +531,7 @@ async function deleteAccountPlanById(planId) {
         currentAccountPlans.find(entry => entry.id === planId) ||
         null;
     const confirmed = window.confirm(
-        `Delete "${plan?.name || "this account plan"}" from your account?`
+        `Delete "${getAccountPlanDisplayName(plan)}" from your account?`
     );
 
     if (!confirmed) {
@@ -383,13 +547,13 @@ async function deleteAccountPlanById(planId) {
 
         await refreshAccountPlans({ keepStatus: true });
         setAccountPlansStatus(
-            `Deleted "${plan?.name || "account plan"}" from your account.`,
+            `Deleted scenario "${getAccountPlanDisplayName(plan)}" from your account.`,
             "success"
         );
     } catch (error) {
         console.error("Account plan delete failed", error);
         setAccountPlansStatus(
-            error.message || "That account plan could not be deleted.",
+            error.message || "That scenario could not be deleted.",
             "error"
         );
     }
@@ -706,7 +870,7 @@ function setupAccountPlansUi() {
     });
 
     refreshBtn?.addEventListener("click", async () => {
-        setAccountPlansStatus("Refreshing account plans...", "neutral");
+        setAccountPlansStatus("Refreshing account scenarios...", "neutral");
         await refreshAccountPlans();
     });
 
@@ -732,7 +896,7 @@ function setupAccountPlansUi() {
             return;
         }
 
-        if (action === "update-current-name") {
+        if (action === "set-current-target") {
             const plan =
                 currentAccountPlans.find(entry => entry.id === planId) ||
                 null;
@@ -747,9 +911,19 @@ function setupAccountPlansUi() {
             });
             renderAccountPlansList();
             setAccountPlansStatus(
-                `"${plan.name}" is now the current account save target.`,
+                `"${plan.name}" is now the current scenario save target.`,
                 "success"
             );
+            return;
+        }
+
+        if (action === "rename") {
+            await renameAccountPlanById(planId);
+            return;
+        }
+
+        if (action === "duplicate") {
+            await duplicateAccountPlanById(planId);
             return;
         }
 

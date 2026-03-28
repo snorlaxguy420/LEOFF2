@@ -181,11 +181,13 @@ Completed / In progress:
 - Accounts now use a 15-minute inactivity timeout with backend sliding-session refresh behavior in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js), and [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js)
 - The account page now includes a real settings surface for preferred name, visible session-policy details, session refresh, and in-session password updates through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js), and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
 - Out-of-session password recovery now exists through token-based reset links, with configurable outbound email delivery plus a server-log fallback for local/dev testing, in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/lib/email.js](/D:/LEOFF%202/backend/src/lib/email.js), [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
+- The live Lightsail backend now has production email env configuration for `RESEND_API_KEY`, `EMAIL_FROM`, and `PUBLIC_SITE_URL`, and the deployed API on `https://api.leoffhelper.com` is healthy on the current password-recovery build
+- Production password recovery has now been live-verified end to end against `https://api.leoffhelper.com`, with Resend-backed forgot-password requests successfully accepted for a real production account
+- The simulator now includes a first-pass `My Scenarios` account surface with clearer synced-scenario framing, current save-target messaging, rename, duplicate, delete, and reopen flows in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
-- Configure live transactional email delivery on the deployed backend and verify the production password-recovery flow end to end
-- Add a more intentional `My Plans` management experience beyond the current simulator-side list/open/delete controls
+- Refine `My Scenarios` placement and polish beyond the current simulator-side card so saved-scenario management feels less tucked away and more intentional
 - Add scenario comparison persistence tied to the authenticated account
 - Add premium billing and payment collection, including checkout/subscription management for `$1.49/month` or `$14.99/year` premium accounts
 - Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
@@ -333,8 +335,8 @@ Remaining:
 
 ## Immediate Next Steps
 
--> 1. Deploy and live-verify the new frontend accounts flow so login, account creation, and synced plan save/load all work end to end against `api.leoffhelper.com`.
-2. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
-3. Continue refining the Survivor Benefit Estimator so it becomes easier to trust and easier to choose from at a glance.
-4. Keep validating Monte Carlo outputs in real beta scenarios and continue tightening any remaining assumptions or display rules that can produce counterintuitive results.
-5. Replace the temporary backend JSON store with PostgreSQL once the accounts flow has passed enough live testing to freeze the first persistence contract.
+-> 1. Refine `My Scenarios` placement and polish so authenticated saved-scenario management feels more intentional than the current simulator-side card.
+2. Add scenario comparison persistence tied to the authenticated account so account value goes beyond simple scenario save/load.
+3. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
+4. Replace the temporary backend JSON store with PostgreSQL once the current account + recovery route contract has passed enough live testing to freeze the first persistence contract.
+5. Continue premium billing and subscription planning once the core saved-scenario account experience feels polished enough to monetize.

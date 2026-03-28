@@ -457,9 +457,23 @@ align-items:center;
 gap:12px;
 }
 
+.account-plans-head-copy{
+display:flex;
+flex-direction:column;
+gap:6px;
+}
+
 .account-plans-head h3{
 margin:0;
 color:var(--pnw-navy);
+}
+
+.account-plans-head-copy p{
+margin:0;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+max-width:360px;
 }
 
 .account-plans-link{
@@ -491,6 +505,16 @@ color:#7C2A2A;
 
 .account-plans-status[data-tone="neutral"]{
 color:rgba(42,42,42,.82);
+}
+
+.account-plans-summary{
+padding:12px 14px;
+border-radius:12px;
+background:rgba(30,47,68,.05);
+border:1px solid rgba(30,47,68,.08);
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.78);
 }
 
 .account-plans-actions{
@@ -529,6 +553,13 @@ gap:12px;
 margin-bottom:8px;
 }
 
+.account-plan-badges{
+display:flex;
+flex-wrap:wrap;
+justify-content:flex-end;
+gap:6px;
+}
+
 .account-plan-name{
 margin:0;
 font-size:15px;
@@ -549,6 +580,11 @@ font-weight:700;
 letter-spacing:.04em;
 text-transform:uppercase;
 white-space:nowrap;
+}
+
+.account-plan-badge.is-secondary{
+background:rgba(30,47,68,.08);
+color:var(--pnw-navy);
 }
 
 .account-plan-meta{
@@ -979,6 +1015,10 @@ grid-template-columns:1fr;
 body.mobile-simulator .account-plan-top{
 flex-direction:column;
 align-items:flex-start;
+}
+
+body.mobile-simulator .account-plan-badges{
+justify-content:flex-start;
 }
 
 body.mobile-simulator .mobile-section-progress{

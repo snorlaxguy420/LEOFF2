@@ -379,26 +379,33 @@ Save this scenario as a local JSON file or import a previously exported plan on 
 
 <div class="account-plans-card">
 <div class="account-plans-head">
-<h3>Account Plans</h3>
-<a href="/ui/login.html" class="account-plans-link">Account Access</a>
+<div class="account-plans-head-copy">
+<h3>My Scenarios</h3>
+<p>Save multiple what-if versions to your account so you can reopen, rename, and compare them later.</p>
+</div>
+<a href="/ui/login.html" class="account-plans-link">Account Settings</a>
+</div>
+
+<div id="accountPlansSummary" class="account-plans-summary">
+Sign in to start building synced retirement scenarios.
 </div>
 
 <div id="accountPlansStatus" class="account-plans-status">
-Sign in to save and reopen plans across devices.
+Sign in to save and reopen scenarios across devices.
 </div>
 
 <div class="account-plans-actions">
-<button id="saveAccountPlanBtn" type="button" class="primary-btn">Save to Account</button>
-<button id="saveAccountPlanAsNewBtn" type="button" class="secondary-btn">Save as New</button>
+<button id="saveAccountPlanBtn" type="button" class="primary-btn">Save Current Scenario</button>
+<button id="saveAccountPlanAsNewBtn" type="button" class="secondary-btn">Save as New Scenario</button>
 <button id="refreshAccountPlansBtn" type="button" class="secondary-btn">Refresh</button>
 </div>
 
 <div id="accountPlansList" class="account-plans-list">
-<div class="account-plan-empty">No account plans loaded yet.</div>
+<div class="account-plan-empty">No account scenarios loaded yet.</div>
 </div>
 
 <p class="account-plans-note">
-Account saves sync through your LEOFF Helper login. Import/export still works as a manual backup.
+Your synced scenarios travel with your LEOFF Helper login. Local import/export still works as a manual backup.
 </p>
 </div>
 

@@ -53,6 +53,11 @@ import {
     estimateSurvivorOptions,
     validateInputs as validateSurvivorEstimatorInputs
 } from "./survivor-benefit-estimator.js";
+import {
+    buildLifetimeValueMilestones,
+    buildLifetimeValueScenario,
+    validateLifetimeValueInputs
+} from "./lifetime-pension-value-calculator.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -131,6 +136,11 @@ const SMOKE_TEST_PAGES = [
         name: "Survivor Benefit Estimator",
         path: "./survivor-benefit-estimator.html",
         selectors: [".survivor-shell", "#runSurvivorEstimatorBtn", "#survivorSummaryTableBody"]
+    },
+    {
+        name: "Lifetime Pension Value Calculator",
+        path: "./lifetime-pension-value-calculator.html",
+        selectors: [".lifetime-shell", "#runLifetimeValueBtn", "#lifetimeMilestoneTableBody"]
     },
     {
         name: "Article Page",
@@ -1496,6 +1506,77 @@ function testSurvivorEstimatorOrdering() {
     logResult("Survivor estimator ordering passed");
 }
 
+function testLifetimePensionValueCalculator() {
+    const baselineScenario = buildLifetimeValueScenario({
+        birthYear: 1981,
+        retirementAge: 53,
+        leoffStartYear: 2001,
+        finalAverageSalary: 110000,
+        colaRate: 0.02,
+        benefitEnhancement: "tiered_multiplier",
+        targetAge: 90
+    });
+    const longerHorizonScenario = buildLifetimeValueScenario({
+        ...baselineScenario,
+        targetAge: 95
+    });
+    const lumpSumScenario = buildLifetimeValueScenario({
+        birthYear: 1981,
+        retirementAge: 53,
+        leoffStartYear: 2001,
+        finalAverageSalary: 110000,
+        colaRate: 0.02,
+        benefitEnhancement: "lump_sum",
+        targetAge: 90
+    });
+    const milestoneRows = buildLifetimeValueMilestones(baselineScenario);
+    let validationMessage = "";
+
+    try {
+        validateLifetimeValueInputs({
+            birthYear: 1981,
+            retirementAge: 53,
+            leoffStartYear: 2001,
+            finalAverageSalary: 110000,
+            colaRate: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            targetAge: 53
+        });
+    } catch (error) {
+        validationMessage = error.message;
+    }
+
+    assert(
+        baselineScenario.serviceYears === 33,
+        "Lifetime pension value calculator should derive service credit from birth year, retirement age, and LEOFF start year"
+    );
+    assert(
+        baselineScenario.lifetimeValue > 0,
+        "Lifetime pension value calculator should produce positive cumulative pension value"
+    );
+    assert(
+        longerHorizonScenario.lifetimeValue > baselineScenario.lifetimeValue,
+        "Lifetime pension value calculator should increase cumulative pension value when the target age moves later"
+    );
+    assert(
+        lumpSumScenario.lumpSumBenefit > 0 &&
+        lumpSumScenario.combinedValue > lumpSumScenario.lifetimeValue,
+        "Lifetime pension value calculator should include the optional lump sum in the combined value"
+    );
+    assert(
+        milestoneRows.length > 0 &&
+        milestoneRows[0].age > baselineScenario.retirementAge &&
+        milestoneRows[milestoneRows.length - 1].age === baselineScenario.targetAge,
+        "Lifetime pension value calculator should build milestone rows that end at the selected target age"
+    );
+    assert(
+        validationMessage === "Target age must be greater than retirement age.",
+        "Lifetime pension value calculator should reject target ages at or below retirement age"
+    );
+
+    logResult("Lifetime pension value calculator passed");
+}
+
 function buildDashboardVerificationInputs() {
     return {
         profile: {
@@ -2549,6 +2630,7 @@ async function runVerification() {
         testMonteCarloEngine();
         testRetirementAgeComparisonMonotonicity();
         testSurvivorEstimatorOrdering();
+        testLifetimePensionValueCalculator();
         testToolEdgeCaseValidation();
         testMultipleRetirementAccountPayloads();
         testInputPopulationAndPreviewMetrics();

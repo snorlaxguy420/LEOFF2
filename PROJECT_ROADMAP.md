@@ -147,10 +147,13 @@ Completed / In progress:
 - Survivor Benefit Estimator page now exists in [ui/survivor-benefit-estimator.html](/D:/LEOFF%202/ui/survivor-benefit-estimator.html)
 - The survivor tool now uses sampled DRS age-gap outputs to estimate joint-option reductions for `50%`, `66.67%`, and `100%` survivor choices
 - The estimator now compares single life versus survivor options with a clearer decision-oriented layout: monthly-benefit comparison, give-up versus single-life framing, early/middle/late death snapshots, copy/print actions, and explicit estimator framing
+- Lifetime Pension Value Calculator page now exists in [ui/lifetime-pension-value-calculator.html](/D:/LEOFF%202/ui/lifetime-pension-value-calculator.html)
+- The lifetime-value tool now estimates service credit from `Birth Year`, `Retirement Age`, and `LEOFF Start Year`, then shows monthly pension, annual pension, `% of FAS`, cumulative pension value through a target age, and optional lump-sum-inclusive totals
+- The lifetime-value tool now includes milestone payout checkpoints, copy/print actions, and a one-more-year tradeoff summary so members can see both pension scale and the cost/benefit of waiting
+- Homepage, supporting tool pages, and the articles hub now link into the Lifetime Pension Value Calculator, improving discoverability and internal linking for the new Phase 7 tool
 - Homepage hero now includes a direct launch CTA for the Survivor Benefit Comparison tool, improving discoverability of the estimator from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 
 Planned:
-- Lifetime Pension Value Calculator
 - Continue refining the Survivor Benefit Estimator toward closer DRS-table fidelity
 
 ### Phase 8 - Reports

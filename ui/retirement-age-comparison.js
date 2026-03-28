@@ -1,5 +1,10 @@
 import { buildPensionIncomeSources } from "./simulatorShared.js";
 import { calculateSocialSecurityIncomeSource } from "../core/socialSecurityEngine.js";
+import {
+    calculateLifetimePensionValue,
+    deriveCurrentAgeFromBirthYear,
+    deriveServiceYearsForRetirement
+} from "./leoff-tool-math.js";
 
 function parsePercent(id) {
     return (parseFloat(document.getElementById(id)?.value || 0) || 0) / 100;
@@ -15,16 +20,6 @@ function parseIntValue(id) {
 
 function parseStringValue(id, fallback = "") {
     return document.getElementById(id)?.value || fallback;
-}
-
-export function deriveCurrentAgeFromBirthYear(birthYear) {
-    const currentYear = new Date().getFullYear();
-
-    if (!birthYear || birthYear < 1900 || birthYear > currentYear) {
-        return 0;
-    }
-
-    return currentYear - birthYear;
 }
 
 export function parseRetirementAges(value, minimumAge = 50) {
@@ -62,33 +57,11 @@ function formatSignedMoney(value) {
     return `${rounded > 0 ? "+" : "-"}${formatMoney(Math.abs(rounded))}`;
 }
 
-export function deriveServiceYearsForRetirement({
-    birthYear,
-    retirementAge,
-    leoffStartYear
-}) {
-    const retirementYear = birthYear + retirementAge;
-
-    if (!leoffStartYear || !birthYear || retirementYear <= leoffStartYear) {
-        return 0;
-    }
-
-    return retirementYear - leoffStartYear;
-}
-
-export function calculateLifetimePensionValue(annualPension, colaRate, retirementAge, targetAge) {
-    const years = Math.max(0, Math.round((targetAge || retirementAge) - retirementAge));
-
-    if (years === 0 || annualPension <= 0) {
-        return 0;
-    }
-
-    if (!colaRate) {
-        return annualPension * years;
-    }
-
-    return annualPension * ((Math.pow(1 + colaRate, years) - 1) / colaRate);
-}
+export {
+    calculateLifetimePensionValue,
+    deriveCurrentAgeFromBirthYear,
+    deriveServiceYearsForRetirement
+};
 
 export function calculateExtraSalaryEarned({
     baselineAge,

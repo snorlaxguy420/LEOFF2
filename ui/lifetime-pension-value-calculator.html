@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LEOFF Lifetime Pension Value Calculator | Estimate Pension Value Through Retirement</title>
+<meta name="description" content="Estimate the lifetime value of a Washington LEOFF pension through a target age, including monthly pension, annual pension, service credit, and optional lump-sum impact.">
+<meta name="keywords" content="LEOFF lifetime pension value calculator, LEOFF pension value, Washington pension value calculator, LEOFF pension worth, lifetime pension estimate">
+<meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leoffhelper.com/lifetime-pension-value-calculator">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="LEOFF Lifetime Pension Value Calculator | Estimate Pension Value Through Retirement">
+<meta property="og:description" content="Estimate monthly pension, annual pension, service credit, and cumulative LEOFF pension value through a target age.">
+<meta property="og:url" content="https://leoffhelper.com/lifetime-pension-value-calculator">
+<meta property="og:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEOFF Lifetime Pension Value Calculator | Estimate Pension Value Through Retirement">
+<meta name="twitter:description" content="Estimate monthly pension, annual pension, service credit, and cumulative LEOFF pension value through a target age.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "LEOFF Lifetime Pension Value Calculator",
+  "url": "https://leoffhelper.com/lifetime-pension-value-calculator",
+  "description": "Estimate the lifetime value of a Washington LEOFF pension through a target age, including monthly pension, annual pension, service credit, and optional lump-sum impact."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "LEOFF Lifetime Pension Value Calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Web",
+  "url": "https://leoffhelper.com/lifetime-pension-value-calculator",
+  "description": "A Washington-focused LEOFF calculator for estimating pension value through a target age using service credit, final average salary, COLA, and benefit enhancement choices."
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://leoffhelper.com/"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Lifetime Pension Value Calculator",
+      "item": "https://leoffhelper.com/lifetime-pension-value-calculator"
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="/ui/simulator-dashboard.css">
+<link rel="stylesheet" href="/ui/lifetime-pension-value-calculator.css">
+</head>
+<body>
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<div class="simbg-section">
+<main class="lifetime-shell">
+
+<section class="lifetime-hero">
+<div class="lifetime-kicker">Phase 7 Tool</div>
+<h1>Lifetime Pension Value Calculator</h1>
+<p>
+See what your LEOFF pension could pay over time, not just what it pays in one month.
+This tool estimates service credit, monthly pension, annual pension, and the cumulative
+value of those payments through a target age.
+</p>
+<p>
+It is designed for Washington LEOFF members who want to make the pension feel tangible
+before moving into the full <a href="/ui/simulator.html">retirement calculator</a>,
+the <a href="/ui/retirement-age-comparison.html">Retirement Age Comparison Tool</a>,
+or the <a href="/ui/survivor-benefit-estimator.html">Survivor Benefit Estimator</a>.
+</p>
+</section>
+
+<section class="lifetime-grid">
+<section class="lifetime-form-card">
+<h2>Scenario Inputs</h2>
+
+<div class="form-grid">
+<label>
+Birth Year
+<input id="lpvBirthYear" type="number" value="1981" min="1900" max="2100">
+</label>
+
+<label>
+Retirement Age
+<input id="lpvRetirementAge" type="number" value="53" min="50" max="70">
+</label>
+
+<label>
+LEOFF Start Year
+<input id="lpvLeoffStartYear" type="number" value="2001" min="1977" max="2100">
+</label>
+
+<label>
+Final Average Salary
+<input id="lpvFas" type="number" value="110000" min="0" step="1000">
+</label>
+
+<label>
+Pension COLA (%)
+<input id="lpvCola" type="number" value="2" min="0" max="3" step="0.1">
+</label>
+
+<label>
+Benefit Enhancement
+<select id="lpvBenefitEnhancement">
+<option value="tiered_multiplier" selected>Tiered Multiplier</option>
+<option value="lump_sum">2% Pension + Lump Sum</option>
+</select>
+</label>
+
+<label>
+Value Through Age
+<input id="lpvTargetAge" type="number" value="90" min="51" max="100">
+</label>
+</div>
+
+<div class="lifetime-actions">
+<button id="runLifetimeValueBtn" class="primary-btn" type="button">Estimate Pension Value</button>
+</div>
+</section>
+
+<aside class="lifetime-summary-card">
+<h2>What This Tool Shows</h2>
+<ul class="lifetime-summary-list">
+<li>Estimated service credit at your chosen retirement age</li>
+<li>Monthly pension and annual pension</li>
+<li>Percentage of final average salary replaced by the pension</li>
+<li>Cumulative pension value through a target age</li>
+<li>Combined value when the `2% Pension + Lump Sum` enhancement is selected</li>
+</ul>
+
+<div class="lifetime-note">
+<strong>How value is measured here</strong>
+<p>
+This is cumulative pension paid over time, not discounted present value. It answers:
+roughly how many pension dollars would be paid by age 75, 80, 90, or another target age?
+</p>
+</div>
+
+<div class="lifetime-note">
+<strong>Formula basis</strong>
+<p>
+Base pension = `FAS x service years x 2.0%`
+</p>
+<p>
+If `Tiered Multiplier` is selected, the calculator also includes the bonus `0.5% x FAS`
+for service years 16 through 25.
+</p>
+</div>
+
+<div class="lifetime-note">
+<strong>Go deeper</strong>
+<p>
+Use the <a href="/ui/retirement-age-comparison.html">Retirement Age Comparison Tool</a>
+to compare multiple retirement ages side by side, or the
+<a href="/ui/survivor-benefit-estimator.html">Survivor Benefit Estimator</a>
+to see how spouse protection changes the pension tradeoff.
+</p>
+</div>
+</aside>
+</section>
+
+<section class="lifetime-results-card">
+<div class="panel-header">
+<h2>Lifetime Value Estimate</h2>
+<div class="lifetime-header-actions">
+<button id="copyLifetimeValueSummaryBtn" class="secondary-btn" type="button">Copy Summary</button>
+<button id="printLifetimeValueBtn" class="secondary-btn" type="button">Print</button>
+</div>
+</div>
+
+<div id="lifetimeTakeaway" class="lifetime-takeaway">
+Run the calculator to estimate monthly pension, cumulative value, and the tradeoff of waiting one more year.
+</div>
+<div id="lifetimeStatus" class="lifetime-status">Enter inputs and run the calculator.</div>
+
+<div class="lifetime-metrics-grid">
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">Service Credit</div>
+<div id="lifetimeServiceCredit" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">Monthly Pension</div>
+<div id="lifetimeMonthlyPension" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">Annual Pension</div>
+<div id="lifetimeAnnualPension" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">% Of FAS</div>
+<div id="lifetimePercentOfFas" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">Value Through Target Age</div>
+<div id="lifetimeValueTarget" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">If You Wait One More Year</div>
+<div id="lifetimeWaitDelta" class="lifetime-metric-value">-</div>
+</article>
+
+<article class="lifetime-metric-card">
+<div class="lifetime-metric-label">Optional Lump Sum</div>
+<div id="lifetimeLumpSum" class="lifetime-metric-value">-</div>
+</article>
+</div>
+
+<div class="lifetime-table-hint">Swipe sideways to compare milestone totals on smaller screens.</div>
+<div class="lifetime-table-wrap">
+<table class="lifetime-table">
+<thead>
+<tr>
+<th>Through Age</th>
+<th>Years Collected</th>
+<th title="Cumulative pension paid by this age. This is not discounted present value.">Cumulative Pension</th>
+<th id="lifetimeCombinedColumn" title="Includes the optional lump sum when that enhancement is selected.">Including Lump Sum</th>
+</tr>
+</thead>
+<tbody id="lifetimeMilestoneTableBody">
+<tr>
+<td colspan="4">No lifetime-value estimate has been run yet.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="lifetime-seo-grid">
+<article class="lifetime-seo-card">
+<h2>What “lifetime pension value” means here</h2>
+<p>
+This calculator estimates how much pension income would be paid by a selected age, such as
+75, 80, 90, or 95. It is not a discounted investment present-value model. It is a planning
+tool for seeing the scale of your pension benefit over time.
+</p>
+</article>
+
+<article class="lifetime-seo-card">
+<h2>Why this matters for LEOFF retirement decisions</h2>
+<p>
+Many members know their estimated monthly pension but still struggle to feel what that means
+over a long retirement. Seeing the cumulative value can make retirement timing, service credit,
+and benefit-enhancement choices more concrete.
+</p>
+</article>
+
+<article class="lifetime-seo-card">
+<h2>How to use this with the other tools</h2>
+<p>
+Use this page to understand the size of one pension path, then move to the
+<a href="/ui/retirement-age-comparison.html">Retirement Age Comparison Tool</a>
+for side-by-side timing tradeoffs or the
+<a href="/ui/survivor-benefit-estimator.html">Survivor Benefit Estimator</a>
+to evaluate household protection tradeoffs.
+</p>
+</article>
+</section>
+
+</main>
+</div>
+
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/lifetime-pension-value-calculator.html">Lifetime Pension Value</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/survivor-benefit-estimator.html">Survivor Benefit Estimator</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+<h4>Subscribe for Retirement Tips</h4>
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+</div>
+</div>
+
+<div class="footer-bottom">
+<p>© 2024 LEOFF Helper - Not affiliated with any government agency</p>
+</div>
+</footer>
+<script type="module" src="/ui/lifetime-pension-value-calculator.js"></script>
+<script type="module" src="/ui/authHeader.js"></script>
+</body>
+</html>

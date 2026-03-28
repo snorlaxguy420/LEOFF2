@@ -184,10 +184,10 @@ Completed / In progress:
 - The live Lightsail backend now has production email env configuration for `RESEND_API_KEY`, `EMAIL_FROM`, and `PUBLIC_SITE_URL`, and the deployed API on `https://api.leoffhelper.com` is healthy on the current password-recovery build
 - Production password recovery has now been live-verified end to end against `https://api.leoffhelper.com`, with Resend-backed forgot-password requests successfully accepted for a real production account
 - The simulator now includes a first-pass `My Scenarios` account surface with clearer synced-scenario framing, current save-target messaging, rename, duplicate, delete, and reopen flows in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
+- The simulator preview rail now gives `My Scenarios` a more intentional workspace section, grouping report generation, synced-scenario actions, and local import/export into a clearer saved-scenario management surface in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html) and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
-- Refine `My Scenarios` placement and polish beyond the current simulator-side card so saved-scenario management feels less tucked away and more intentional
 - Add scenario comparison persistence tied to the authenticated account
 - Add premium billing and payment collection, including checkout/subscription management for `$1.49/month` or `$14.99/year` premium accounts
 - Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
@@ -335,8 +335,8 @@ Remaining:
 
 ## Immediate Next Steps
 
--> 1. Refine `My Scenarios` placement and polish so authenticated saved-scenario management feels more intentional than the current simulator-side card.
-2. Add scenario comparison persistence tied to the authenticated account so account value goes beyond simple scenario save/load.
-3. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
-4. Replace the temporary backend JSON store with PostgreSQL once the current account + recovery route contract has passed enough live testing to freeze the first persistence contract.
-5. Continue premium billing and subscription planning once the core saved-scenario account experience feels polished enough to monetize.
+-> 1. Add scenario comparison persistence tied to the authenticated account so account value goes beyond simple scenario save/load.
+2. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
+3. Replace the temporary backend JSON store with PostgreSQL once the current account + recovery route contract has passed enough live testing to freeze the first persistence contract.
+4. Continue premium billing and subscription planning once the core saved-scenario account experience feels polished enough to monetize.
+5. Consider whether `My Scenarios` should eventually graduate from the simulator rail into a dedicated account page once scenario comparison exists.

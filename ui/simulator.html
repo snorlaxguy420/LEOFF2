@@ -362,28 +362,29 @@ RIGHT PREVIEW PANEL
 
 
 </div>
-<a href="/ui/retirementDashboard.html" class="report-link">
-<button id="fullReportBtn" class="primary-btn" style="width:100%;margin-top:10px;">
-Generate Retirement Report
-</button>
-</a>
-
-<div class="plan-transfer-row">
-<button id="exportPlanBtn" type="button" class="secondary-btn">Export Plan</button>
-<button id="importPlanBtn" type="button" class="secondary-btn">Import Plan</button>
-</div>
-<input id="importPlanInput" type="file" accept="application/json,.json" hidden>
-<p class="plan-transfer-note">
-Save this scenario as a local JSON file or import a previously exported plan on this device.
-</p>
 
 <div class="account-plans-card">
 <div class="account-plans-head">
 <div class="account-plans-head-copy">
 <h3>My Scenarios</h3>
-<p>Save multiple what-if versions to your account so you can reopen, rename, and compare them later.</p>
+<p>Keep synced versions of your retirement what-ifs in one place, then reopen or update the one you want to keep working on.</p>
 </div>
 <a href="/ui/login.html" class="account-plans-link">Account Settings</a>
+</div>
+
+<div class="account-plans-subsection account-plans-subsection-primary">
+<div class="account-plans-subhead">
+<span class="account-plans-kicker">Workspace</span>
+<h4>Report And Sync</h4>
+</div>
+<p class="account-plans-subcopy">
+Generate a report for the currently open scenario, save it to your account, or keep a local backup on this device.
+</p>
+<a href="/ui/retirementDashboard.html" class="report-link account-plans-report-link">
+<button id="fullReportBtn" class="primary-btn account-plans-report-btn">
+Generate Retirement Report
+</button>
+</a>
 </div>
 
 <div id="accountPlansSummary" class="account-plans-summary">
@@ -404,8 +405,25 @@ Sign in to save and reopen scenarios across devices.
 <div class="account-plan-empty">No account scenarios loaded yet.</div>
 </div>
 
+<div class="account-plans-divider"></div>
+
+<div class="account-plans-subsection">
+<div class="account-plans-subhead">
+<span class="account-plans-kicker">Local Backup</span>
+<h4>Import Or Export</h4>
+</div>
+<p class="account-plans-subcopy">
+Use local JSON exports if you want an offline copy or need to move a scenario manually between devices.
+</p>
+<div class="plan-transfer-row">
+<button id="exportPlanBtn" type="button" class="secondary-btn">Export Scenario</button>
+<button id="importPlanBtn" type="button" class="secondary-btn">Import Scenario</button>
+</div>
+<input id="importPlanInput" type="file" accept="application/json,.json" hidden>
+</div>
+
 <p class="account-plans-note">
-Your synced scenarios travel with your LEOFF Helper login. Local import/export still works as a manual backup.
+Synced scenarios travel with your LEOFF Helper login. Local import/export stays available as a fallback if you want manual control.
 </p>
 </div>
 

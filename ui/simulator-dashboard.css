@@ -414,6 +414,169 @@ line-height:1.5;
 color:rgba(42,42,42,.72);
 }
 
+.account-plans-card{
+display:flex;
+flex-direction:column;
+gap:12px;
+padding:18px 16px;
+border-radius:16px;
+background:rgba(255,255,255,.84);
+border:1px solid rgba(255,255,255,.48);
+box-shadow:0 10px 24px rgba(0,0,0,.06);
+}
+
+.account-plans-head{
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:12px;
+}
+
+.account-plans-head h3{
+margin:0;
+color:var(--pnw-navy);
+}
+
+.account-plans-link{
+font-size:13px;
+font-weight:700;
+color:var(--pnw-evergreen);
+text-decoration:none;
+}
+
+.account-plans-link:hover{
+text-decoration:underline;
+}
+
+.account-plans-status{
+padding:12px 14px;
+border-radius:12px;
+background:rgba(31,77,58,.08);
+border:1px solid rgba(31,77,58,.10);
+font-size:14px;
+line-height:1.5;
+color:var(--pnw-evergreen);
+}
+
+.account-plans-status[data-tone="error"]{
+background:rgba(150,42,42,.08);
+border-color:rgba(150,42,42,.16);
+color:#7C2A2A;
+}
+
+.account-plans-status[data-tone="neutral"]{
+color:rgba(42,42,42,.82);
+}
+
+.account-plans-actions{
+display:grid;
+grid-template-columns:repeat(3, minmax(0, 1fr));
+gap:10px;
+}
+
+.account-plans-actions .secondary-btn,
+.account-plans-actions .primary-btn{
+width:100%;
+}
+
+.account-plans-list{
+display:grid;
+gap:10px;
+}
+
+.account-plan-item{
+padding:14px;
+border-radius:14px;
+border:1px solid rgba(30,47,68,.10);
+background:rgba(244,241,234,.72);
+}
+
+.account-plan-item.is-current{
+border-color:rgba(31,77,58,.22);
+background:rgba(31,77,58,.08);
+}
+
+.account-plan-top{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:12px;
+margin-bottom:8px;
+}
+
+.account-plan-name{
+margin:0;
+font-size:15px;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.account-plan-badge{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+padding:5px 9px;
+border-radius:999px;
+background:rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:11px;
+font-weight:700;
+letter-spacing:.04em;
+text-transform:uppercase;
+white-space:nowrap;
+}
+
+.account-plan-meta{
+margin:0 0 12px;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
+.account-plan-actions{
+display:flex;
+flex-wrap:wrap;
+gap:8px;
+}
+
+.account-plan-actions button{
+min-height:40px;
+padding:10px 14px;
+border-radius:999px;
+border:1px solid rgba(31,77,58,.12);
+background:white;
+color:var(--pnw-evergreen);
+font-size:13px;
+font-weight:700;
+cursor:pointer;
+}
+
+.account-plan-actions button:hover{
+background:rgba(31,77,58,.08);
+}
+
+.account-plan-actions button.account-plan-delete{
+color:#7C2A2A;
+border-color:rgba(150,42,42,.12);
+}
+
+.account-plan-empty{
+padding:14px;
+border-radius:14px;
+border:1px dashed rgba(30,47,68,.12);
+background:rgba(255,255,255,.72);
+font-size:14px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
+.account-plans-note{
+margin:0;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
 #assetButtonBar,
 #retirementButtonBar,
 #debtButtonBar{
@@ -774,6 +937,15 @@ body.mobile-simulator .planner-preview a{
 body.mobile-simulator .plan-transfer-row{
 grid-template-columns:1fr;
 gap:10px;
+}
+
+body.mobile-simulator .account-plans-actions{
+grid-template-columns:1fr;
+}
+
+body.mobile-simulator .account-plan-top{
+flex-direction:column;
+align-items:flex-start;
 }
 
 body.mobile-simulator .mobile-section-progress{

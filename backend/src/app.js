@@ -44,9 +44,64 @@ function sanitizePlanSummary(plan) {
 }
 
 function sanitizePlan(plan) {
+    const workspaceState =
+        plan.workspaceState && typeof plan.workspaceState === "object"
+            ? {
+                ...plan.workspaceState,
+                simulationState: plan.simulationState,
+                moduleState:
+                    plan.workspaceState.moduleState &&
+                    typeof plan.workspaceState.moduleState === "object"
+                        ? plan.workspaceState.moduleState
+                        : {}
+            }
+            : {
+                simulationState: plan.simulationState,
+                moduleState: {}
+            };
+
     return {
         ...sanitizePlanSummary(plan),
-        simulationState: plan.simulationState
+        simulationState: plan.simulationState,
+        workspaceState
+    };
+}
+
+function normalizeWorkspaceStatePayload(payload = {}) {
+    const rawWorkspaceState = payload?.workspaceState;
+    const simulationState =
+        payload?.simulationState ??
+        rawWorkspaceState?.simulationState ??
+        null;
+
+    if (!simulationState || typeof simulationState !== "object") {
+        return {
+            error: "A simulationState object is required."
+        };
+    }
+
+    if (
+        rawWorkspaceState !== undefined &&
+        (!rawWorkspaceState || typeof rawWorkspaceState !== "object")
+    ) {
+        return {
+            error: "workspaceState must be an object when provided."
+        };
+    }
+
+    return {
+        simulationState,
+        workspaceState: {
+            ...(rawWorkspaceState && typeof rawWorkspaceState === "object"
+                ? rawWorkspaceState
+                : {}),
+            simulationState,
+            moduleState:
+                rawWorkspaceState?.moduleState &&
+                typeof rawWorkspaceState.moduleState === "object"
+                    ? rawWorkspaceState.moduleState
+                    : {}
+        }
     };
 }
 
@@ -297,15 +352,16 @@ async function handleCreatePlan(req, res) {
 
     const body = await readJsonBody(req);
     const name = String(body.name || "").trim();
-    const simulationState = body.simulationState;
+    const normalizedPlanPayload =
+        normalizeWorkspaceStatePayload(body);
 
     if (!name) {
         sendError(res, 400, "Plan name is required.");
         return;
     }
 
-    if (!simulationState || typeof simulationState !== "object") {
-        sendError(res, 400, "A simulationState object is required.");
+    if (normalizedPlanPayload.error) {
+        sendError(res, 400, normalizedPlanPayload.error);
         return;
     }
 
@@ -314,7 +370,8 @@ async function handleCreatePlan(req, res) {
         id: createId("plan"),
         userId: sessionContext.user.id,
         name,
-        simulationState,
+        simulationState: normalizedPlanPayload.simulationState,
+        workspaceState: normalizedPlanPayload.workspaceState,
         createdAt: now,
         updatedAt: now
     };
@@ -365,6 +422,7 @@ async function handleUpdatePlan(req, res, planId) {
             ? String(body.name || "").trim()
             : undefined;
     const nextSimulationState = body.simulationState;
+    const nextWorkspaceState = body.workspaceState;
     let updatedPlan = null;
 
     if (nextName !== undefined && !nextName) {
@@ -382,11 +440,38 @@ async function handleUpdatePlan(req, res, planId) {
                 return plan;
             }
 
+            let nextPlanPayload = null;
+
+            if (
+                nextSimulationState !== undefined ||
+                nextWorkspaceState !== undefined
+            ) {
+                nextPlanPayload = normalizeWorkspaceStatePayload({
+                    simulationState:
+                        nextSimulationState !== undefined
+                            ? nextSimulationState
+                            : plan.simulationState,
+                    workspaceState:
+                        nextWorkspaceState !== undefined
+                            ? nextWorkspaceState
+                            : plan.workspaceState
+                });
+
+                if (nextPlanPayload.error) {
+                    const validationError = new Error(nextPlanPayload.error);
+                    validationError.statusCode = 400;
+                    throw validationError;
+                }
+            }
+
             updatedPlan = {
                 ...plan,
                 ...(nextName !== undefined ? { name: nextName } : {}),
-                ...(nextSimulationState !== undefined
-                    ? { simulationState: nextSimulationState }
+                ...(nextPlanPayload
+                    ? {
+                        simulationState: nextPlanPayload.simulationState,
+                        workspaceState: nextPlanPayload.workspaceState
+                    }
                     : {}),
                 updatedAt: new Date().toISOString()
             };
@@ -510,6 +595,11 @@ export async function handleRequest(req, res) {
 
         if (error instanceof SyntaxError) {
             sendError(res, 400, "Invalid JSON request body.");
+            return;
+        }
+
+        if (error?.statusCode) {
+            sendError(res, error.statusCode, error.message || "Request failed.");
             return;
         }
 

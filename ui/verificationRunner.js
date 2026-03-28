@@ -118,6 +118,11 @@ const SMOKE_TEST_PAGES = [
         selectors: [".about-shell", ".about-grid", ".site-header img"]
     },
     {
+        name: "Login Page",
+        path: "./login.html",
+        selectors: [".login-shell", "[data-auth-form]", "[data-auth-submit]"]
+    },
+    {
         name: "Retirement Age Comparison",
         path: "./retirement-age-comparison.html",
         selectors: [".comparison-shell", "#runComparisonBtn", "#comparisonTableBody"]

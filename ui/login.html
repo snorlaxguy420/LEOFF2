@@ -51,8 +51,8 @@ work organized in one place as account features roll out.
 <div class="login-note">
 <strong>Current status</strong>
 <p>
-This page is the account entry point for the upcoming saved-plan experience.
-The design is ready now so the flow feels native to the rest of LEOFF Helper.
+Accounts are now live on the backend. You can create an account and sign in
+today, and frontend saved-plan syncing will build on this flow next.
 </p>
 </div>
 </div>
@@ -61,40 +61,56 @@ The design is ready now so the flow feels native to the rest of LEOFF Helper.
 <div class="login-card-head">
 <div class="login-card-kicker">LEOFF Helper</div>
 <h2>Log In</h2>
-<p>Use your account email to access your saved retirement work.</p>
+<p class="login-card-copy" data-auth-copy>Use your account email to access your saved retirement work.</p>
 </div>
 
-<form class="login-form">
+<div class="login-mode-toggle" role="tablist" aria-label="Authentication mode">
+<button type="button" class="login-mode-btn is-active" data-auth-mode-toggle="login" aria-pressed="true">Log In</button>
+<button type="button" class="login-mode-btn" data-auth-mode-toggle="register" aria-pressed="false">Create Account</button>
+</div>
+
+<div class="login-status" data-auth-status hidden></div>
+
+<form class="login-form" data-auth-form>
 <label>
 Email Address
-<input type="email" placeholder="name@example.com">
+<input type="email" name="email" placeholder="name@example.com" autocomplete="email" required>
 </label>
 
 <label>
 Password
-<input type="password" placeholder="Enter your password">
+<input type="password" name="password" placeholder="Enter your password" autocomplete="current-password" minlength="8" required>
 </label>
 
 <div class="login-row">
 <label class="remember-row">
-<input type="checkbox">
+<input type="checkbox" name="remember" checked>
 <span>Remember me</span>
 </label>
-<a href="#" class="login-link">Forgot password?</a>
+<span class="login-inline-note">Use at least 8 characters for new accounts.</span>
 </div>
 
-<button type="button" class="login-submit">Log In</button>
+<button type="submit" class="login-submit" data-auth-submit>Log In</button>
 </form>
 
 <div class="login-divider"><span>or</span></div>
 
 <div class="login-secondary-actions">
-<a href="#" class="login-secondary-btn">Continue with Google</a>
-<a href="#" class="login-secondary-btn">Send Magic Link</a>
+<a href="/ui/simulator.html" class="login-secondary-btn">Open Calculator</a>
+<button type="button" class="login-secondary-btn" data-auth-logout hidden>Log Out</button>
 </div>
 
-<p class="login-footer-note">
-New here? Account-based saved plans are coming soon.
+<div class="login-authenticated" data-authenticated-panel hidden>
+<div class="login-authenticated-kicker">Signed In</div>
+<h3>Account ready for <span data-auth-email></span></h3>
+<p>
+Your secure account session is active. Local import/export still works today,
+and account-backed plan management is the next frontend step.
+</p>
+</div>
+
+<p class="login-footer-note" data-auth-footer>
+New here? Create an account now so your saved-plan flow is ready as frontend syncing rolls out.
 </p>
 </div>
 
@@ -148,5 +164,6 @@ New here? Account-based saved plans are coming soon.
 
 </footer>
 
+<script type="module" src="/ui/login.js"></script>
 </body>
 </html>

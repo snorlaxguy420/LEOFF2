@@ -22,6 +22,14 @@ import {
     buildAssetButtons,
     loadProfileModule
 } from "./simulatorBootstrap.js";
+import {
+    createPlan as createAccountPlan,
+    deletePlan as deleteAccountPlan,
+    getCurrentUser,
+    getPlan as fetchAccountPlan,
+    listPlans as listAccountPlans,
+    updatePlan as updateAccountPlan
+} from "./apiClient.js";
 
 /* ------------------------------------------------
 GLOBAL STATE
@@ -45,6 +53,346 @@ const SUGGESTED_INFLATION_DEFAULTS = {
     healthcareInflation: "6"
 };
 const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
+const ACCOUNT_PLAN_META_KEY = "leoffHelperAccountPlanMeta";
+let currentAccountUser = null;
+let currentAccountPlans = [];
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+function getStoredAccountPlanMeta() {
+    try {
+        const raw = localStorage.getItem(ACCOUNT_PLAN_META_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+        console.warn("Account plan metadata could not be read", error);
+        return null;
+    }
+}
+
+function storeAccountPlanMeta(meta = null) {
+    if (!meta) {
+        localStorage.removeItem(ACCOUNT_PLAN_META_KEY);
+        return;
+    }
+
+    localStorage.setItem(
+        ACCOUNT_PLAN_META_KEY,
+        JSON.stringify({
+            id: meta.id,
+            name: meta.name
+        })
+    );
+}
+
+function buildWorkspaceStateForPersistence(simulationState = null) {
+    return StateManager.normalizeWorkspaceState({
+        ...StateManager.state,
+        simulationState:
+            simulationState ??
+            StateManager.getSimulationState() ??
+            null,
+        moduleState: StateManager.collectModuleState()
+    });
+}
+
+function formatAccountPlanTimestamp(isoString) {
+    if (!isoString) {
+        return "Unknown update time";
+    }
+
+    const parsed = new Date(isoString);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return "Unknown update time";
+    }
+
+    return parsed.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit"
+    });
+}
+
+function setAccountPlansStatus(message, tone = "neutral") {
+    const statusEl = document.getElementById("accountPlansStatus");
+
+    if (!statusEl) {
+        return;
+    }
+
+    statusEl.textContent = message;
+    statusEl.dataset.tone = tone;
+}
+
+function renderAccountPlansList() {
+    const listEl = document.getElementById("accountPlansList");
+    const saveBtn = document.getElementById("saveAccountPlanBtn");
+    const saveAsNewBtn = document.getElementById("saveAccountPlanAsNewBtn");
+    const refreshBtn = document.getElementById("refreshAccountPlansBtn");
+
+    if (saveBtn) {
+        saveBtn.disabled = !currentAccountUser;
+    }
+
+    if (saveAsNewBtn) {
+        saveAsNewBtn.disabled = !currentAccountUser;
+    }
+
+    if (refreshBtn) {
+        refreshBtn.disabled = false;
+    }
+
+    if (!listEl) {
+        return;
+    }
+
+    if (!currentAccountUser) {
+        listEl.innerHTML = `
+            <div class="account-plan-empty">
+                Sign in from the account page to save plans to your account and reopen them here.
+            </div>
+        `;
+        return;
+    }
+
+    if (!currentAccountPlans.length) {
+        listEl.innerHTML = `
+            <div class="account-plan-empty">
+                You do not have any synced plans yet. Save the current scenario to create your first one.
+            </div>
+        `;
+        return;
+    }
+
+    const currentPlanId = getStoredAccountPlanMeta()?.id || null;
+
+    listEl.innerHTML = currentAccountPlans.map(plan => `
+        <div class="account-plan-item ${plan.id === currentPlanId ? "is-current" : ""}">
+            <div class="account-plan-top">
+                <div>
+                    <p class="account-plan-name">${escapeHtml(plan.name)}</p>
+                    <p class="account-plan-meta">Updated ${escapeHtml(formatAccountPlanTimestamp(plan.updatedAt))}</p>
+                </div>
+                ${plan.id === currentPlanId
+                    ? '<span class="account-plan-badge">Current</span>'
+                    : ""}
+            </div>
+            <div class="account-plan-actions">
+                <button type="button" data-account-action="open" data-plan-id="${escapeHtml(plan.id)}">Open</button>
+                <button type="button" data-account-action="update-current-name" data-plan-id="${escapeHtml(plan.id)}">Use as Current Save Target</button>
+                <button type="button" class="account-plan-delete" data-account-action="delete" data-plan-id="${escapeHtml(plan.id)}">Delete</button>
+            </div>
+        </div>
+    `).join("");
+}
+
+function renderDefaultAccountStatus() {
+    if (!currentAccountUser) {
+        setAccountPlansStatus(
+            "Sign in to save and reopen plans across devices.",
+            "neutral"
+        );
+        return;
+    }
+
+    const currentPlanMeta = getStoredAccountPlanMeta();
+
+    if (currentPlanMeta?.name) {
+        setAccountPlansStatus(
+            `Signed in as ${currentAccountUser.email}. Current account save target: ${currentPlanMeta.name}.`,
+            "success"
+        );
+        return;
+    }
+
+    setAccountPlansStatus(
+        `Signed in as ${currentAccountUser.email}. Save this scenario to create your first synced plan.`,
+        "success"
+    );
+}
+
+function applyWorkspaceStateToSimulator(workspaceState, accountPlanMeta = null) {
+    const importedState =
+        StateManager.importPortablePlan({ workspaceState });
+
+    loadProfileModule(assetRegistry);
+    sessionStorage.removeItem("retirementProjection");
+    populateStandardInputs(
+        simulationStateToInputs(importedState.simulationState)
+    );
+    setActiveSimulatorTab("profile", {
+        scrollOnMobile: isPhoneChartLayout()
+    });
+
+    if (accountPlanMeta) {
+        storeAccountPlanMeta(accountPlanMeta);
+    } else {
+        storeAccountPlanMeta(null);
+    }
+
+    runProjection(importedState.simulationState);
+}
+
+async function refreshAccountPlans({ keepStatus = false } = {}) {
+    try {
+        currentAccountUser = await getCurrentUser();
+        currentAccountPlans = await listAccountPlans();
+
+        const storedPlanMeta = getStoredAccountPlanMeta();
+
+        if (
+            storedPlanMeta?.id &&
+            !currentAccountPlans.some(plan => plan.id === storedPlanMeta.id)
+        ) {
+            storeAccountPlanMeta(null);
+        }
+    } catch (error) {
+        currentAccountUser = null;
+        currentAccountPlans = [];
+    }
+
+    renderAccountPlansList();
+
+    if (!keepStatus) {
+        renderDefaultAccountStatus();
+    }
+}
+
+async function saveCurrentPlanToAccount({ forceNew = false } = {}) {
+    if (!currentAccountUser) {
+        setAccountPlansStatus(
+            "Sign in first, then come back here to save this plan to your account.",
+            "error"
+        );
+        return;
+    }
+
+    const { simulationState } = buildCurrentSimulationPayload();
+
+    StateManager.saveWorkspaceState({ simulationState });
+
+    const workspaceState =
+        buildWorkspaceStateForPersistence(simulationState);
+    const currentPlanMeta = getStoredAccountPlanMeta();
+    const defaultName =
+        currentPlanMeta?.name ||
+        `Retirement Plan ${new Date().toISOString().slice(0, 10)}`;
+
+    try {
+        let savedPlan;
+
+        if (forceNew || !currentPlanMeta?.id) {
+            const requestedName =
+                window.prompt("Name this account plan:", defaultName) || "";
+            const trimmedName = requestedName.trim();
+
+            if (!trimmedName) {
+                setAccountPlansStatus("Account save cancelled.", "neutral");
+                return;
+            }
+
+            savedPlan = await createAccountPlan(trimmedName, {
+                simulationState,
+                workspaceState
+            });
+        } else {
+            savedPlan = await updateAccountPlan(currentPlanMeta.id, {
+                simulationState,
+                workspaceState
+            });
+        }
+
+        storeAccountPlanMeta({
+            id: savedPlan.id,
+            name: savedPlan.name
+        });
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `${forceNew || !currentPlanMeta?.id ? "Saved" : "Updated"} "${savedPlan.name}" in your account.`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account plan save failed", error);
+        setAccountPlansStatus(
+            error.message || "The account plan could not be saved right now.",
+            "error"
+        );
+    }
+}
+
+async function openAccountPlan(planId) {
+    try {
+        const plan = await fetchAccountPlan(planId);
+        const workspaceState =
+            plan?.workspaceState ||
+            {
+                simulationState: plan?.simulationState || null,
+                moduleState: {}
+            };
+
+        if (!workspaceState?.simulationState) {
+            throw new Error("That account plan is missing its simulation state.");
+        }
+
+        applyWorkspaceStateToSimulator(workspaceState, {
+            id: plan.id,
+            name: plan.name
+        });
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `Loaded "${plan.name}" from your account.`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account plan load failed", error);
+        setAccountPlansStatus(
+            error.message || "That account plan could not be opened.",
+            "error"
+        );
+    }
+}
+
+async function deleteAccountPlanById(planId) {
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+    const confirmed = window.confirm(
+        `Delete "${plan?.name || "this account plan"}" from your account?`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await deleteAccountPlan(planId);
+
+        if (getStoredAccountPlanMeta()?.id === planId) {
+            storeAccountPlanMeta(null);
+        }
+
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `Deleted "${plan?.name || "account plan"}" from your account.`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account plan delete failed", error);
+        setAccountPlansStatus(
+            error.message || "That account plan could not be deleted.",
+            "error"
+        );
+    }
+}
 
 function hasRequiredCurrentExpenses(inputs) {
     return (inputs?.expenses?.monthly || 0) > 0;
@@ -293,18 +641,11 @@ async function importPortablePlanFile(file) {
 
     const text = await file.text();
     const payload = JSON.parse(text);
-    const importedState =
-        StateManager.importPortablePlan(payload);
+    const workspaceState =
+        payload?.workspaceState ||
+        payload;
 
-    loadProfileModule(assetRegistry);
-    sessionStorage.removeItem("retirementProjection");
-    populateStandardInputs(
-        simulationStateToInputs(importedState.simulationState)
-    );
-    setActiveSimulatorTab("profile", {
-        scrollOnMobile: isPhoneChartLayout()
-    });
-    runProjection(importedState.simulationState);
+    applyWorkspaceStateToSimulator(workspaceState, null);
 }
 
 function setupPlanTransferUi() {
@@ -334,14 +675,85 @@ function setupPlanTransferUi() {
 
         try {
             await importPortablePlanFile(file);
-            alert("Plan imported successfully.");
+            setAccountPlansStatus("Plan imported successfully.", "success");
         } catch (error) {
             console.error("Plan import failed", error);
-            alert("That file could not be imported. Please use a LEOFF Helper plan export.");
+            setAccountPlansStatus(
+                "That file could not be imported. Please use a LEOFF Helper plan export.",
+                "error"
+            );
         } finally {
             if (importInput) {
                 importInput.value = "";
             }
+        }
+    });
+}
+
+function setupAccountPlansUi() {
+    const saveBtn = document.getElementById("saveAccountPlanBtn");
+    const saveAsNewBtn = document.getElementById("saveAccountPlanAsNewBtn");
+    const refreshBtn = document.getElementById("refreshAccountPlansBtn");
+    const listEl = document.getElementById("accountPlansList");
+
+    saveBtn?.addEventListener("click", async () => {
+        await saveCurrentPlanToAccount();
+    });
+
+    saveAsNewBtn?.addEventListener("click", async () => {
+        await saveCurrentPlanToAccount({ forceNew: true });
+    });
+
+    refreshBtn?.addEventListener("click", async () => {
+        setAccountPlansStatus("Refreshing account plans...", "neutral");
+        await refreshAccountPlans();
+    });
+
+    listEl?.addEventListener("click", async event => {
+        const button =
+            event.target instanceof Element
+                ? event.target.closest("[data-account-action]")
+                : null;
+
+        if (!button) {
+            return;
+        }
+
+        const action = button.dataset.accountAction;
+        const planId = button.dataset.planId;
+
+        if (!planId) {
+            return;
+        }
+
+        if (action === "open") {
+            await openAccountPlan(planId);
+            return;
+        }
+
+        if (action === "update-current-name") {
+            const plan =
+                currentAccountPlans.find(entry => entry.id === planId) ||
+                null;
+
+            if (!plan) {
+                return;
+            }
+
+            storeAccountPlanMeta({
+                id: plan.id,
+                name: plan.name
+            });
+            renderAccountPlansList();
+            setAccountPlansStatus(
+                `"${plan.name}" is now the current account save target.`,
+                "success"
+            );
+            return;
+        }
+
+        if (action === "delete") {
+            await deleteAccountPlanById(planId);
         }
     });
 }
@@ -369,6 +781,7 @@ async function init(){
     setupSocialSecurityUi();
     setupInflationDefaultsUi();
     setupPlanTransferUi();
+    setupAccountPlansUi();
     setupReportButton();   // add this line
     syncMobileSimulatorMode();
     setupDisclaimerGate();
@@ -380,6 +793,7 @@ async function init(){
     }
 
     runProjection(workspaceState?.simulationState || null);
+    await refreshAccountPlans();
 }
 
 

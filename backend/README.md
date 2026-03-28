@@ -49,7 +49,7 @@ server reads:
 
 - Passwords are hashed with Node's `scrypt`.
 - Sessions are stored server-side and referenced by an HTTP-only cookie.
-- Plans store the canonical `simulationState` object so the frontend does not
-  need a second persistence format.
+- Plans store the canonical `simulationState` and can also persist full
+  `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so it can
   later move to PostgreSQL with minimal route churn.

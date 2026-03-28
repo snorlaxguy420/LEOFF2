@@ -48,6 +48,10 @@ export const config = {
     passwordResetTtlMinutes: readNumberEnv("PASSWORD_RESET_TTL_MINUTES", 60),
     publicSiteUrl: readEnv("PUBLIC_SITE_URL", "https://leoffhelper.com"),
     supportEmail: readEnv("SUPPORT_EMAIL", "leoffhelper@gmail.com"),
+    signupSummaryRecipient: readEnv(
+        "SIGNUP_SUMMARY_RECIPIENT",
+        readEnv("SUPPORT_EMAIL", "leoffhelper@gmail.com")
+    ),
     emailFrom: readEnv("EMAIL_FROM", ""),
     resendApiKey: readEnv("RESEND_API_KEY", ""),
     dataFilePath: readEnv(

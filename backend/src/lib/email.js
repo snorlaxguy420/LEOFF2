@@ -32,6 +32,51 @@ export function buildLoginUrl() {
     return buildAbsoluteUrl("/ui/login.html");
 }
 
+async function sendConfiguredEmail({
+    toEmails,
+    subject,
+    text,
+    html,
+    missingConfigLogParts,
+    missingConfigMode = "log",
+    failureMessage
+}) {
+    if (!config.resendApiKey || !config.emailFrom) {
+        console.info(missingConfigLogParts.join(" "));
+
+        return {
+            mode: missingConfigMode
+        };
+    }
+
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${config.resendApiKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            from: config.emailFrom,
+            to: toEmails,
+            subject,
+            text,
+            html
+        })
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        const error = new Error(failureMessage);
+        error.statusCode = 502;
+        error.details = errorBody;
+        throw error;
+    }
+
+    return {
+        mode: "resend"
+    };
+}
+
 function buildResetEmailText({ displayName, resetUrl }) {
     const name = displayName || "there";
 
@@ -113,57 +158,105 @@ function buildWelcomeEmailHtml({ displayName, simulatorUrl, loginUrl }) {
     `.trim();
 }
 
+function formatSignupSummaryTimestamp(isoString) {
+    const timestamp = new Date(isoString);
+
+    if (!Number.isFinite(timestamp.getTime())) {
+        return "Unknown signup time";
+    }
+
+    return new Intl.DateTimeFormat("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/Los_Angeles"
+    }).format(timestamp);
+}
+
+function buildSignupSummaryText({
+    recipientEmail,
+    summaryStart,
+    summaryEnd,
+    newUsers,
+    totalUsers
+}) {
+    const summaryLines = [
+        "LEOFF Helper daily signup summary",
+        "",
+        `Window: ${formatSignupSummaryTimestamp(summaryStart)} to ${formatSignupSummaryTimestamp(summaryEnd)} (America/Los_Angeles)`,
+        `New accounts in the last 24 hours: ${newUsers.length}`,
+        `Total accounts: ${totalUsers}`,
+        `Summary recipient: ${recipientEmail}`,
+        ""
+    ];
+
+    if (!newUsers.length) {
+        summaryLines.push("No new accounts were created in the last 24 hours.");
+        return summaryLines.join("\n");
+    }
+
+    summaryLines.push("New signup emails:");
+    newUsers.forEach(user => {
+        summaryLines.push(
+            `- ${user.email} (${formatSignupSummaryTimestamp(user.createdAt)})`
+        );
+    });
+
+    return summaryLines.join("\n");
+}
+
+function buildSignupSummaryHtml({
+    summaryStart,
+    summaryEnd,
+    newUsers,
+    totalUsers
+}) {
+    const listMarkup = newUsers.length
+        ? `
+            <ul>
+                ${newUsers.map(user => `
+                    <li>
+                        <strong>${escapeHtml(user.email)}</strong>
+                        <span style="color:#5c6b75;"> - ${escapeHtml(formatSignupSummaryTimestamp(user.createdAt))}</span>
+                    </li>
+                `).join("")}
+            </ul>
+        `
+        : "<p>No new accounts were created in the last 24 hours.</p>";
+
+    return `
+        <div style="font-family:Segoe UI,Arial,sans-serif;color:#1e2f44;line-height:1.6;">
+            <p><strong>LEOFF Helper daily signup summary</strong></p>
+            <p>Window: ${escapeHtml(formatSignupSummaryTimestamp(summaryStart))} to ${escapeHtml(formatSignupSummaryTimestamp(summaryEnd))} (America/Los_Angeles)</p>
+            <p>New accounts in the last 24 hours: <strong>${newUsers.length}</strong><br>Total accounts: <strong>${totalUsers}</strong></p>
+            <p><strong>New signup emails</strong></p>
+            ${listMarkup}
+        </div>
+    `.trim();
+}
+
 export async function sendPasswordResetEmail({
     toEmail,
     displayName,
     resetUrl
 }) {
-    if (!config.resendApiKey || !config.emailFrom) {
-        console.info(
-            [
-                "Password reset email delivery not configured.",
-                `Requested email: ${toEmail}`,
-                `Reset URL: ${resetUrl}`
-            ].join(" ")
-        );
-
-        return {
-            mode: "log"
-        };
-    }
-
-    const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${config.resendApiKey}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            from: config.emailFrom,
-            to: [toEmail],
-            subject: "Reset your LEOFF Helper password",
-            text: buildResetEmailText({
-                displayName,
-                resetUrl
-            }),
-            html: buildResetEmailHtml({
-                displayName,
-                resetUrl
-            })
-        })
+    return sendConfiguredEmail({
+        toEmails: [toEmail],
+        subject: "Reset your LEOFF Helper password",
+        text: buildResetEmailText({
+            displayName,
+            resetUrl
+        }),
+        html: buildResetEmailHtml({
+            displayName,
+            resetUrl
+        }),
+        missingConfigLogParts: [
+            "Password reset email delivery not configured.",
+            `Requested email: ${toEmail}`,
+            `Reset URL: ${resetUrl}`
+        ],
+        failureMessage: "Password reset email could not be sent."
     });
-
-    if (!response.ok) {
-        const errorBody = await response.text();
-        const error = new Error("Password reset email could not be sent.");
-        error.statusCode = 502;
-        error.details = errorBody;
-        throw error;
-    }
-
-    return {
-        mode: "resend"
-    };
 }
 
 export async function sendWelcomeEmail({
@@ -173,53 +266,58 @@ export async function sendWelcomeEmail({
     const simulatorUrl = buildSimulatorUrl();
     const loginUrl = buildLoginUrl();
 
-    if (!config.resendApiKey || !config.emailFrom) {
-        console.info(
-            [
-                "Welcome email delivery not configured.",
-                `Requested email: ${toEmail}`,
-                `Simulator URL: ${simulatorUrl}`,
-                `Login URL: ${loginUrl}`
-            ].join(" ")
-        );
-
-        return {
-            mode: "log"
-        };
-    }
-
-    const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-            Authorization: `Bearer ${config.resendApiKey}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            from: config.emailFrom,
-            to: [toEmail],
-            subject: "Your LEOFF Helper account is ready",
-            text: buildWelcomeEmailText({
-                displayName,
-                simulatorUrl,
-                loginUrl
-            }),
-            html: buildWelcomeEmailHtml({
-                displayName,
-                simulatorUrl,
-                loginUrl
-            })
-        })
+    return sendConfiguredEmail({
+        toEmails: [toEmail],
+        subject: "Your LEOFF Helper account is ready",
+        text: buildWelcomeEmailText({
+            displayName,
+            simulatorUrl,
+            loginUrl
+        }),
+        html: buildWelcomeEmailHtml({
+            displayName,
+            simulatorUrl,
+            loginUrl
+        }),
+        missingConfigLogParts: [
+            "Welcome email delivery not configured.",
+            `Requested email: ${toEmail}`,
+            `Simulator URL: ${simulatorUrl}`,
+            `Login URL: ${loginUrl}`
+        ],
+        failureMessage: "Welcome email could not be sent."
     });
+}
 
-    if (!response.ok) {
-        const errorBody = await response.text();
-        const error = new Error("Welcome email could not be sent.");
-        error.statusCode = 502;
-        error.details = errorBody;
-        throw error;
-    }
-
-    return {
-        mode: "resend"
-    };
+export async function sendDailySignupSummaryEmail({
+    recipientEmail,
+    summaryStart,
+    summaryEnd,
+    newUsers,
+    totalUsers
+}) {
+    return sendConfiguredEmail({
+        toEmails: [recipientEmail],
+        subject: `LEOFF Helper daily signup summary: ${newUsers.length} new account${newUsers.length === 1 ? "" : "s"}`,
+        text: buildSignupSummaryText({
+            recipientEmail,
+            summaryStart,
+            summaryEnd,
+            newUsers,
+            totalUsers
+        }),
+        html: buildSignupSummaryHtml({
+            summaryStart,
+            summaryEnd,
+            newUsers,
+            totalUsers
+        }),
+        missingConfigLogParts: [
+            "Daily signup summary email delivery not configured.",
+            `Recipient email: ${recipientEmail}`,
+            `New accounts in window: ${newUsers.length}`,
+            `Signup emails: ${newUsers.length ? newUsers.map(user => user.email).join(", ") : "(none)"}`
+        ],
+        failureMessage: "Daily signup summary email could not be sent."
+    });
 }

@@ -6,7 +6,8 @@
   "description": "Initial backend scaffold for LEOFF Helper saved plans and authentication.",
   "scripts": {
     "start": "node ./src/server.js",
-    "dev": "node ./src/server.js"
+    "dev": "node ./src/server.js",
+    "send-daily-signup-summary": "node ./src/sendDailySignupSummary.js"
   },
   "engines": {
     "node": ">=20"

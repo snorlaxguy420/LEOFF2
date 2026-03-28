@@ -36,6 +36,7 @@ server reads:
 - `PASSWORD_RESET_TTL_MINUTES`
 - `PUBLIC_SITE_URL`
 - `SUPPORT_EMAIL`
+- `SIGNUP_SUMMARY_RECIPIENT`
 - `EMAIL_FROM`
 - `RESEND_API_KEY`
 - `DATA_FILE_PATH`
@@ -57,6 +58,28 @@ server reads:
 - `PUT /plans/:id`
 - `DELETE /plans/:id`
 
+## Daily signup summary job
+
+The backend now includes a daily signup-summary script:
+
+```powershell
+cd backend
+npm run send-daily-signup-summary
+```
+
+What it does:
+
+- counts accounts created in the last 24 hours
+- includes the signup email addresses in the report
+- sends the summary to `SIGNUP_SUMMARY_RECIPIENT`
+- falls back to server logging if outbound email is not configured
+
+Recommended production scheduling:
+
+- run it once every 24 hours on the Lightsail server
+- use the same backend environment as the main API service
+- send to `leoffhelper@gmail.com` unless you later want a different recipient
+
 ## Notes
 
 - Passwords are hashed with Node's `scrypt`.
@@ -68,6 +91,8 @@ server reads:
   logged on the server so local/dev testing can still complete the flow.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, account-created
   emails also fall back to server logging instead of blocking signup.
+- The daily signup summary job uses the same outbound email configuration and
+  also falls back to server logging when email delivery is not configured.
 - Plans store the canonical `simulationState` and can also persist full
   `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so it can

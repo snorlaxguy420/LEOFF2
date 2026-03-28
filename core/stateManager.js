@@ -36,11 +36,16 @@ export const StateManager = {
             ...defaults.simulationState,
             ...(nextState.simulationState || {})
         };
+        const comparisonState = {
+            ...defaults.comparisonState,
+            ...(nextState.comparisonState || {})
+        };
 
         return {
             ...defaults,
             ...nextState,
             simulationState,
+            comparisonState,
             moduleState: nextState.moduleState || {}
         };
     },
@@ -210,6 +215,9 @@ loadAll(){
                 }
             }
             ,
+            comparisonState: {
+                planIds: []
+            },
             moduleState: {}
         };
     }

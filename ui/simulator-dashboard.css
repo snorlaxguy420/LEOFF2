@@ -578,6 +578,91 @@ display:grid;
 gap:10px;
 }
 
+.account-comparison-summary{
+padding:12px 14px;
+border-radius:12px;
+background:rgba(30,47,68,.05);
+border:1px solid rgba(30,47,68,.08);
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.78);
+}
+
+.account-comparison-actions{
+display:flex;
+justify-content:flex-end;
+}
+
+.account-comparison-list{
+display:grid;
+gap:10px;
+}
+
+.account-comparison-card{
+padding:14px;
+border-radius:14px;
+border:1px solid rgba(30,47,68,.10);
+background:rgba(244,241,234,.72);
+}
+
+.account-comparison-card.is-current{
+border-color:rgba(63,124,133,.24);
+background:rgba(63,124,133,.08);
+}
+
+.account-comparison-top{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:12px;
+margin-bottom:10px;
+}
+
+.account-comparison-name{
+margin:0;
+font-size:15px;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.account-comparison-meta{
+margin:4px 0 0;
+font-size:12px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
+.account-comparison-grid{
+display:grid;
+grid-template-columns:repeat(2, minmax(0, 1fr));
+gap:10px;
+}
+
+.account-comparison-metric{
+padding:10px 12px;
+border-radius:12px;
+background:rgba(255,255,255,.82);
+border:1px solid rgba(30,47,68,.08);
+}
+
+.account-comparison-label{
+display:block;
+font-size:11px;
+font-weight:800;
+letter-spacing:.08em;
+text-transform:uppercase;
+color:rgba(30,47,68,.60);
+}
+
+.account-comparison-value{
+display:block;
+margin-top:6px;
+font-size:14px;
+font-weight:700;
+line-height:1.4;
+color:var(--pnw-navy);
+}
+
 .account-plan-item{
 padding:14px;
 border-radius:14px;
@@ -664,6 +749,12 @@ background:rgba(31,77,58,.08);
 .account-plan-actions button.account-plan-delete{
 color:#7C2A2A;
 border-color:rgba(150,42,42,.12);
+}
+
+.account-plan-actions button.account-plan-compare-active{
+background:rgba(63,124,133,.12);
+border-color:rgba(63,124,133,.24);
+color:var(--pnw-navy);
 }
 
 .account-plan-empty{
@@ -1063,6 +1154,10 @@ gap:10px;
 }
 
 body.mobile-simulator .account-plans-actions{
+grid-template-columns:1fr;
+}
+
+body.mobile-simulator .account-comparison-grid{
 grid-template-columns:1fr;
 }
 

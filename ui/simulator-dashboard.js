@@ -55,8 +55,10 @@ const SUGGESTED_INFLATION_DEFAULTS = {
 const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
 const ACCOUNT_PLAN_META_KEY = "leoffHelperAccountPlanMeta";
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
+const SCENARIO_COMPARISON_MAX_SELECTION = 3;
 let currentAccountUser = null;
 let currentAccountPlans = [];
+let currentScenarioComparisonPlans = [];
 
 function buildDefaultAccountScenarioName() {
     const now = new Date();
@@ -76,6 +78,43 @@ function escapeHtml(value) {
         .replaceAll(">", "&gt;")
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#39;");
+}
+
+function normalizeScenarioComparisonPlanIds(planIds = []) {
+    return Array.from(
+        new Set(
+            (Array.isArray(planIds) ? planIds : [])
+                .map(id => String(id || "").trim())
+                .filter(Boolean)
+        )
+    ).slice(0, SCENARIO_COMPARISON_MAX_SELECTION);
+}
+
+function getScenarioComparisonState() {
+    const comparisonState =
+        StateManager.state?.comparisonState ||
+        {};
+
+    return {
+        planIds: normalizeScenarioComparisonPlanIds(
+            comparisonState.planIds
+        )
+    };
+}
+
+function setScenarioComparisonState(planIds = []) {
+    const nextState =
+        StateManager.normalizeWorkspaceState({
+            ...StateManager.state,
+            comparisonState: {
+                planIds: normalizeScenarioComparisonPlanIds(planIds)
+            }
+        });
+
+    StateManager.state = nextState;
+    StateManager.save();
+
+    return nextState.comparisonState;
 }
 
 function getStoredAccountPlanMeta() {
@@ -138,6 +177,124 @@ function getAccountPlanDisplayName(plan) {
     return String(plan?.name || "").trim() || "Untitled Scenario";
 }
 
+function formatScenarioComparisonMoney(value) {
+    return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+        maximumFractionDigits: 0
+    }).format(value || 0);
+}
+
+function formatScenarioBenefitEnhancement(value) {
+    return value === "lump_sum"
+        ? "2% + Lump Sum"
+        : "Tiered Multiplier";
+}
+
+function formatScenarioSurvivorOption(value) {
+    const normalized = String(value || "").toUpperCase();
+
+    if (!value || normalized === "NONE" || normalized === "SINGLE") {
+        return "None";
+    }
+
+    if (normalized === "JOINT_50" || value === "50%") {
+        return "50%";
+    }
+
+    if (
+        normalized === "JOINT_66" ||
+        value === "66%" ||
+        value === "66.6%"
+    ) {
+        return "66%";
+    }
+
+    if (normalized === "JOINT_100" || value === "100%") {
+        return "100%";
+    }
+
+    return String(value);
+}
+
+function buildScenarioComparisonSnapshot({
+    name,
+    simulationState,
+    updatedAt,
+    badgeText = "",
+    isCurrentWorkspace = false
+}) {
+    const state = simulationState || {};
+    const profile = state.profile || {};
+    const pension = state.pension || {};
+    const socialSecurity = state.socialSecurity || {};
+    const expenses = state.expenses || {};
+    const annualExpenses =
+        expenses.annual ||
+        ((expenses.monthly || 0) * 12);
+
+    return {
+        name,
+        badgeText,
+        isCurrentWorkspace,
+        updatedAt,
+        metrics: [
+            {
+                label: "Retirement Age",
+                value: profile.retirementAge ?? pension.retirementAge ?? "-"
+            },
+            {
+                label: "Service Credit",
+                value:
+                    pension.yearsOfService || pension.serviceYears
+                        ? `${pension.yearsOfService || pension.serviceYears} yrs`
+                        : "-"
+            },
+            {
+                label: "Final Average Salary",
+                value:
+                    pension.finalAverageSalary > 0
+                        ? formatScenarioComparisonMoney(
+                            pension.finalAverageSalary
+                        )
+                        : "-"
+            },
+            {
+                label: "Annual Expenses",
+                value:
+                    annualExpenses > 0
+                        ? formatScenarioComparisonMoney(annualExpenses)
+                        : "-"
+            },
+            {
+                label: "Benefit Enhancement",
+                value: formatScenarioBenefitEnhancement(
+                    pension.benefitEnhancement
+                )
+            },
+            {
+                label: "Survivor Option",
+                value: formatScenarioSurvivorOption(
+                    pension.survivorOption
+                )
+            },
+            {
+                label: "SS Claim Age",
+                value: socialSecurity.claimAge || "-"
+            },
+            {
+                label: "Housing Inflation",
+                value:
+                    state.assumptions?.housingInflationRate !== undefined
+                        ? `${(
+                            (state.assumptions?.housingInflationRate || 0) * 100
+                        ).toFixed(1)}%`
+                        : "-"
+            }
+        ]
+    };
+}
+
 function getAccountPlansSummaryText() {
     if (!currentAccountUser) {
         return "Sign in to start building synced retirement scenarios.";
@@ -155,6 +312,30 @@ function getAccountPlansSummaryText() {
     }
 
     return `${countLabel}. Save the current workspace as a new scenario or pick one as your save target.`;
+}
+
+function getScenarioComparisonSummaryText() {
+    if (!currentAccountUser) {
+        return "Sign in to compare the current workspace with synced scenarios.";
+    }
+
+    const selectedCount =
+        getScenarioComparisonState().planIds.length;
+
+    if (!selectedCount) {
+        return `Current workspace ready. Add up to ${SCENARIO_COMPARISON_MAX_SELECTION} synced scenarios to compare key assumptions side by side.`;
+    }
+
+    const comparisonLabel =
+        selectedCount === 1
+            ? "1 synced scenario"
+            : `${selectedCount} synced scenarios`;
+    const currentPlanMeta = getStoredAccountPlanMeta();
+    const persistenceHint = currentPlanMeta?.id
+        ? `Update Current Scenario to sync this comparison set to your account.`
+        : "Save the current scenario if you want this comparison set tied to your account.";
+
+    return `Comparing the current workspace with ${comparisonLabel}. ${persistenceHint}`;
 }
 
 function setAccountPlansStatus(message, tone = "neutral") {
@@ -178,12 +359,162 @@ function renderAccountPlansSummary() {
     summaryEl.textContent = getAccountPlansSummaryText();
 }
 
+function renderScenarioComparisonSummary() {
+    const summaryEl =
+        document.getElementById("accountComparisonSummary");
+
+    if (!summaryEl) {
+        return;
+    }
+
+    summaryEl.textContent = getScenarioComparisonSummaryText();
+}
+
+function renderScenarioComparisonList() {
+    const listEl =
+        document.getElementById("accountComparisonList");
+
+    if (!listEl) {
+        return;
+    }
+
+    if (!currentAccountUser) {
+        listEl.innerHTML = `
+            <div class="account-plan-empty">
+                Sign in to compare the current workspace against your synced scenarios.
+            </div>
+        `;
+        renderScenarioComparisonSummary();
+        return;
+    }
+
+    const selectedPlanIds =
+        getScenarioComparisonState().planIds;
+
+    if (!selectedPlanIds.length) {
+        listEl.innerHTML = `
+            <div class="account-plan-empty">
+                No synced scenarios selected yet. Use Compare on any saved scenario to add it here.
+            </div>
+        `;
+        renderScenarioComparisonSummary();
+        return;
+    }
+
+    const currentSimulationState =
+        StateManager.getSimulationState() ||
+        buildCurrentSimulationPayload().simulationState;
+    const cards = [
+        buildScenarioComparisonSnapshot({
+            name: "Current Workspace",
+            simulationState: currentSimulationState,
+            badgeText: "Current",
+            isCurrentWorkspace: true
+        }),
+        ...currentScenarioComparisonPlans.map(plan =>
+            buildScenarioComparisonSnapshot({
+                name: getAccountPlanDisplayName(plan),
+                simulationState:
+                    plan.workspaceState?.simulationState ||
+                    plan.simulationState ||
+                    null,
+                updatedAt: plan.updatedAt,
+                badgeText: "Synced"
+            })
+        )
+    ];
+
+    listEl.innerHTML = cards.map(card => `
+        <div class="account-comparison-card ${card.isCurrentWorkspace ? "is-current" : ""}">
+            <div class="account-comparison-top">
+                <div>
+                    <p class="account-comparison-name">${escapeHtml(card.name)}</p>
+                    <p class="account-comparison-meta">
+                        ${card.isCurrentWorkspace
+                            ? "Live simulator inputs"
+                            : `Updated ${escapeHtml(formatAccountPlanTimestamp(card.updatedAt))}`}
+                    </p>
+                </div>
+                ${card.badgeText
+                    ? `<span class="account-plan-badge ${card.isCurrentWorkspace ? "" : "is-secondary"}">${escapeHtml(card.badgeText)}</span>`
+                    : ""}
+            </div>
+            <div class="account-comparison-grid">
+                ${card.metrics.map(metric => `
+                    <div class="account-comparison-metric">
+                        <span class="account-comparison-label">${escapeHtml(metric.label)}</span>
+                        <span class="account-comparison-value">${escapeHtml(metric.value)}</span>
+                    </div>
+                `).join("")}
+            </div>
+        </div>
+    `).join("");
+
+    renderScenarioComparisonSummary();
+}
+
+async function loadScenarioComparisonPlans() {
+    if (!currentAccountUser) {
+        currentScenarioComparisonPlans = [];
+        renderScenarioComparisonList();
+        return;
+    }
+
+    const selectedPlanIds =
+        getScenarioComparisonState().planIds;
+    const validPlanIds = selectedPlanIds.filter(planId =>
+        currentAccountPlans.some(plan => plan.id === planId)
+    );
+
+    if (validPlanIds.length !== selectedPlanIds.length) {
+        setScenarioComparisonState(validPlanIds);
+        renderAccountPlansList();
+    }
+
+    if (!validPlanIds.length) {
+        currentScenarioComparisonPlans = [];
+        renderScenarioComparisonList();
+        return;
+    }
+
+    const plans = await Promise.all(
+        validPlanIds.map(async planId => {
+            try {
+                return await fetchAccountPlan(planId);
+            } catch (error) {
+                console.warn(
+                    `Scenario comparison load failed for plan ${planId}`,
+                    error
+                );
+                return null;
+            }
+        })
+    );
+
+    currentScenarioComparisonPlans = plans.filter(Boolean);
+
+    if (currentScenarioComparisonPlans.length !== validPlanIds.length) {
+        setScenarioComparisonState(
+            currentScenarioComparisonPlans.map(plan => plan.id)
+        );
+        renderAccountPlansList();
+    }
+
+    renderScenarioComparisonList();
+}
+
 function renderAccountPlansList() {
     const listEl = document.getElementById("accountPlansList");
     const saveBtn = document.getElementById("saveAccountPlanBtn");
     const saveAsNewBtn = document.getElementById("saveAccountPlanAsNewBtn");
     const refreshBtn = document.getElementById("refreshAccountPlansBtn");
+    const clearComparisonBtn =
+        document.getElementById("clearScenarioComparisonBtn");
     const currentPlanMeta = getStoredAccountPlanMeta();
+    const selectedComparisonPlanIds =
+        getScenarioComparisonState().planIds;
+    const selectedComparisonSet =
+        new Set(selectedComparisonPlanIds);
 
     if (saveBtn) {
         saveBtn.disabled = !currentAccountUser;
@@ -199,6 +530,12 @@ function renderAccountPlansList() {
 
     if (refreshBtn) {
         refreshBtn.disabled = false;
+    }
+
+    if (clearComparisonBtn) {
+        clearComparisonBtn.disabled =
+            !currentAccountUser ||
+            selectedComparisonPlanIds.length === 0;
     }
 
     if (!listEl) {
@@ -247,6 +584,15 @@ function renderAccountPlansList() {
                 <button type="button" data-account-action="set-current-target" data-plan-id="${escapeHtml(plan.id)}" ${plan.id === currentPlanId ? "disabled" : ""}>Set Save Target</button>
                 <button type="button" data-account-action="rename" data-plan-id="${escapeHtml(plan.id)}">Rename</button>
                 <button type="button" data-account-action="duplicate" data-plan-id="${escapeHtml(plan.id)}">Duplicate</button>
+                <button
+                    type="button"
+                    class="${selectedComparisonSet.has(plan.id) ? "account-plan-compare-active" : ""}"
+                    data-account-action="toggle-compare"
+                    data-plan-id="${escapeHtml(plan.id)}"
+                    ${(selectedComparisonPlanIds.length >= SCENARIO_COMPARISON_MAX_SELECTION && !selectedComparisonSet.has(plan.id)) ? "disabled" : ""}
+                >
+                    ${selectedComparisonSet.has(plan.id) ? "Remove From Compare" : "Compare"}
+                </button>
                 <button type="button" class="account-plan-delete" data-account-action="delete" data-plan-id="${escapeHtml(plan.id)}">Delete</button>
             </div>
         </div>
@@ -300,6 +646,7 @@ function applyWorkspaceStateToSimulator(workspaceState, accountPlanMeta = null) 
     }
 
     runProjection(importedState.simulationState);
+    void loadScenarioComparisonPlans();
 }
 
 async function refreshAccountPlans({ keepStatus = false } = {}) {
@@ -321,6 +668,7 @@ async function refreshAccountPlans({ keepStatus = false } = {}) {
     }
 
     renderAccountPlansList();
+    await loadScenarioComparisonPlans();
 
     if (!keepStatus) {
         renderDefaultAccountStatus();
@@ -545,6 +893,12 @@ async function deleteAccountPlanById(planId) {
             storeAccountPlanMeta(null);
         }
 
+        if (getScenarioComparisonState().planIds.includes(planId)) {
+            setScenarioComparisonState(
+                getScenarioComparisonState().planIds.filter(id => id !== planId)
+            );
+        }
+
         await refreshAccountPlans({ keepStatus: true });
         setAccountPlansStatus(
             `Deleted scenario "${getAccountPlanDisplayName(plan)}" from your account.`,
@@ -557,6 +911,65 @@ async function deleteAccountPlanById(planId) {
             "error"
         );
     }
+}
+
+async function toggleScenarioComparisonById(planId) {
+    if (!currentAccountUser) {
+        setAccountPlansStatus(
+            "Sign in first, then use Compare on synced scenarios.",
+            "error"
+        );
+        return;
+    }
+
+    const selectedPlanIds =
+        getScenarioComparisonState().planIds;
+    const isSelected =
+        selectedPlanIds.includes(planId);
+
+    if (!isSelected && selectedPlanIds.length >= SCENARIO_COMPARISON_MAX_SELECTION) {
+        setAccountPlansStatus(
+            `You can compare up to ${SCENARIO_COMPARISON_MAX_SELECTION} synced scenarios at a time.`,
+            "error"
+        );
+        return;
+    }
+
+    const nextPlanIds = isSelected
+        ? selectedPlanIds.filter(id => id !== planId)
+        : [...selectedPlanIds, planId];
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+
+    setScenarioComparisonState(nextPlanIds);
+    renderAccountPlansList();
+    await loadScenarioComparisonPlans();
+    setAccountPlansStatus(
+        isSelected
+            ? `Removed "${getAccountPlanDisplayName(plan)}" from scenario comparison. Save the current scenario if you want that comparison set synced to your account.`
+            : `Added "${getAccountPlanDisplayName(plan)}" to scenario comparison. Save the current scenario if you want that comparison set synced to your account.`,
+        "success"
+    );
+}
+
+async function clearScenarioComparisonSelection() {
+    if (!getScenarioComparisonState().planIds.length) {
+        setAccountPlansStatus(
+            "Scenario comparison is already empty.",
+            "neutral"
+        );
+        return;
+    }
+
+    setScenarioComparisonState([]);
+    currentScenarioComparisonPlans = [];
+    renderAccountPlansList();
+    renderScenarioComparisonList();
+    setAccountPlansStatus(
+        "Cleared the current scenario comparison. Save the current scenario if you want that cleared state synced to your account.",
+        "success"
+    );
 }
 
 function hasRequiredCurrentExpenses(inputs) {
@@ -859,6 +1272,8 @@ function setupAccountPlansUi() {
     const saveBtn = document.getElementById("saveAccountPlanBtn");
     const saveAsNewBtn = document.getElementById("saveAccountPlanAsNewBtn");
     const refreshBtn = document.getElementById("refreshAccountPlansBtn");
+    const clearComparisonBtn =
+        document.getElementById("clearScenarioComparisonBtn");
     const listEl = document.getElementById("accountPlansList");
 
     saveBtn?.addEventListener("click", async () => {
@@ -872,6 +1287,10 @@ function setupAccountPlansUi() {
     refreshBtn?.addEventListener("click", async () => {
         setAccountPlansStatus("Refreshing account scenarios...", "neutral");
         await refreshAccountPlans();
+    });
+
+    clearComparisonBtn?.addEventListener("click", async () => {
+        await clearScenarioComparisonSelection();
     });
 
     listEl?.addEventListener("click", async event => {
@@ -924,6 +1343,11 @@ function setupAccountPlansUi() {
 
         if (action === "duplicate") {
             await duplicateAccountPlanById(planId);
+            return;
+        }
+
+        if (action === "toggle-compare") {
+            await toggleScenarioComparisonById(planId);
             return;
         }
 
@@ -1129,6 +1553,7 @@ function runProjection(existingSimulationState = null){
         clearTimeline();
         setReportButtonDisabled(true);
         sessionStorage.removeItem("retirementProjection");
+        renderScenarioComparisonList();
         return;
     }
 
@@ -1153,6 +1578,7 @@ function runProjection(existingSimulationState = null){
     });
 
     renderPreview(projection);
+    renderScenarioComparisonList();
 
 }
 

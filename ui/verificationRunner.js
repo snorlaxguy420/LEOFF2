@@ -340,6 +340,13 @@ function testPortablePlanExportImport() {
         localStorage.getItem("leoffSimulationState");
     const originalState =
         structuredClone(StateManager.state || {});
+    StateManager.state =
+        StateManager.normalizeWorkspaceState({
+            ...StateManager.defaultState(),
+            comparisonState: {
+                planIds: ["plan_alpha", "plan_beta"]
+            }
+        });
     const portablePlan =
         StateManager.buildPortablePlan({
             simulationState: {
@@ -382,6 +389,13 @@ function testPortablePlanExportImport() {
     assert(
         importedState.simulationState.pension.currentAnnualPay === 118000,
         "Portable plan import should preserve pension pay inputs"
+    );
+    assert(
+        Array.isArray(importedState.comparisonState?.planIds) &&
+        importedState.comparisonState.planIds.length === 2 &&
+        importedState.comparisonState.planIds[0] === "plan_alpha" &&
+        importedState.comparisonState.planIds[1] === "plan_beta",
+        "Portable plan import should preserve scenario comparison selection state"
     );
 
     if (originalStorage === null) {

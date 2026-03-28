@@ -5,6 +5,7 @@ Initial backend scaffold for:
 - session-based authentication
 - saved plan CRUD around the canonical `simulationState`
 - out-of-session password recovery via reset links
+- transactional account emails for registration and password recovery
 
 This first version intentionally uses Node built-ins only and persists to a
 local JSON file so the API contract can stabilize before a database migration.
@@ -65,6 +66,8 @@ server reads:
 - Password reset links default to a 60-minute lifetime.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, reset links are
   logged on the server so local/dev testing can still complete the flow.
+- If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, account-created
+  emails also fall back to server logging instead of blocking signup.
 - Plans store the canonical `simulationState` and can also persist full
   `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so it can

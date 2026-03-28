@@ -1,7 +1,8 @@
 import { config } from "./config.js";
 import {
     buildPasswordResetUrl,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    sendWelcomeEmail
 } from "./lib/email.js";
 import {
     applyCors,
@@ -248,6 +249,22 @@ async function handleRegister(req, res) {
         users: [...store.users, user],
         sessions: [...store.sessions, session]
     }));
+
+    try {
+        await sendWelcomeEmail({
+            toEmail: user.email,
+            displayName: user.displayName
+        });
+    } catch (error) {
+        console.warn(
+            "Welcome email delivery failed after registration.",
+            {
+                email: user.email,
+                message: error?.message,
+                details: error?.details
+            }
+        );
+    }
 
     res.setHeader(
         "Set-Cookie",

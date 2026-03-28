@@ -14,10 +14,22 @@ function getPublicSiteUrl() {
         .replace(/\/+$/, "");
 }
 
+function buildAbsoluteUrl(pathname) {
+    return new URL(pathname, `${getPublicSiteUrl()}/`).toString();
+}
+
 export function buildPasswordResetUrl(token) {
     const url = new URL("/ui/login.html", `${getPublicSiteUrl()}/`);
     url.searchParams.set("resetToken", token);
     return url.toString();
+}
+
+export function buildSimulatorUrl() {
+    return buildAbsoluteUrl("/ui/simulator.html");
+}
+
+export function buildLoginUrl() {
+    return buildAbsoluteUrl("/ui/login.html");
 }
 
 function buildResetEmailText({ displayName, resetUrl }) {
@@ -56,6 +68,47 @@ function buildResetEmailHtml({ displayName, resetUrl }) {
             <p><a href="${safeUrl}">${safeUrl}</a></p>
             <p>This link expires in ${config.passwordResetTtlMinutes} minutes.</p>
             <p>If you did not request this, you can ignore this email or contact ${safeSupportEmail}.</p>
+        </div>
+    `.trim();
+}
+
+function buildWelcomeEmailText({ displayName, simulatorUrl, loginUrl }) {
+    const name = displayName || "there";
+
+    return [
+        `Hi ${name},`,
+        "",
+        "Your LEOFF Helper account is ready.",
+        `You can jump back into the simulator here: ${simulatorUrl}`,
+        `If you ever need to sign in again, use: ${loginUrl}`,
+        "",
+        "Account perks currently include synced scenarios, account settings, and password recovery.",
+        `If you did not create this account, contact ${config.supportEmail}.`
+    ].join("\n");
+}
+
+function buildWelcomeEmailHtml({ displayName, simulatorUrl, loginUrl }) {
+    const name = escapeHtml(displayName || "there");
+    const safeSimulatorUrl = escapeHtml(simulatorUrl);
+    const safeLoginUrl = escapeHtml(loginUrl);
+    const safeSupportEmail = escapeHtml(config.supportEmail);
+
+    return `
+        <div style="font-family:Segoe UI,Arial,sans-serif;color:#1e2f44;line-height:1.6;">
+            <p>Hi ${name},</p>
+            <p>Your LEOFF Helper account is ready.</p>
+            <p>
+                <a
+                    href="${safeSimulatorUrl}"
+                    style="display:inline-block;padding:12px 18px;border-radius:999px;background:#1f4d3a;color:#ffffff;text-decoration:none;font-weight:700;"
+                >
+                    Open LEOFF Helper
+                </a>
+            </p>
+            <p>You can also sign in again any time here:</p>
+            <p><a href="${safeLoginUrl}">${safeLoginUrl}</a></p>
+            <p>Account perks currently include synced scenarios, account settings, and password recovery.</p>
+            <p>If you did not create this account, contact ${safeSupportEmail}.</p>
         </div>
     `.trim();
 }
@@ -103,6 +156,64 @@ export async function sendPasswordResetEmail({
     if (!response.ok) {
         const errorBody = await response.text();
         const error = new Error("Password reset email could not be sent.");
+        error.statusCode = 502;
+        error.details = errorBody;
+        throw error;
+    }
+
+    return {
+        mode: "resend"
+    };
+}
+
+export async function sendWelcomeEmail({
+    toEmail,
+    displayName
+}) {
+    const simulatorUrl = buildSimulatorUrl();
+    const loginUrl = buildLoginUrl();
+
+    if (!config.resendApiKey || !config.emailFrom) {
+        console.info(
+            [
+                "Welcome email delivery not configured.",
+                `Requested email: ${toEmail}`,
+                `Simulator URL: ${simulatorUrl}`,
+                `Login URL: ${loginUrl}`
+            ].join(" ")
+        );
+
+        return {
+            mode: "log"
+        };
+    }
+
+    const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${config.resendApiKey}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            from: config.emailFrom,
+            to: [toEmail],
+            subject: "Your LEOFF Helper account is ready",
+            text: buildWelcomeEmailText({
+                displayName,
+                simulatorUrl,
+                loginUrl
+            }),
+            html: buildWelcomeEmailHtml({
+                displayName,
+                simulatorUrl,
+                loginUrl
+            })
+        })
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        const error = new Error("Welcome email could not be sent.");
         error.statusCode = 502;
         error.details = errorBody;
         throw error;

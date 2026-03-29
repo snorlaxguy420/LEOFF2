@@ -588,6 +588,17 @@ line-height:1.5;
 color:rgba(42,42,42,.78);
 }
 
+.account-comparison-premium-note{
+margin-bottom:12px;
+padding:12px 14px;
+border-radius:12px;
+background:rgba(31,77,58,.08);
+border:1px solid rgba(31,77,58,.12);
+font-size:13px;
+line-height:1.5;
+color:rgba(23,61,47,.86);
+}
+
 .account-comparison-actions{
 display:flex;
 justify-content:flex-end;
@@ -636,6 +647,19 @@ color:rgba(42,42,42,.72);
 display:grid;
 grid-template-columns:repeat(2, minmax(0, 1fr));
 gap:10px;
+}
+
+.account-comparison-section + .account-comparison-section{
+margin-top:12px;
+}
+
+.account-comparison-section-title{
+margin:0 0 10px;
+font-size:11px;
+font-weight:800;
+letter-spacing:.08em;
+text-transform:uppercase;
+color:rgba(30,47,68,.62);
 }
 
 .account-comparison-metric{

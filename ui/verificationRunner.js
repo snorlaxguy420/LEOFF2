@@ -68,6 +68,7 @@ import {
     buildPremiumStressTestMonteCarloConfig,
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
+import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -435,6 +436,113 @@ function testPortablePlanExportImport() {
             : StateManager.defaultState();
 
     logResult("Portable plan export/import passed");
+}
+
+function testPremiumSavedScenarioComparisonCard() {
+    const simulationState = buildSimulationState({
+        inputs: {
+            profile: {
+                currentAge: 46
+            },
+            retireAge: 55,
+            lifeExpectancy: 90,
+            pension: {
+                serviceYears: 25,
+                finalAverageSalary: 120000,
+                currentAnnualPay: 115000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "50%",
+                survivorAge: 52
+            },
+            socialSecurity: {
+                birthYear: 1980,
+                claimAge: 67,
+                cola: 0.02,
+                fraBenefit: 26000
+            },
+            expenses: {
+                monthly: 5200,
+                annual: 62400,
+                housing: 1800,
+                groceries: 750,
+                bills: 500,
+                auto: 450,
+                healthcare: 650,
+                insurance: 300,
+                other: 750
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.031,
+                housingInflationRate: 0.035,
+                healthcareInflationRate: 0.055
+            },
+            toggles: {
+                showReal: false,
+                marketFirst: false
+            }
+        },
+        incomeSources: [
+            {
+                type: "fixed",
+                name: "Bridge Income",
+                annualAmount: 12000,
+                startAge: 55,
+                growthRate: 0
+            }
+        ]
+    });
+    const freeCard = buildScenarioComparisonCard({
+        name: "Free Snapshot",
+        workspaceState: {
+            simulationState
+        },
+        premium: false
+    });
+    const premiumCard = buildScenarioComparisonCard({
+        name: "Premium Snapshot",
+        workspaceState: {
+            simulationState,
+            premiumStressTesting: {
+                enabled: true,
+                goodsServicesInflationTargetRate: 0.045,
+                healthcareInflationTargetRate: 0.075,
+                portfolioDownsideFloorRate: -0.28,
+                earlyRetirementShockYears: 3,
+                earlyRetirementShockRate: -0.12
+            }
+        },
+        premium: true
+    });
+
+    assert(
+        freeCard.sections.length === 1 &&
+        freeCard.sections[0].title === "Snapshot",
+        "Free saved-scenario comparison should stay on a single assumptions snapshot section"
+    );
+    assert(
+        premiumCard.sections.length === 2 &&
+        premiumCard.sections[0].title === "Outcomes" &&
+        premiumCard.sections[1].title === "Setup",
+        "Premium saved-scenario comparison should expose both outcome and setup sections"
+    );
+    assert(
+        premiumCard.sections[0].metrics.some(metric =>
+            metric.label === "Readiness" &&
+            String(metric.value).includes("/ 100")
+        ),
+        "Premium saved-scenario comparison should include a readiness outcome metric"
+    );
+    assert(
+        premiumCard.sections[1].metrics.some(metric =>
+            metric.label === "Stress Profile" &&
+            metric.value === "Custom premium stress"
+        ),
+        "Premium saved-scenario comparison should reflect saved premium stress profiles"
+    );
+
+    logResult("Premium saved-scenario comparison card passed");
 }
 
 function testProjectionChartModes() {
@@ -2874,6 +2982,7 @@ async function runVerification() {
         await testDebtModuleCardFlow();
         testSimulationStateRoundTrip();
         testPortablePlanExportImport();
+        testPremiumSavedScenarioComparisonCard();
         testProjectionChartModes();
         testProjectionChartDatasets();
         testSharedSimulatorHelpers();

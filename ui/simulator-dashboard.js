@@ -35,6 +35,7 @@ import {
     DEFAULT_PREMIUM_STRESS_TESTING,
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
+import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
 
 /* ------------------------------------------------
 GLOBAL STATE
@@ -412,124 +413,6 @@ function getAccountPlanDisplayName(plan) {
     return String(plan?.name || "").trim() || "Untitled Scenario";
 }
 
-function formatScenarioComparisonMoney(value) {
-    return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 0
-    }).format(value || 0);
-}
-
-function formatScenarioBenefitEnhancement(value) {
-    return value === "lump_sum"
-        ? "2% + Lump Sum"
-        : "Tiered Multiplier";
-}
-
-function formatScenarioSurvivorOption(value) {
-    const normalized = String(value || "").toUpperCase();
-
-    if (!value || normalized === "NONE" || normalized === "SINGLE") {
-        return "None";
-    }
-
-    if (normalized === "JOINT_50" || value === "50%") {
-        return "50%";
-    }
-
-    if (
-        normalized === "JOINT_66" ||
-        value === "66%" ||
-        value === "66.6%"
-    ) {
-        return "66%";
-    }
-
-    if (normalized === "JOINT_100" || value === "100%") {
-        return "100%";
-    }
-
-    return String(value);
-}
-
-function buildScenarioComparisonSnapshot({
-    name,
-    simulationState,
-    updatedAt,
-    badgeText = "",
-    isCurrentWorkspace = false
-}) {
-    const state = simulationState || {};
-    const profile = state.profile || {};
-    const pension = state.pension || {};
-    const socialSecurity = state.socialSecurity || {};
-    const expenses = state.expenses || {};
-    const annualExpenses =
-        expenses.annual ||
-        ((expenses.monthly || 0) * 12);
-
-    return {
-        name,
-        badgeText,
-        isCurrentWorkspace,
-        updatedAt,
-        metrics: [
-            {
-                label: "Retirement Age",
-                value: profile.retirementAge ?? pension.retirementAge ?? "-"
-            },
-            {
-                label: "Service Credit",
-                value:
-                    pension.yearsOfService || pension.serviceYears
-                        ? `${pension.yearsOfService || pension.serviceYears} yrs`
-                        : "-"
-            },
-            {
-                label: "Final Average Salary",
-                value:
-                    pension.finalAverageSalary > 0
-                        ? formatScenarioComparisonMoney(
-                            pension.finalAverageSalary
-                        )
-                        : "-"
-            },
-            {
-                label: "Annual Expenses",
-                value:
-                    annualExpenses > 0
-                        ? formatScenarioComparisonMoney(annualExpenses)
-                        : "-"
-            },
-            {
-                label: "Benefit Enhancement",
-                value: formatScenarioBenefitEnhancement(
-                    pension.benefitEnhancement
-                )
-            },
-            {
-                label: "Survivor Option",
-                value: formatScenarioSurvivorOption(
-                    pension.survivorOption
-                )
-            },
-            {
-                label: "SS Claim Age",
-                value: socialSecurity.claimAge || "-"
-            },
-            {
-                label: "Housing Inflation",
-                value:
-                    state.assumptions?.housingInflationRate !== undefined
-                        ? `${(
-                            (state.assumptions?.housingInflationRate || 0) * 100
-                        ).toFixed(1)}%`
-                        : "-"
-            }
-        ]
-    };
-}
-
 function getAccountPlansSummaryText() {
     if (!currentAccountUser) {
         return "Sign in to start building synced retirement scenarios.";
@@ -554,11 +437,15 @@ function getScenarioComparisonSummaryText() {
         return "Sign in to compare the current workspace with synced scenarios.";
     }
 
+    const premiumComparisonEnabled =
+        hasPremiumAccess(currentAccountContext, "premium");
     const selectedCount =
         getScenarioComparisonState().planIds.length;
 
     if (!selectedCount) {
-        return `Current workspace ready. Add up to ${SCENARIO_COMPARISON_MAX_SELECTION} synced scenarios to compare key assumptions side by side.`;
+        return premiumComparisonEnabled
+            ? `Premium comparison is ready. Add up to ${SCENARIO_COMPARISON_MAX_SELECTION} synced scenarios to compare real planning outcomes side by side.`
+            : `Current workspace ready. Add up to ${SCENARIO_COMPARISON_MAX_SELECTION} synced scenarios to compare key assumptions side by side.`;
     }
 
     const comparisonLabel =
@@ -570,7 +457,9 @@ function getScenarioComparisonSummaryText() {
         ? `Update Current Scenario to sync this comparison set to your account.`
         : "Save the current scenario if you want this comparison set tied to your account.";
 
-    return `Comparing the current workspace with ${comparisonLabel}. ${persistenceHint}`;
+    return premiumComparisonEnabled
+        ? `Premium comparison is active for the current workspace and ${comparisonLabel}. ${persistenceHint}`
+        : `Comparing the current workspace with ${comparisonLabel}. ${persistenceHint}`;
 }
 
 function setAccountPlansStatus(message, tone = "neutral") {
@@ -608,9 +497,17 @@ function renderScenarioComparisonSummary() {
 function renderScenarioComparisonList() {
     const listEl =
         document.getElementById("accountComparisonList");
+    const premiumNoteEl =
+        document.getElementById("accountComparisonPremiumNote");
+    const premiumComparisonEnabled =
+        hasPremiumAccess(currentAccountContext, "premium");
 
     if (!listEl) {
         return;
+    }
+
+    if (premiumNoteEl) {
+        premiumNoteEl.hidden = premiumComparisonEnabled;
     }
 
     if (!currentAccountUser) {
@@ -639,22 +536,34 @@ function renderScenarioComparisonList() {
     const currentSimulationState =
         StateManager.getSimulationState() ||
         buildCurrentSimulationPayload().simulationState;
+    const currentWorkspaceState =
+        StateManager.normalizeWorkspaceState({
+            ...StateManager.state,
+            simulationState: currentSimulationState
+        });
     const cards = [
-        buildScenarioComparisonSnapshot({
+        buildScenarioComparisonCard({
             name: "Current Workspace",
+            workspaceState: currentWorkspaceState,
             simulationState: currentSimulationState,
             badgeText: "Current",
-            isCurrentWorkspace: true
+            isCurrentWorkspace: true,
+            premium: premiumComparisonEnabled
         }),
         ...currentScenarioComparisonPlans.map(plan =>
-            buildScenarioComparisonSnapshot({
+            buildScenarioComparisonCard({
                 name: getAccountPlanDisplayName(plan),
+                workspaceState:
+                    plan.workspaceState || {},
                 simulationState:
                     plan.workspaceState?.simulationState ||
                     plan.simulationState ||
                     null,
                 updatedAt: plan.updatedAt,
-                badgeText: "Synced"
+                badgeText: premiumComparisonEnabled
+                    ? "Premium Compare"
+                    : "Synced",
+                premium: premiumComparisonEnabled
             })
         )
     ];
@@ -674,14 +583,19 @@ function renderScenarioComparisonList() {
                     ? `<span class="account-plan-badge ${card.isCurrentWorkspace ? "" : "is-secondary"}">${escapeHtml(card.badgeText)}</span>`
                     : ""}
             </div>
-            <div class="account-comparison-grid">
-                ${card.metrics.map(metric => `
-                    <div class="account-comparison-metric">
-                        <span class="account-comparison-label">${escapeHtml(metric.label)}</span>
-                        <span class="account-comparison-value">${escapeHtml(metric.value)}</span>
+            ${card.sections.map(section => `
+                <div class="account-comparison-section">
+                    <div class="account-comparison-section-title">${escapeHtml(section.title)}</div>
+                    <div class="account-comparison-grid">
+                        ${section.metrics.map(metric => `
+                            <div class="account-comparison-metric">
+                                <span class="account-comparison-label">${escapeHtml(metric.label)}</span>
+                                <span class="account-comparison-value">${escapeHtml(metric.value)}</span>
+                            </div>
+                        `).join("")}
                     </div>
-                `).join("")}
-            </div>
+                </div>
+            `).join("")}
         </div>
     `).join("");
 

@@ -33,6 +33,11 @@ function readBooleanEnv(name, fallback = false) {
     return fallback;
 }
 
+function readDurationMinutesEnv(name, fallbackMinutes) {
+    const parsed = readNumberEnv(name, fallbackMinutes);
+    return Math.max(1, parsed) * 60 * 1000;
+}
+
 function parseOrigins(value) {
     return String(value || "")
         .split(",")
@@ -73,6 +78,32 @@ export const config = {
     dataBackend: readEnv("DATA_BACKEND", "file").trim().toLowerCase(),
     databaseUrl: readEnv("DATABASE_URL", ""),
     databaseSsl: readBooleanEnv("DATABASE_SSL", false),
+    registerRateLimitMax: readNumberEnv("REGISTER_RATE_LIMIT_MAX", 5),
+    registerRateLimitWindowMs: readDurationMinutesEnv(
+        "REGISTER_RATE_LIMIT_WINDOW_MINUTES",
+        60
+    ),
+    loginRateLimitMax: readNumberEnv("LOGIN_RATE_LIMIT_MAX", 10),
+    loginRateLimitWindowMs: readDurationMinutesEnv(
+        "LOGIN_RATE_LIMIT_WINDOW_MINUTES",
+        15
+    ),
+    forgotPasswordRateLimitMax: readNumberEnv(
+        "FORGOT_PASSWORD_RATE_LIMIT_MAX",
+        5
+    ),
+    forgotPasswordRateLimitWindowMs: readDurationMinutesEnv(
+        "FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MINUTES",
+        60
+    ),
+    resetPasswordRateLimitMax: readNumberEnv(
+        "RESET_PASSWORD_RATE_LIMIT_MAX",
+        10
+    ),
+    resetPasswordRateLimitWindowMs: readDurationMinutesEnv(
+        "RESET_PASSWORD_RATE_LIMIT_WINDOW_MINUTES",
+        60
+    ),
     dataFilePath: readEnv(
         "DATA_FILE_PATH",
         path.join(projectRoot, "data", "store.json")

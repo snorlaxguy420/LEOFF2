@@ -44,6 +44,14 @@ server reads:
 - `DATA_BACKEND`
 - `DATABASE_URL`
 - `DATABASE_SSL`
+- `REGISTER_RATE_LIMIT_MAX`
+- `REGISTER_RATE_LIMIT_WINDOW_MINUTES`
+- `LOGIN_RATE_LIMIT_MAX`
+- `LOGIN_RATE_LIMIT_WINDOW_MINUTES`
+- `FORGOT_PASSWORD_RATE_LIMIT_MAX`
+- `FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MINUTES`
+- `RESET_PASSWORD_RATE_LIMIT_MAX`
+- `RESET_PASSWORD_RATE_LIMIT_WINDOW_MINUTES`
 - `DATA_FILE_PATH`
 
 ## Current endpoints
@@ -94,6 +102,7 @@ Recommended production scheduling:
 - Account responses now include a safe `entitlements` payload so the frontend
   can gate premium-ready features without exposing billing internals.
 - Password reset links default to a 60-minute lifetime.
+- Auth-sensitive endpoints now use in-memory rate limiting keyed by client IP.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, reset links are
   logged on the server so local/dev testing can still complete the flow.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, account-created
@@ -127,6 +136,29 @@ DATABASE_SSL=false
 ```
 
 The default backend remains the current file store until the production cutover.
+
+## Auth rate limits
+
+The backend now rate limits these routes by client IP:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/forgot-password`
+- `POST /auth/reset-password`
+
+Default limits:
+
+- register: `5` requests per `60` minutes
+- login: `10` requests per `15` minutes
+- forgot-password: `5` requests per `60` minutes
+- reset-password: `10` requests per `60` minutes
+
+The response includes:
+
+- `X-RateLimit-Limit`
+- `X-RateLimit-Remaining`
+- `X-RateLimit-Reset`
+- `Retry-After` on `429`
 
 ## Manual premium testing
 

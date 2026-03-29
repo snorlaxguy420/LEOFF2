@@ -21,6 +21,10 @@ import {
     normalizeEmail,
     verifyPassword
 } from "./lib/security.js";
+import {
+    applyRateLimitHeaders,
+    takeRateLimitToken
+} from "./lib/rateLimit.js";
 import { readStore, withStore } from "./lib/store.js";
 
 function getCookieSecurity(req) {
@@ -58,6 +62,26 @@ function buildSessionCookieOptions(req) {
         secure: getCookieSecurity(req),
         maxAge: getSessionMaxAgeSeconds()
     };
+}
+
+function enforceRateLimit(req, res, options) {
+    const result = takeRateLimitToken({
+        req,
+        ...options
+    });
+
+    applyRateLimitHeaders(res, result);
+
+    if (result.allowed) {
+        return true;
+    }
+
+    sendError(
+        res,
+        429,
+        "Too many requests. Please wait a bit and try again."
+    );
+    return false;
 }
 
 function sanitizeUser(user) {
@@ -938,11 +962,27 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/register") {
+            if (!enforceRateLimit(req, res, {
+                scope: "auth-register",
+                maxRequests: config.registerRateLimitMax,
+                windowMs: config.registerRateLimitWindowMs
+            })) {
+                return;
+            }
+
             await handleRegister(req, res);
             return;
         }
 
         if (req.method === "POST" && pathname === "/auth/login") {
+            if (!enforceRateLimit(req, res, {
+                scope: "auth-login",
+                maxRequests: config.loginRateLimitMax,
+                windowMs: config.loginRateLimitWindowMs
+            })) {
+                return;
+            }
+
             await handleLogin(req, res);
             return;
         }
@@ -968,11 +1008,27 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/forgot-password") {
+            if (!enforceRateLimit(req, res, {
+                scope: "auth-forgot-password",
+                maxRequests: config.forgotPasswordRateLimitMax,
+                windowMs: config.forgotPasswordRateLimitWindowMs
+            })) {
+                return;
+            }
+
             await handleForgotPassword(req, res);
             return;
         }
 
         if (req.method === "POST" && pathname === "/auth/reset-password") {
+            if (!enforceRateLimit(req, res, {
+                scope: "auth-reset-password",
+                maxRequests: config.resetPasswordRateLimitMax,
+                windowMs: config.resetPasswordRateLimitWindowMs
+            })) {
+                return;
+            }
+
             await handleResetPassword(req, res);
             return;
         }

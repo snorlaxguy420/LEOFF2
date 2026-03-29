@@ -13,6 +13,26 @@ body {
     color: var(--text-dark);
 }
 
+.simbg-section {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(244, 241, 234, 0.72) 0%,
+            rgba(244, 241, 234, 0.58) 28%,
+            rgba(244, 241, 234, 0.74) 58%,
+            rgba(244, 241, 234, 0.88) 100%
+        ),
+        radial-gradient(
+            circle at top left,
+            rgba(31, 77, 58, 0.18),
+            transparent 42%
+        ),
+        url("/assets/illustrations/deceptionpass.png");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
 .login-shell {
     max-width: 1280px;
     margin: 0 auto;

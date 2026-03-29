@@ -65,6 +65,9 @@ const elements = {
     status: document.querySelector("[data-auth-status]"),
     footer: document.querySelector("[data-auth-footer]"),
     copy: document.querySelector("[data-auth-copy]"),
+    recoveryPanel: document.querySelector("[data-recovery-panel]"),
+    recoveryTitle: document.querySelector("[data-recovery-title]"),
+    recoveryCopy: document.querySelector("[data-recovery-copy]"),
     divider: document.querySelector("[data-auth-divider]"),
     secondaryActions: document.querySelector("[data-auth-secondary-actions]"),
     forgotPasswordTrigger: document.querySelector("[data-forgot-password-trigger]"),
@@ -190,7 +193,7 @@ function setStatus(message, tone = "neutral") {
 }
 
 function getAnonymousTitle() {
-    if (state.view === "forgot" || state.view === "reset") {
+    if (state.view === "reset") {
         return VIEW_TITLE[state.view];
     }
 
@@ -198,7 +201,7 @@ function getAnonymousTitle() {
 }
 
 function getAnonymousCopy() {
-    if (state.view === "forgot" || state.view === "reset") {
+    if (state.view === "reset") {
         return VIEW_COPY[state.view];
     }
 
@@ -232,11 +235,23 @@ function renderAnonymousView() {
     }
 
     if (elements.modeControls) {
-        elements.modeControls.hidden = authenticated || !inAuthView;
+        elements.modeControls.hidden = authenticated || inResetView;
     }
 
     if (elements.form) {
-        elements.form.hidden = authenticated || !inAuthView;
+        elements.form.hidden = authenticated || inResetView;
+    }
+
+    if (elements.recoveryPanel) {
+        elements.recoveryPanel.hidden = authenticated || (inAuthView && !inResetView);
+    }
+
+    if (elements.recoveryTitle) {
+        elements.recoveryTitle.textContent = VIEW_TITLE[inResetView ? "reset" : "forgot"];
+    }
+
+    if (elements.recoveryCopy) {
+        elements.recoveryCopy.textContent = VIEW_COPY[inResetView ? "reset" : "forgot"];
     }
 
     if (elements.resetRequestForm) {
@@ -248,18 +263,21 @@ function renderAnonymousView() {
     }
 
     if (elements.divider) {
-        elements.divider.hidden = authenticated || !inAuthView;
+        elements.divider.hidden = authenticated || inResetView;
     }
 
     if (elements.secondaryActions) {
-        elements.secondaryActions.hidden = authenticated || !inAuthView;
+        elements.secondaryActions.hidden = authenticated || inResetView;
     }
 
     if (elements.forgotPasswordTrigger) {
         elements.forgotPasswordTrigger.hidden =
             authenticated ||
-            !inAuthView ||
+            inResetView ||
             state.mode !== "login";
+        elements.forgotPasswordTrigger.textContent = inForgotView
+            ? "Hide password recovery"
+            : "Forgot password?";
     }
 
     if (!authenticated && elements.footer) {
@@ -645,6 +663,11 @@ function openForgotPasswordView() {
         return;
     }
 
+    if (state.view === "forgot") {
+        handleRecoveryBack();
+        return;
+    }
+
     updateMode("login", { preserveStatus: true });
 
     if (
@@ -781,8 +804,12 @@ async function handleSessionRefresh() {
 function bindEvents() {
     elements.modeButtons.forEach(button => {
         button.addEventListener("click", () => {
-            if (state.pending || state.user || state.view !== "auth") {
+            if (state.pending || state.user || state.view === "reset") {
                 return;
+            }
+
+            if (state.view === "forgot") {
+                setAnonymousView("auth", { preserveStatus: true });
             }
 
             updateMode(button.dataset.authModeToggle || "login");

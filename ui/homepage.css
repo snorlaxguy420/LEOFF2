@@ -103,6 +103,10 @@ font-weight:700;
 letter-spacing:.01em;
 }
 
+.nav-auth-status[hidden]{
+display:none !important;
+}
+
 .nav a.nav-login{
 display:inline-flex;
 align-items:center;

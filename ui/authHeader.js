@@ -157,9 +157,8 @@ function renderAuthHeader() {
             return;
         }
 
-        const greeting = ensureGreeting(nav, link);
-
         if (currentUser?.email) {
+            const greeting = ensureGreeting(nav, link);
             greeting.hidden = false;
             greeting.textContent = `Welcome, ${formatDisplayName(currentUser)}`;
             link.textContent = "LOG OUT";
@@ -168,8 +167,13 @@ function renderAuthHeader() {
             return;
         }
 
-        greeting.hidden = true;
-        greeting.textContent = "";
+        const greeting = nav.querySelector(".nav-auth-status");
+
+        if (greeting) {
+            greeting.hidden = true;
+            greeting.textContent = "";
+        }
+
         link.textContent = "LOG IN";
         link.href = "/ui/login.html";
         link.dataset.authMode = "login";

@@ -89,6 +89,10 @@ body {
     letter-spacing: 0.01em;
 }
 
+.nav-auth-status[hidden] {
+    display: none !important;
+}
+
 .nav a.nav-login {
     display: inline-flex;
     align-items: center;

@@ -348,6 +348,24 @@ Remaining:
    Progress:
    - Late-life expense stress now separately tests healthcare, insurance, and housing pressure in the vulnerability engine
 
+## Security Hardening Roadmap
+
+Completed:
+- Production storage has been migrated from the temporary JSON file backend to PostgreSQL on Lightsail, with smoke-tested auth and plan CRUD plus rollback backups
+- Auth-sensitive routes now use per-IP rate limiting for `register`, `login`, `forgot-password`, and `reset-password`
+- Runtime secrets now load from a protected root-owned env file on the Lightsail host instead of raw systemd drop-ins
+- Root-owned daily backups now run through `leoff-api-backup.timer`, with `700` backup directories and `600` backup files
+- Backup artifacts are now encrypted at rest on the server using a separate root-only backup key, and older plaintext backup files have been converted
+
+Deferred / To Revisit:
+- Minimize what gets persisted in `workspaceState`, with the explicit intent to avoid full names, spouse names, full birth dates, SSNs, and financial-account identifiers wherever they are not strictly necessary
+
+Next:
+1. Enable and verify Lightsail automatic snapshots, then run a documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
+2. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
+3. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.
+4. Add lightweight access/audit visibility for critical auth and account-management actions so suspicious login, reset, or admin-tier activity is easier to review.
+
 ## Immediate Next Steps
 
 1. Enable and verify Lightsail automatic snapshots, then run a documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.

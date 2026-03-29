@@ -196,7 +196,9 @@ Completed / In progress:
 - A first-pass premium withdrawal strategy optimizer now exists on the dashboard, turning the current account mix into personalized withdrawal-order, bridge-year, RMD, and Roth-preservation guidance for premium members in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - A first-pass premium estate projection now exists on the dashboard, showing deterministic expected net worth for every projected year of life plus estate-planning prompts around beneficiaries, real-estate transfer planning, household coordination, and when to seek professional help in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - PostgreSQL migration groundwork now exists in the backend through a storage-adapter layer, PostgreSQL schema file, JSON-to-PostgreSQL import script, and backend config support in [backend/src/lib/storage/index.js](/D:/LEOFF%202/backend/src/lib/storage/index.js), [backend/src/lib/storage/postgresStore.js](/D:/LEOFF%202/backend/src/lib/storage/postgresStore.js), [backend/src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql), and [backend/src/migrateJsonStoreToPostgres.js](/D:/LEOFF%202/backend/src/migrateJsonStoreToPostgres.js)
+- The live Lightsail backend has now been migrated from the temporary JSON store to PostgreSQL, with production smoke-test coverage for auth and plan CRUD plus rollback backups of both the legacy `store.json` and the PostgreSQL database
 - Auth-sensitive backend endpoints now use per-IP in-memory rate limiting for `register`, `login`, `forgot-password`, and `reset-password`, with configurable thresholds and retry headers in [backend/src/lib/rateLimit.js](/D:/LEOFF%202/backend/src/lib/rateLimit.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), and [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js)
+- The live backend now has a stronger operational security baseline: runtime secrets moved out of systemd drop-ins into a protected root-owned env file, and root-owned daily PostgreSQL backups now run on a systemd timer with `700` directory permissions and `600` backup files on Lightsail
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
@@ -347,8 +349,8 @@ Remaining:
 
 ## Immediate Next Steps
 
-1. Replace the temporary backend JSON store with PostgreSQL, starting with the migration plan in [backend/POSTGRES_MIGRATION_PLAN.md](/D:/LEOFF%202/backend/POSTGRES_MIGRATION_PLAN.md) and a storage-adapter implementation that preserves the current auth, recovery, and plans route contract.
-2. Add encrypted-at-rest protection for the server volume and backup flow once PostgreSQL is in place.
-3. Add rate limiting for `register`, `login`, `forgot-password`, and `reset-password` endpoints before scaling account usage.
-4. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default.
-5. Add a clearer production security baseline for secrets handling, backups, and access/audit controls.
+1. Add encrypted-at-rest protection for the server volume and backup flow now that PostgreSQL and the daily backup path are in place.
+2. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default, with the explicit goal of avoiding full names, spouse names, full birth dates, SSNs, or financial-account identifiers where they are not strictly necessary.
+3. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
+4. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.
+5. Add lightweight access/audit visibility for critical auth and account-management actions so suspicious login, reset, or admin-tier activity is easier to review.

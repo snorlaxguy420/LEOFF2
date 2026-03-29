@@ -6,6 +6,7 @@ import {
     analyzeRetirementPlan
 } from "../analysis/retirementAnalysis.js";
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
+import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 import { StateManager } from "../core/stateManager.js";
 import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
 import { runProjection } from "../core/projectionEngine.js";
@@ -183,6 +184,100 @@ function renderPlanningLeverSection({
     if (narrative) {
         narrative.textContent = content.narrative;
     }
+}
+
+function renderWithdrawalOptimizerSection({
+    simulationState,
+    projection
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "premium");
+    const headline = document.getElementById("withdrawalOptimizerHeadline");
+    const summary = document.getElementById("withdrawalOptimizerSummary");
+    const premiumNote =
+        document.getElementById("withdrawalOptimizerPremiumNote");
+    const highlights =
+        document.getElementById("withdrawalOptimizerHighlights");
+    const sequence =
+        document.getElementById("withdrawalOptimizerSequence");
+    const notes =
+        document.getElementById("withdrawalOptimizerNotes");
+
+    if (!headline || !summary || !premiumNote || !highlights || !sequence || !notes) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium withdrawal strategy guidance";
+        summary.textContent =
+            "Premium turns your account mix into a suggested withdrawal order, bridge-year funding plan, and tax-order guidance.";
+        premiumNote.hidden = false;
+        premiumNote.textContent =
+            dashboardAccountContext?.user?.email
+                ? "This account is currently on the free tier. Upgrade to premium to unlock personalized withdrawal order, bridge-year, and tax-order guidance."
+                : "Sign in with a premium account to unlock personalized withdrawal order, bridge-year, and tax-order guidance.";
+        highlights.hidden = true;
+        sequence.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Premium optimizer preview</h3>
+                <p>See which accounts to tap first, which dollars to preserve for later, and where bridge-year tax pressure is likely to come from.</p>
+            </div>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    premiumNote.hidden = true;
+
+    const optimization =
+        buildWithdrawalStrategyOptimization({
+            simulationState,
+            projection
+        });
+
+    headline.textContent = optimization.headline;
+    summary.textContent = optimization.summary;
+    highlights.hidden = false;
+
+    setElementText(
+        "withdrawalOptimizerBridgeYears",
+        optimization.highlights?.bridgeYears
+            ? `${optimization.highlights.bridgeYears}`
+            : "0"
+    );
+    setElementText(
+        "withdrawalOptimizerAnnualGap",
+        optimization.highlights?.annualGap > 0
+            ? formatCurrency(optimization.highlights.annualGap)
+            : "Covered"
+    );
+    setElementText(
+        "withdrawalOptimizerTaxDeferredBalance",
+        formatCurrency(optimization.highlights?.taxDeferredBalance || 0)
+    );
+
+    sequence.innerHTML =
+        optimization.sequence.length
+            ? optimization.sequence.map((entry, index) => `
+                <div class="optimizer-sequence-item">
+                    <h3>${index + 1}. ${entry.title}</h3>
+                    <p>${entry.rationale}</p>
+                </div>
+            `).join("")
+            : `
+                <div class="optimizer-sequence-item">
+                    <h3>No withdrawal sequence available yet</h3>
+                    <p>Add retirement or liquid accounts to generate personalized withdrawal guidance.</p>
+                </div>
+            `;
+
+    notes.innerHTML =
+        optimization.notes.map(note => `
+            <div class="optimizer-note-card">
+                <span>${note.label}</span>
+                <strong>${note.value}</strong>
+            </div>
+        `).join("");
 }
 
 function syncComparisonChartToggleUi() {
@@ -859,6 +954,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             projection: currentProjection,
             premiumStressTesting:
                 workspaceState?.premiumStressTesting || null
+        });
+        renderWithdrawalOptimizerSection({
+            simulationState: currentSimulationState,
+            projection: currentProjection
         });
     }
 

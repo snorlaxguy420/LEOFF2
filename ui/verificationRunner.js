@@ -69,6 +69,7 @@ import {
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
 import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
+import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -543,6 +544,135 @@ function testPremiumSavedScenarioComparisonCard() {
     );
 
     logResult("Premium saved-scenario comparison card passed");
+}
+
+function testWithdrawalStrategyOptimizer() {
+    const simulationState = buildSimulationState({
+        inputs: {
+            profile: {
+                currentAge: 50
+            },
+            retireAge: 55,
+            lifeExpectancy: 90,
+            pension: {
+                serviceYears: 25,
+                finalAverageSalary: 118000,
+                currentAnnualPay: 112000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "50%",
+                survivorAge: 52
+            },
+            socialSecurity: {
+                birthYear: 1981,
+                claimAge: 67,
+                cola: 0.02,
+                fraBenefit: 26000
+            },
+            expenses: {
+                monthly: 6500,
+                annual: 78000,
+                housing: 2200,
+                groceries: 850,
+                bills: 500,
+                auto: 600,
+                healthcare: 750,
+                insurance: 350,
+                other: 1250
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.031,
+                housingInflationRate: 0.035,
+                healthcareInflationRate: 0.055
+            },
+            toggles: {
+                showReal: false,
+                marketFirst: false
+            }
+        },
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "Checking / Cash",
+                balance: 60000,
+                growthRate: 0.015,
+                startAge: 55,
+                withdrawalType: "amount",
+                withdrawal: 12000,
+                withdrawalRate: null,
+                taxable: false
+            },
+            {
+                type: "portfolio",
+                name: "Taxable Brokerage",
+                balance: 240000,
+                growthRate: 0.07,
+                startAge: 55,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.04,
+                taxable: false
+            },
+            {
+                type: "portfolio",
+                name: "Deferred Comp 457",
+                balance: 180000,
+                growthRate: 0.06,
+                startAge: 55,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.04,
+                taxable: true,
+                accountType: "457b",
+                penaltyExceptionType: "standard"
+            },
+            {
+                type: "portfolio",
+                name: "Roth IRA",
+                balance: 95000,
+                growthRate: 0.06,
+                startAge: 55,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.03,
+                taxable: false,
+                accountType: "roth_ira",
+                penaltyExceptionType: "standard"
+            }
+        ]
+    });
+    const projection = runProjection(simulationState);
+    const optimization =
+        buildWithdrawalStrategyOptimization({
+            simulationState,
+            projection
+        });
+
+    assert(
+        optimization.headline.includes("withdrawal"),
+        "Withdrawal optimizer should return a strategy headline"
+    );
+    assert(
+        optimization.sequence.some(entry =>
+            entry.title.includes("457") ||
+            entry.rationale.includes("457")
+        ),
+        "Withdrawal optimizer should prioritize 457(b) bridge funding when available before age 59 1/2"
+    );
+    assert(
+        optimization.sequence.some(entry =>
+            entry.title.includes("Roth") ||
+            entry.rationale.includes("Roth")
+        ),
+        "Withdrawal optimizer should preserve Roth balances as a later-stage reserve"
+    );
+    assert(
+        optimization.notes.some(note => note.label === "Bridge Window"),
+        "Withdrawal optimizer should report the Social Security bridge window when one exists"
+    );
+
+    logResult("Withdrawal strategy optimizer passed");
 }
 
 function testProjectionChartModes() {
@@ -2983,6 +3113,7 @@ async function runVerification() {
         testSimulationStateRoundTrip();
         testPortablePlanExportImport();
         testPremiumSavedScenarioComparisonCard();
+        testWithdrawalStrategyOptimizer();
         testProjectionChartModes();
         testProjectionChartDatasets();
         testSharedSimulatorHelpers();

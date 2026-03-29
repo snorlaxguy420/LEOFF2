@@ -562,6 +562,67 @@ SCORE PANEL
     border: 1px solid rgba(31, 77, 58, 0.14);
 }
 
+.withdrawal-optimizer-panel .report-highlight-card {
+    background: linear-gradient(180deg, rgba(246,250,248,0.9), rgba(239,231,220,0.86));
+    border-color: rgba(31, 77, 58, 0.12);
+}
+
+.optimizer-sequence-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.optimizer-sequence-item {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.86);
+    border: 1px solid rgba(30, 47, 68, 0.08);
+}
+
+.optimizer-sequence-item h3 {
+    margin: 0;
+    color: var(--pnw-navy);
+    font-size: 18px;
+}
+
+.optimizer-sequence-item p {
+    margin: 10px 0 0;
+    color: rgba(42, 42, 42, 0.78);
+    line-height: 1.6;
+}
+
+.optimizer-note-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.optimizer-note-card {
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(31,77,58,0.06);
+    border: 1px solid rgba(31,77,58,0.10);
+}
+
+.optimizer-note-card span {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(30,47,68,0.58);
+}
+
+.optimizer-note-card strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--pnw-navy);
+    font-size: 15px;
+    line-height: 1.45;
+}
+
 .monte-carlo-range-header h3 {
     margin: 6px 0 0;
     color: var(--pnw-navy);
@@ -1543,7 +1604,8 @@ EDIT INPUT BUTTON
 
     .report-risk-list,
     .report-highlight-grid,
-    .dashboard-bottom {
+    .dashboard-bottom,
+    .optimizer-note-list {
         grid-template-columns: 1fr;
     }
 

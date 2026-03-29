@@ -289,6 +289,48 @@ depletion in the same planning flow as the simulator.
               <div id="monteCarloConfidenceLabel" class="report-highlight-value">--</div>
           </div>
       </div>
+      <div id="monteCarloPremiumNote" class="monte-carlo-premium-note" hidden>
+          Monte Carlo Plus path ranges are available for premium accounts.
+      </div>
+      <section id="monteCarloRangePanel" class="monte-carlo-range-panel" hidden>
+          <div class="monte-carlo-range-header">
+              <div>
+                  <div class="report-summary-kicker">Monte Carlo Range</div>
+                  <h3>Mean projection with best and worst-case trial paths</h3>
+              </div>
+          </div>
+          <div class="monte-carlo-path-grid">
+              <div class="monte-carlo-path-card">
+                  <div class="monte-carlo-path-label">
+                      <span class="monte-carlo-path-swatch monte-carlo-path-swatch-mean"></span>
+                      Mean Ending Net Worth
+                  </div>
+                  <strong id="monteCarloMeanEndingNetWorth">--</strong>
+              </div>
+              <div class="monte-carlo-path-card">
+                  <div class="monte-carlo-path-label">
+                      <span class="monte-carlo-path-swatch monte-carlo-path-swatch-worst"></span>
+                      Worst-Case Ending Net Worth
+                  </div>
+                  <strong id="monteCarloWorstEndingNetWorth">--</strong>
+                  <p id="monteCarloWorstCaseMeta">Awaiting range data</p>
+              </div>
+              <div class="monte-carlo-path-card">
+                  <div class="monte-carlo-path-label">
+                      <span class="monte-carlo-path-swatch monte-carlo-path-swatch-best"></span>
+                      Best-Case Ending Net Worth
+                  </div>
+                  <strong id="monteCarloBestEndingNetWorth">--</strong>
+                  <p id="monteCarloBestCaseMeta">Awaiting range data</p>
+              </div>
+          </div>
+          <div class="chart-scroll-shell monte-carlo-chart-shell">
+              <canvas id="monteCarloProjectionChart" width="1000" height="360"></canvas>
+          </div>
+          <p id="monteCarloRangeSummary" class="report-inline-note">
+              The chart will show representative best, mean, and worst-case Monte Carlo paths once the dashboard finishes loading.
+          </p>
+      </section>
       <div id="monteCarloDetail" class="dashboard-card-detail">
           <p id="monteCarloNarrative" class="dashboard-card-summary">
               We will summarize the Monte Carlo engine's stress-tested range once the dashboard finishes loading.

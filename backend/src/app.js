@@ -70,6 +70,78 @@ function sanitizeUser(user) {
     };
 }
 
+function normalizePlanTier(value) {
+    return String(value || "").toLowerCase() === "premium"
+        ? "premium"
+        : "free";
+}
+
+function normalizePremiumSource(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized || null;
+}
+
+function normalizeIsoDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+        ? null
+        : parsed.toISOString();
+}
+
+function buildUserEntitlements(user = {}) {
+    const requestedPlanTier = normalizePlanTier(user.planTier);
+    const premiumExpiresAt = normalizeIsoDate(user.premiumExpiresAt);
+    const premiumSource = normalizePremiumSource(user.premiumSource);
+    const premiumActive =
+        requestedPlanTier === "premium" &&
+        (
+            !premiumExpiresAt ||
+            new Date(premiumExpiresAt).getTime() > Date.now()
+        );
+    const effectivePlanTier =
+        premiumActive
+            ? "premium"
+            : "free";
+
+    return {
+        planTier: effectivePlanTier,
+        premium: premiumActive,
+        premiumSource:
+            premiumActive
+                ? premiumSource
+                : null,
+        premiumExpiresAt:
+            premiumActive
+                ? premiumExpiresAt
+                : null,
+        features: {
+            monteCarloPlus: premiumActive
+        }
+    };
+}
+
+function buildAccountContextPayload({
+    user,
+    session = null
+}) {
+    return {
+        user: sanitizeUser(user),
+        entitlements: buildUserEntitlements(user),
+        ...(session
+            ? {
+                session: {
+                    expiresAt: session.expiresAt,
+                    idleTimeoutMinutes: config.sessionTtlMinutes
+                }
+            }
+            : {})
+    };
+}
+
 function sanitizePlanSummary(plan) {
     return {
         id: plan.id,
@@ -233,6 +305,10 @@ async function handleRegister(req, res) {
         email,
         passwordHash: passwordRecord.hash,
         passwordSalt: passwordRecord.salt,
+        planTier: "free",
+        premiumSource: null,
+        premiumGrantedAt: null,
+        premiumExpiresAt: null,
         createdAt: now,
         updatedAt: now
     };
@@ -275,9 +351,10 @@ async function handleRegister(req, res) {
         )
     );
 
-    sendJson(res, 201, {
-        user: sanitizeUser(user)
-    });
+    sendJson(res, 201, buildAccountContextPayload({
+        user,
+        session
+    }));
 }
 
 async function handleLogin(req, res) {
@@ -332,9 +409,10 @@ async function handleLogin(req, res) {
         )
     );
 
-    sendJson(res, 200, {
-        user: sanitizeUser(user)
-    });
+    sendJson(res, 200, buildAccountContextPayload({
+        user,
+        session
+    }));
 }
 
 async function handleLogout(req, res) {
@@ -412,13 +490,10 @@ async function handleGetMe(req, res) {
         return;
     }
 
-    sendJson(res, 200, {
-        user: sanitizeUser(sessionContext.user),
-        session: {
-            expiresAt: sessionContext.session.expiresAt,
-            idleTimeoutMinutes: config.sessionTtlMinutes
-        }
-    });
+    sendJson(res, 200, buildAccountContextPayload({
+        user: sessionContext.user,
+        session: sessionContext.session
+    }));
 }
 
 async function handleUpdateMe(req, res) {
@@ -459,13 +534,10 @@ async function handleUpdateMe(req, res) {
         return;
     }
 
-    sendJson(res, 200, {
-        user: sanitizeUser(updatedUser),
-        session: {
-            expiresAt: sessionContext.session.expiresAt,
-            idleTimeoutMinutes: config.sessionTtlMinutes
-        }
-    });
+    sendJson(res, 200, buildAccountContextPayload({
+        user: updatedUser,
+        session: sessionContext.session
+    }));
 }
 
 async function handleChangePassword(req, res) {

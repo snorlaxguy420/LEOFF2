@@ -1,4 +1,7 @@
 import { renderProjectionChart } from "./projectionChart.js";
+import { renderMonteCarloProjectionChart } from "./monteCarloProjectionChart.js";
+import { getAccountContext } from "./apiClient.js";
+import { hasPremiumAccess } from "./accountEntitlements.js";
 import {
     analyzeRetirementPlan,
     calculateReadinessScore
@@ -16,6 +19,7 @@ import {
     buildDashboardAgeAdjustedInputs,
     buildDashboardAgeAdjustedIncomeSources,
     buildMonteCarloContent,
+    buildMonteCarloProjectionChartContent,
     buildExpenseBreakdownSummary,
     buildMarginOverviewText,
     buildPlanningLeverContent,
@@ -35,8 +39,13 @@ let comparisonChartMode = "bar";
 let monteCarloRenderToken = 0;
 let monteCarloTimeoutId = null;
 
-const MONTE_CARLO_ITERATIONS = 250;
+const FREE_MONTE_CARLO_ITERATIONS = 250;
+const PREMIUM_MONTE_CARLO_ITERATIONS = 1000;
 const MONTE_CARLO_BASE_SEED = 424242;
+
+let monteCarloIterations = FREE_MONTE_CARLO_ITERATIONS;
+let monteCarloPlusEnabled = false;
+let dashboardAccountContext = null;
 
 function getMinimumDashboardRetirementAge(inputs = {}) {
     const currentAge =
@@ -290,7 +299,54 @@ function setMonteCarloLoadingState() {
     setElementText("monteCarloP10NetWorth", "--");
     setElementText("monteCarloMedianNetWorth", "--");
     setElementText("monteCarloP90NetWorth", "--");
-    setElementText("monteCarloIterations", String(MONTE_CARLO_ITERATIONS));
+    setElementText("monteCarloIterations", String(monteCarloIterations));
+    setElementText(
+        "monteCarloRangeSummary",
+        "Building the Monte Carlo range chart for this retirement age now."
+    );
+    setElementText("monteCarloMeanEndingNetWorth", "--");
+    setElementText("monteCarloWorstEndingNetWorth", "--");
+    setElementText("monteCarloBestEndingNetWorth", "--");
+    setElementText("monteCarloWorstCaseMeta", "Awaiting range data");
+    setElementText("monteCarloBestCaseMeta", "Awaiting range data");
+    renderMonteCarloProjectionChart({
+        canvasId: "monteCarloProjectionChart",
+        chart: null
+    });
+}
+
+async function loadDashboardAccountContext() {
+    try {
+        dashboardAccountContext = await getAccountContext();
+    } catch (error) {
+        dashboardAccountContext = null;
+    }
+
+    return dashboardAccountContext;
+}
+
+function applyMonteCarloEntitlementState(accountContext = null) {
+    monteCarloPlusEnabled =
+        hasPremiumAccess(accountContext, "monteCarloPlus");
+    monteCarloIterations =
+        monteCarloPlusEnabled
+            ? PREMIUM_MONTE_CARLO_ITERATIONS
+            : FREE_MONTE_CARLO_ITERATIONS;
+
+    const premiumNote = document.getElementById("monteCarloPremiumNote");
+    const rangePanel = document.getElementById("monteCarloRangePanel");
+
+    if (premiumNote) {
+        premiumNote.hidden = monteCarloPlusEnabled;
+        premiumNote.textContent =
+            accountContext?.user?.email
+                ? "Monte Carlo Plus path ranges and deeper trial runs are reserved for premium accounts. This account is currently on the free tier."
+                : "Sign in with a premium account to unlock Monte Carlo Plus path ranges and deeper trial runs.";
+    }
+
+    if (rangePanel) {
+        rangePanel.hidden = !monteCarloPlusEnabled;
+    }
 }
 
 function renderMonteCarloSection({
@@ -309,7 +365,7 @@ function renderMonteCarloSection({
     monteCarloTimeoutId = window.setTimeout(() => {
         const monteCarlo = runMonteCarloSimulation({
             simulationState,
-            iterations: MONTE_CARLO_ITERATIONS,
+            iterations: monteCarloIterations,
             seed: MONTE_CARLO_BASE_SEED
         });
 
@@ -344,10 +400,54 @@ function renderMonteCarloSection({
         setElementText("monteCarloMedianNetWorth", content.medianEndingNetWorth);
         setElementText("monteCarloP90NetWorth", content.percentile90EndingNetWorth);
         setElementText("monteCarloIterations", content.iterations);
+
+        if (monteCarloPlusEnabled) {
+            const projectionChartContent =
+                buildMonteCarloProjectionChartContent(monteCarlo);
+
+            if (projectionChartContent) {
+                setElementText(
+                    "monteCarloRangeSummary",
+                    projectionChartContent.summary
+                );
+                setElementText(
+                    "monteCarloMeanEndingNetWorth",
+                    projectionChartContent.meanEndingNetWorth
+                );
+                setElementText(
+                    "monteCarloWorstEndingNetWorth",
+                    projectionChartContent.worstEndingNetWorth
+                );
+                setElementText(
+                    "monteCarloBestEndingNetWorth",
+                    projectionChartContent.bestEndingNetWorth
+                );
+                setElementText(
+                    "monteCarloWorstCaseMeta",
+                    projectionChartContent.worstCaseMeta
+                );
+                setElementText(
+                    "monteCarloBestCaseMeta",
+                    projectionChartContent.bestCaseMeta
+                );
+                renderMonteCarloProjectionChart({
+                    canvasId: "monteCarloProjectionChart",
+                    chart: projectionChartContent.chart
+                });
+            } else {
+                setElementText(
+                    "monteCarloRangeSummary",
+                    "Representative best, mean, and worst-case projection paths are not available for this run."
+                );
+            }
+        }
     }, 60);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+
+    await loadDashboardAccountContext();
+    applyMonteCarloEntitlementState(dashboardAccountContext);
 
     const stored = sessionStorage.getItem("retirementProjection");
     const workspaceState = StateManager.loadAll();

@@ -453,6 +453,13 @@ function getMonteCarloConfidenceLabel(successRate = 0) {
     return "Fragile under stress";
 }
 
+function formatSignedCurrency(value) {
+    const absoluteValue = formatCurrency(Math.abs(value || 0));
+    return (value || 0) < 0
+        ? `-${absoluteValue}`
+        : absoluteValue;
+}
+
 export function buildMonteCarloContent(monteCarlo = {}) {
     const successRate = monteCarlo?.successRate ?? 0;
     const essentialSuccessRate =
@@ -488,13 +495,17 @@ export function buildMonteCarloContent(monteCarlo = {}) {
         monteCarlo?.wealthMetricsTrusted === false
             ? "The ending net worth range is still too wide to summarize cleanly, so we are emphasizing success odds instead of precise wealth figures."
             : `The median readiness score across trials is ${medianReadinessScore}, the downside 10th percentile ending net worth is ${percentile10EndingNetWorth}, and the median ending net worth is ${medianEndingNetWorth}.`;
+    const rangeNarrative =
+        monteCarlo?.projectionPaths?.ages?.length
+            ? " The range chart below now shows the mean net-worth path plus the best and worst ending-net-worth trial paths from this run."
+            : "";
 
     return {
         headline: `${formatPercent(successRate)} Success Rate`,
         summary:
             `Across ${iterations} simulated different market and inflation scenarios, this plan stays fully solvent in ${formatPercent(successRate)} of trials and still covers essential expenses in ${formatPercent(essentialSuccessRate)} of trials.`,
         narrative:
-            `This standalone Monte Carlo view tests the current plan against many different market and inflation scenarios. ${wealthNarrative}`,
+            `This standalone Monte Carlo view tests the current plan against many different market and inflation scenarios. ${wealthNarrative}${rangeNarrative}`,
         confidenceLabel,
         successRate: formatPercent(successRate),
         essentialSuccessRate: formatPercent(essentialSuccessRate),
@@ -505,6 +516,74 @@ export function buildMonteCarloContent(monteCarlo = {}) {
         medianEndingNetWorth,
         percentile90EndingNetWorth,
         iterations: String(iterations || 0)
+    };
+}
+
+export function buildMonteCarloProjectionChartContent(monteCarlo = {}) {
+    const projectionPaths = monteCarlo?.projectionPaths;
+    const ages = projectionPaths?.ages || [];
+    const meanNetWorthPath = projectionPaths?.meanNetWorthPath || [];
+    const worstCasePath = projectionPaths?.worstCase?.netWorthPath || [];
+    const bestCasePath = projectionPaths?.bestCase?.netWorthPath || [];
+
+    if (
+        ages.length < 2 ||
+        meanNetWorthPath.length !== ages.length ||
+        worstCasePath.length !== ages.length ||
+        bestCasePath.length !== ages.length
+    ) {
+        return null;
+    }
+
+    const meanEndingNetWorth =
+        meanNetWorthPath[meanNetWorthPath.length - 1] || 0;
+    const worstEndingNetWorth =
+        projectionPaths?.worstCase?.endingNetWorth || 0;
+    const bestEndingNetWorth =
+        projectionPaths?.bestCase?.endingNetWorth || 0;
+
+    return {
+        chart: {
+            ages,
+            series: [
+                {
+                    key: "mean",
+                    label: "Mean Projection",
+                    color: "#1F4D3A",
+                    dash: [10, 6],
+                    values: meanNetWorthPath
+                },
+                {
+                    key: "worst",
+                    label: "Worst Case",
+                    color: "#B33A3A",
+                    values: worstCasePath
+                },
+                {
+                    key: "best",
+                    label: "Best Case",
+                    color: "#3F7C85",
+                    values: bestCasePath
+                }
+            ]
+        },
+        summary:
+            `Worst and best case are the single lowest and highest ending-net-worth trials out of ${monteCarlo?.iterations || 0} runs. The mean projection is the average net-worth path across the full simulation set.`,
+        meanEndingNetWorth: formatSignedCurrency(meanEndingNetWorth),
+        worstEndingNetWorth: formatSignedCurrency(worstEndingNetWorth),
+        bestEndingNetWorth: formatSignedCurrency(bestEndingNetWorth),
+        worstCaseMeta:
+            projectionPaths?.worstCase?.failureAge != null
+                ? `Failure age ${projectionPaths.worstCase.failureAge}`
+                : projectionPaths?.worstCase?.assetDepletionAge != null
+                    ? `Assets depleted by age ${projectionPaths.worstCase.assetDepletionAge}`
+                    : "No modeled failure",
+        bestCaseMeta:
+            projectionPaths?.bestCase?.failureAge != null
+                ? `Failure age ${projectionPaths.bestCase.failureAge}`
+                : projectionPaths?.bestCase?.assetDepletionAge != null
+                    ? `Assets depleted by age ${projectionPaths.bestCase.assetDepletionAge}`
+                    : "No modeled failure"
     };
 }
 

@@ -35,6 +35,7 @@ import {
     buildDashboardAgeAdjustedIncomeSources,
     buildExpenseBreakdownSummary,
     buildMonteCarloContent,
+    buildMonteCarloProjectionChartContent,
     buildPlanningLeverContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
@@ -58,6 +59,11 @@ import {
     buildLifetimeValueScenario,
     validateLifetimeValueInputs
 } from "./lifetime-pension-value-calculator.js";
+import {
+    getPlanTierLabel,
+    hasPremiumAccess,
+    normalizeAccountContext
+} from "./accountEntitlements.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -1994,6 +2000,54 @@ function testToolEdgeCaseValidation() {
     logResult("Tool edge-case validation passed");
 }
 
+function testAccountEntitlements() {
+    const premiumContext = normalizeAccountContext({
+        user: {
+            id: "user_premium",
+            email: "premium@example.com"
+        },
+        entitlements: {
+            planTier: "premium",
+            premium: true,
+            premiumSource: "manual",
+            features: {
+                monteCarloPlus: true
+            }
+        }
+    });
+    const expiredContext = normalizeAccountContext({
+        user: {
+            id: "user_expired",
+            email: "expired@example.com"
+        },
+        entitlements: {
+            planTier: "premium",
+            premium: true,
+            premiumSource: "manual",
+            premiumExpiresAt: "2020-01-01T00:00:00.000Z",
+            features: {
+                monteCarloPlus: true
+            }
+        }
+    });
+
+    assert(
+        getPlanTierLabel(premiumContext) === "Premium",
+        "Account entitlement helper should label premium accounts clearly"
+    );
+    assert(
+        hasPremiumAccess(premiumContext, "monteCarloPlus"),
+        "Account entitlement helper should grant Monte Carlo Plus to active premium accounts"
+    );
+    assert(
+        getPlanTierLabel(expiredContext) === "Free" &&
+        hasPremiumAccess(expiredContext, "monteCarloPlus") === false,
+        "Expired premium access should normalize back to the free tier"
+    );
+
+    logResult("Account entitlement helper passed");
+}
+
 function testMonteCarloEngine() {
     const inputs = buildDashboardVerificationInputs();
     const incomeSources = buildSimulationIncomeSources({
@@ -2081,6 +2135,18 @@ function testMonteCarloEngine() {
         typeof firstRun.wealthMetricsTrusted === "boolean",
         "Monte Carlo engine should expose whether ending-wealth metrics are trustworthy enough to display"
     );
+    assert(
+        Array.isArray(firstRun.projectionPaths?.ages) &&
+        firstRun.projectionPaths.ages.length > 1 &&
+        firstRun.projectionPaths.meanNetWorthPath.length === firstRun.projectionPaths.ages.length &&
+        firstRun.projectionPaths.worstCase.netWorthPath.length === firstRun.projectionPaths.ages.length &&
+        firstRun.projectionPaths.bestCase.netWorthPath.length === firstRun.projectionPaths.ages.length,
+        "Monte Carlo engine should expose representative best, mean, and worst-case net-worth paths"
+    );
+    assert(
+        firstRun.projectionPaths.worstCase.endingNetWorth <= firstRun.projectionPaths.bestCase.endingNetWorth,
+        "Monte Carlo representative case ordering should keep worst-case ending net worth below best-case ending net worth"
+    );
 
     firstRun.trials.forEach(trial => {
         assert(
@@ -2108,6 +2174,17 @@ function testMonteCarloEngine() {
         exaggeratedContent.medianEndingNetWorth === "Range too wide" &&
         exaggeratedContent.percentile10EndingNetWorth === "Range too wide",
         "Dashboard Monte Carlo copy should suppress wealth values when the engine marks them as unreliable"
+    );
+    const projectionChartContent =
+        buildMonteCarloProjectionChartContent(firstRun);
+    assert(
+        projectionChartContent?.chart?.series?.length === 3,
+        "Dashboard Monte Carlo chart content should provide mean, worst, and best-case series"
+    );
+    assert(
+        typeof projectionChartContent?.summary === "string" &&
+        projectionChartContent.summary.includes("ending-net-worth trials"),
+        "Dashboard Monte Carlo chart content should explain how best and worst cases are chosen"
     );
     logResult("Monte Carlo engine passed");
 }
@@ -2641,6 +2718,7 @@ async function runVerification() {
         testDashboardAgeAdjustedPensionInputs();
         testDashboardAgeAdjustedIncomeSources();
         testDashboardReportSectionPopulation();
+        testAccountEntitlements();
         testMonteCarloEngine();
         testRetirementAgeComparisonMonotonicity();
         testSurvivorEstimatorOrdering();

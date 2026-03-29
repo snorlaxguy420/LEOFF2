@@ -9,6 +9,38 @@ const DEFAULT_STORE = Object.freeze({
     passwordResetTokens: []
 });
 
+function normalizePlanTier(value) {
+    return String(value || "").toLowerCase() === "premium"
+        ? "premium"
+        : "free";
+}
+
+function normalizePremiumSource(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized || null;
+}
+
+function normalizeIsoDate(value) {
+    if (!value) {
+        return null;
+    }
+
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+        ? null
+        : parsed.toISOString();
+}
+
+function normalizeUserRecord(user = {}) {
+    return {
+        ...user,
+        planTier: normalizePlanTier(user.planTier),
+        premiumSource: normalizePremiumSource(user.premiumSource),
+        premiumGrantedAt: normalizeIsoDate(user.premiumGrantedAt),
+        premiumExpiresAt: normalizeIsoDate(user.premiumExpiresAt)
+    };
+}
+
 let writeQueue = Promise.resolve();
 
 function cloneDefaultStore() {
@@ -40,7 +72,9 @@ export async function readStore() {
     return {
         ...cloneDefaultStore(),
         ...parsed,
-        users: Array.isArray(parsed?.users) ? parsed.users : [],
+        users: Array.isArray(parsed?.users)
+            ? parsed.users.map(normalizeUserRecord)
+            : [],
         sessions: Array.isArray(parsed?.sessions) ? parsed.sessions : [],
         plans: Array.isArray(parsed?.plans) ? parsed.plans : [],
         passwordResetTokens: Array.isArray(parsed?.passwordResetTokens)

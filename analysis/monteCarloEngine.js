@@ -193,6 +193,14 @@ function getEndingNetWorth(results = []) {
     return results[results.length - 1]?.netWorth || 0;
 }
 
+function buildNetWorthPath(results = []) {
+    return (results || []).map(result => result?.netWorth || 0);
+}
+
+function buildAgePath(results = []) {
+    return (results || []).map(result => result?.age ?? null);
+}
+
 function computeCoverageRate(results = [], retireAge = null) {
     const evaluationYears =
         getRetirementEvaluationYears(results, retireAge);
@@ -448,6 +456,8 @@ function summarizeTrial({
         endingNetWorth: getEndingNetWorth(results),
         coverageRate,
         essentialCoverageRate,
+        agePath: buildAgePath(results),
+        netWorthPath: buildNetWorthPath(results),
         sampledRates: {
             inflationRate: sampledRates.inflationRate,
             goodsServicesInflationRate:
@@ -456,6 +466,60 @@ function summarizeTrial({
             healthcareInflationRate:
                 sampledRates.healthcareInflationRate
         }
+    };
+}
+
+function buildRepresentativeCase(trialSummary = {}, pathLength = 0) {
+    return {
+        endingNetWorth: trialSummary?.endingNetWorth || 0,
+        failureAge: trialSummary?.failureAge ?? null,
+        assetDepletionAge: trialSummary?.assetDepletionAge ?? null,
+        success: Boolean(trialSummary?.success),
+        netWorthPath: (trialSummary?.netWorthPath || []).slice(0, pathLength)
+    };
+}
+
+function buildProjectionPaths(trialSummaries = []) {
+    const pathTrials = trialSummaries.filter(trial => {
+        return Array.isArray(trial?.agePath) &&
+            Array.isArray(trial?.netWorthPath) &&
+            trial.agePath.length > 1 &&
+            trial.netWorthPath.length > 1;
+    });
+
+    if (!pathTrials.length) {
+        return null;
+    }
+
+    const pathLength = pathTrials.reduce((smallest, trial) => {
+        const trialLength = Math.min(
+            trial?.agePath?.length || 0,
+            trial?.netWorthPath?.length || 0
+        );
+
+        return Math.min(smallest, trialLength);
+    }, Infinity);
+
+    if (!Number.isFinite(pathLength) || pathLength < 2) {
+        return null;
+    }
+
+    const ages = (pathTrials[0]?.agePath || []).slice(0, pathLength);
+    const meanNetWorthPath = ages.map((_, index) => {
+        const values = pathTrials.map(trial => trial.netWorthPath[index] || 0);
+        return average(values);
+    });
+    const sortedTrials = [...pathTrials].sort((left, right) => {
+        return (left?.endingNetWorth || 0) - (right?.endingNetWorth || 0);
+    });
+    const worstTrial = sortedTrials[0];
+    const bestTrial = sortedTrials[sortedTrials.length - 1];
+
+    return {
+        ages,
+        meanNetWorthPath,
+        worstCase: buildRepresentativeCase(worstTrial, pathLength),
+        bestCase: buildRepresentativeCase(bestTrial, pathLength)
     };
 }
 
@@ -480,6 +544,8 @@ function buildAggregateSummary({
         trialSummaries.map(trial => trial.failureAge);
     const depletionAges =
         trialSummaries.map(trial => trial.assetDepletionAge);
+    const projectionPaths =
+        buildProjectionPaths(trialSummaries);
     const medianEndingNetWorth =
         computePercentile(endingNetWorths, 0.5);
     const wealthMetricsTrusted =
@@ -512,7 +578,20 @@ function buildAggregateSummary({
             computeMedianAge(failureAges),
         medianAssetDepletionAge:
             computeMedianAge(depletionAges),
-        trials: trialSummaries
+        projectionPaths,
+        trials: trialSummaries.map(trial => ({
+            index: trial.index,
+            success: trial.success,
+            essentialSuccess: trial.essentialSuccess,
+            readinessScore: trial.readinessScore,
+            failureAge: trial.failureAge,
+            assetDepletionAge: trial.assetDepletionAge,
+            cumulativeShortfall: trial.cumulativeShortfall,
+            endingNetWorth: trial.endingNetWorth,
+            coverageRate: trial.coverageRate,
+            essentialCoverageRate: trial.essentialCoverageRate,
+            sampledRates: trial.sampledRates
+        }))
     };
 }
 

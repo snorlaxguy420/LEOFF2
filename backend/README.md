@@ -3,6 +3,7 @@
 Initial backend scaffold for:
 - user registration/login
 - session-based authentication
+- account-tier / entitlement exposure for premium-ready features
 - saved plan CRUD around the canonical `simulationState`
 - out-of-session password recovery via reset links
 - transactional account emails for registration and password recovery
@@ -86,6 +87,8 @@ Recommended production scheduling:
 - Sessions are stored server-side and referenced by an HTTP-only cookie.
 - Sessions now use a 15-minute idle timeout by default, with authenticated API
   activity refreshing the active session window.
+- Account responses now include a safe `entitlements` payload so the frontend
+  can gate premium-ready features without exposing billing internals.
 - Password reset links default to a 60-minute lifetime.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, reset links are
   logged on the server so local/dev testing can still complete the flow.
@@ -97,3 +100,27 @@ Recommended production scheduling:
   `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so it can
   later move to PostgreSQL with minimal route churn.
+
+## Manual premium testing
+
+The backend now includes a helper for manually assigning a user tier while
+billing is still being built:
+
+```powershell
+cd backend
+npm run set-user-tier -- geoff@example.com premium manual
+```
+
+Optional expiry:
+
+```powershell
+cd backend
+npm run set-user-tier -- geoff@example.com premium manual 2026-12-31T23:59:59.000Z
+```
+
+Return a user to the free tier:
+
+```powershell
+cd backend
+npm run set-user-tier -- geoff@example.com free
+```

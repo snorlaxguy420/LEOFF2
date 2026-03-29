@@ -1,3 +1,5 @@
+import { normalizeAccountContext } from "./accountEntitlements.js";
+
 const API_BASE_URL = "https://api.leoffhelper.com";
 
 async function readResponse(response) {
@@ -38,9 +40,11 @@ async function request(path, options = {}) {
 }
 
 export async function getAccountContext() {
-    return request("/me", {
+    const payload = await request("/me", {
         method: "GET"
     });
+
+    return normalizeAccountContext(payload);
 }
 
 export async function getCurrentUser() {
@@ -55,7 +59,7 @@ export async function registerAccount(email, password) {
         body: JSON.stringify({ email, password })
     });
 
-    return payload?.user || null;
+    return normalizeAccountContext(payload);
 }
 
 export async function loginAccount(email, password) {
@@ -64,7 +68,7 @@ export async function loginAccount(email, password) {
         body: JSON.stringify({ email, password })
     });
 
-    return payload?.user || null;
+    return normalizeAccountContext(payload);
 }
 
 export async function logoutAccount() {
@@ -79,7 +83,7 @@ export async function updateAccountProfile(updates = {}) {
         body: JSON.stringify(updates)
     });
 
-    return payload || null;
+    return normalizeAccountContext(payload);
 }
 
 export async function changeAccountPassword(currentPassword, newPassword) {

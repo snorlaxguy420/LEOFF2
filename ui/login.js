@@ -8,6 +8,10 @@ import {
     resetAccountPassword,
     updateAccountProfile
 } from "./apiClient.js";
+import {
+    getPlanTierLabel,
+    hasPremiumAccess
+} from "./accountEntitlements.js";
 
 const MODE_COPY = {
     login: "Use your account email to access your saved retirement work.",
@@ -74,6 +78,8 @@ const elements = {
     authenticatedEmail: document.querySelector("[data-auth-email]"),
     authenticatedDisplayName: document.querySelector("[data-auth-display-name]"),
     authenticatedCreatedAt: document.querySelector("[data-auth-created-at]"),
+    authenticatedPlanTier: document.querySelector("[data-auth-plan-tier]"),
+    authenticatedPremiumAccess: document.querySelector("[data-auth-premium-access]"),
     sessionStatus: document.querySelector("[data-session-status]"),
     sessionExpiry: document.querySelector("[data-session-expiry]"),
     sessionRefreshButton: document.querySelector("[data-session-refresh]"),
@@ -443,6 +449,22 @@ function renderAuthenticatedState(accountContext = null) {
     if (elements.authenticatedCreatedAt) {
         elements.authenticatedCreatedAt.textContent = authenticated
             ? formatTimestamp(user.createdAt)
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedPlanTier) {
+        elements.authenticatedPlanTier.textContent = authenticated
+            ? getPlanTierLabel(accountContext)
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedPremiumAccess) {
+        elements.authenticatedPremiumAccess.textContent = authenticated
+            ? (
+                hasPremiumAccess(accountContext, "monteCarloPlus")
+                    ? "Active"
+                    : "Not active"
+            )
             : "Unavailable";
     }
 

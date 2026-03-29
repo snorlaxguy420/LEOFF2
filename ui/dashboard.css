@@ -532,6 +532,105 @@ SCORE PANEL
     font-size: 24px;
 }
 
+.monte-carlo-premium-note {
+    margin-top: 18px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(30, 47, 68, 0.06);
+    border: 1px dashed rgba(30, 47, 68, 0.18);
+    color: rgba(30, 47, 68, 0.78);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.monte-carlo-range-panel {
+    margin-top: 20px;
+    padding: 20px 22px;
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(248, 250, 247, 0.95), rgba(236, 242, 240, 0.92));
+    border: 1px solid rgba(31, 77, 58, 0.14);
+}
+
+.monte-carlo-range-header h3 {
+    margin: 6px 0 0;
+    color: var(--pnw-navy);
+}
+
+.monte-carlo-path-grid {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.monte-carlo-path-card {
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(63, 124, 133, 0.16);
+}
+
+.monte-carlo-path-card strong {
+    display: block;
+    margin-top: 10px;
+    color: var(--pnw-navy);
+    font-size: 24px;
+    line-height: 1.15;
+}
+
+.monte-carlo-path-card p {
+    margin: 10px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.monte-carlo-path-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.monte-carlo-path-swatch {
+    width: 18px;
+    height: 0;
+    border-top: 3px solid currentColor;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.monte-carlo-path-swatch-mean {
+    color: #1F4D3A;
+    border-top-style: dashed;
+}
+
+.monte-carlo-path-swatch-worst {
+    color: #B33A3A;
+}
+
+.monte-carlo-path-swatch-best {
+    color: #3F7C85;
+}
+
+.monte-carlo-chart-shell {
+    margin-top: 18px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(30, 47, 68, 0.08);
+}
+
+.monte-carlo-chart-shell canvas {
+    width: 100%;
+    min-width: 720px;
+    height: 360px;
+    display: block;
+}
+
 .score-panel {
 
     text-align: center;
@@ -1435,6 +1534,24 @@ EDIT INPUT BUTTON
     .report-highlight-grid,
     .dashboard-bottom {
         grid-template-columns: 1fr;
+    }
+
+    .monte-carlo-range-panel,
+    .monte-carlo-path-card {
+        padding: 14px;
+    }
+
+    .monte-carlo-path-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .monte-carlo-path-card strong {
+        font-size: 22px;
+    }
+
+    .monte-carlo-chart-shell canvas {
+        min-width: 640px;
+        height: 300px;
     }
 
     .report-risk-item,

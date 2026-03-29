@@ -8,8 +8,9 @@ Initial backend scaffold for:
 - out-of-session password recovery via reset links
 - transactional account emails for registration and password recovery
 
-This first version intentionally uses Node built-ins only and persists to a
-local JSON file so the API contract can stabilize before a database migration.
+This first version still defaults to a local JSON file so the API contract can
+stabilize before a database cutover, but it now includes PostgreSQL migration
+groundwork for the next persistence step.
 
 ## Run locally
 
@@ -40,6 +41,9 @@ server reads:
 - `SIGNUP_SUMMARY_RECIPIENT`
 - `EMAIL_FROM`
 - `RESEND_API_KEY`
+- `DATA_BACKEND`
+- `DATABASE_URL`
+- `DATABASE_SSL`
 - `DATA_FILE_PATH`
 
 ## Current endpoints
@@ -98,8 +102,31 @@ Recommended production scheduling:
   also falls back to server logging when email delivery is not configured.
 - Plans store the canonical `simulationState` and can also persist full
   `workspaceState` so asset/debt module cards restore cleanly.
-- The storage layer is intentionally isolated in `src/lib/store.js` so it can
-  later move to PostgreSQL with minimal route churn.
+- The storage layer is intentionally isolated in `src/lib/store.js` so file and
+  PostgreSQL backends can share the same route layer with minimal churn.
+
+## PostgreSQL migration groundwork
+
+The backend now includes the first PostgreSQL migration pieces:
+
+- storage-adapter routing in [src/lib/storage/index.js](/D:/LEOFF%202/backend/src/lib/storage/index.js)
+- file backend in [src/lib/storage/fileStore.js](/D:/LEOFF%202/backend/src/lib/storage/fileStore.js)
+- PostgreSQL backend in [src/lib/storage/postgresStore.js](/D:/LEOFF%202/backend/src/lib/storage/postgresStore.js)
+- schema file in [src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql)
+- schema init script:
+  `npm run db:init`
+- JSON-to-PostgreSQL import script:
+  `npm run migrate-json-store-to-postgres`
+
+To enable PostgreSQL, set:
+
+```powershell
+DATA_BACKEND=postgres
+DATABASE_URL=postgres://...
+DATABASE_SSL=false
+```
+
+The default backend remains the current file store until the production cutover.
 
 ## Manual premium testing
 

@@ -195,6 +195,7 @@ Completed / In progress:
 - Premium saved-scenario comparison now upgrades `My Scenarios` from a plain assumptions snapshot to a richer side-by-side planning compare view for premium accounts, showing readiness, retirement-year income/margin, depletion timing, and key strategy setup details while keeping the lighter snapshot compare available on free accounts in [analysis/scenarioComparisonSummary.js](/D:/LEOFF%202/analysis/scenarioComparisonSummary.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
 - A first-pass premium withdrawal strategy optimizer now exists on the dashboard, turning the current account mix into personalized withdrawal-order, bridge-year, RMD, and Roth-preservation guidance for premium members in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - A first-pass premium estate projection now exists on the dashboard, showing deterministic expected net worth for every projected year of life plus estate-planning prompts around beneficiaries, real-estate transfer planning, household coordination, and when to seek professional help in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- PostgreSQL migration groundwork now exists in the backend through a storage-adapter layer, PostgreSQL schema file, JSON-to-PostgreSQL import script, and backend config support in [backend/src/lib/storage/index.js](/D:/LEOFF%202/backend/src/lib/storage/index.js), [backend/src/lib/storage/postgresStore.js](/D:/LEOFF%202/backend/src/lib/storage/postgresStore.js), [backend/src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql), and [backend/src/migrateJsonStoreToPostgres.js](/D:/LEOFF%202/backend/src/migrateJsonStoreToPostgres.js)
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
@@ -345,7 +346,8 @@ Remaining:
 
 ## Immediate Next Steps
 
--> 1. Run the pending real-device QA sweep across the homepage, simulator input flow, live simulation run, dashboard review, Retirement Age Comparison, Survivor Benefit Estimator, and one article page at `360px`, `390px`, `412px`, `430px`, and `768px`.
-2. Replace the temporary backend JSON store with PostgreSQL once the current account + recovery route contract has passed enough live testing to freeze the first persistence contract.
-3. Continue premium billing and subscription planning once the core saved-scenario account experience feels polished enough to monetize.
-4. Consider whether `My Scenarios` should eventually graduate from the simulator rail into a dedicated account page now that scenario comparison exists.
+1. Replace the temporary backend JSON store with PostgreSQL, starting with the migration plan in [backend/POSTGRES_MIGRATION_PLAN.md](/D:/LEOFF%202/backend/POSTGRES_MIGRATION_PLAN.md) and a storage-adapter implementation that preserves the current auth, recovery, and plans route contract.
+2. Add encrypted-at-rest protection for the server volume and backup flow once PostgreSQL is in place.
+3. Add rate limiting for `register`, `login`, `forgot-password`, and `reset-password` endpoints before scaling account usage.
+4. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default.
+5. Add a clearer production security baseline for secrets handling, backups, and access/audit controls.

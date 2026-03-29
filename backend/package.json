@@ -7,8 +7,13 @@
   "scripts": {
     "start": "node ./src/server.js",
     "dev": "node ./src/server.js",
+    "db:init": "node ./src/initPostgresSchema.js",
+    "migrate-json-store-to-postgres": "node ./src/migrateJsonStoreToPostgres.js",
     "send-daily-signup-summary": "node ./src/sendDailySignupSummary.js",
     "set-user-tier": "node ./src/setUserPlanTier.js"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
   },
   "engines": {
     "node": ">=20"

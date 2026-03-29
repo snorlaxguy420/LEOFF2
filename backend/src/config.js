@@ -17,6 +17,22 @@ function readNumberEnv(name, fallback) {
     return Number.isFinite(value) ? value : fallback;
 }
 
+function readBooleanEnv(name, fallback = false) {
+    const value = String(readEnv(name, fallback ? "true" : "false"))
+        .trim()
+        .toLowerCase();
+
+    if (["1", "true", "yes", "on"].includes(value)) {
+        return true;
+    }
+
+    if (["0", "false", "no", "off"].includes(value)) {
+        return false;
+    }
+
+    return fallback;
+}
+
 function parseOrigins(value) {
     return String(value || "")
         .split(",")
@@ -54,6 +70,9 @@ export const config = {
     ),
     emailFrom: readEnv("EMAIL_FROM", ""),
     resendApiKey: readEnv("RESEND_API_KEY", ""),
+    dataBackend: readEnv("DATA_BACKEND", "file").trim().toLowerCase(),
+    databaseUrl: readEnv("DATABASE_URL", ""),
+    databaseSsl: readBooleanEnv("DATABASE_SSL", false),
     dataFilePath: readEnv(
         "DATA_FILE_PATH",
         path.join(projectRoot, "data", "store.json")

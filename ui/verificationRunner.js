@@ -69,6 +69,7 @@ import {
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
 import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
+import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 
 function assert(condition, message) {
@@ -673,6 +674,110 @@ function testWithdrawalStrategyOptimizer() {
     );
 
     logResult("Withdrawal strategy optimizer passed");
+}
+
+function testEstateProjectionSummary() {
+    const simulationState = buildSimulationState({
+        inputs: {
+            profile: {
+                currentAge: 50,
+                spouse: {
+                    currentAge: 48,
+                    retirementAge: 58,
+                    annualIncome: 40000
+                }
+            },
+            retireAge: 55,
+            lifeExpectancy: 58,
+            pension: {
+                serviceYears: 25,
+                finalAverageSalary: 118000,
+                currentAnnualPay: 112000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "50%",
+                survivorAge: 52
+            },
+            socialSecurity: {
+                birthYear: 1981,
+                claimAge: 67,
+                cola: 0.02,
+                fraBenefit: 26000
+            },
+            expenses: {
+                monthly: 6200,
+                annual: 74400,
+                housing: 2000,
+                groceries: 800,
+                bills: 500,
+                auto: 550,
+                healthcare: 700,
+                insurance: 350,
+                other: 1300
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.031,
+                housingInflationRate: 0.035,
+                healthcareInflationRate: 0.055
+            },
+            toggles: {
+                showReal: false,
+                marketFirst: false
+            }
+        },
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "401k",
+                balance: 280000,
+                growthRate: 0.06,
+                startAge: 55,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.04,
+                taxable: true,
+                accountType: "401k",
+                penaltyExceptionType: "public_safety_age50"
+            },
+            {
+                type: "real_estate",
+                name: "Primary Home",
+                currentValue: 420000,
+                growthRate: 0.03
+            }
+        ]
+    });
+    const projection = runProjection(simulationState);
+    const summary =
+        buildEstateProjectionSummary({
+            currentInputs: simulationStateToInputs(simulationState),
+            incomeSources: simulationState.incomeSources || [],
+            projection
+        });
+
+    assert(
+        summary.rows.length === projection.results.length,
+        "Estate projection summary should provide one row per projected year"
+    );
+    assert(
+        summary.highlights?.endOfLifeNetWorth !== "-",
+        "Estate projection summary should provide an end-of-life net-worth highlight"
+    );
+    assert(
+        summary.helpCards.some(card => card.title === "Beneficiary Review"),
+        "Estate projection summary should prompt for beneficiary review when retirement accounts exist"
+    );
+    assert(
+        summary.helpCards.some(card => card.title === "Real Estate Transfer Plan"),
+        "Estate projection summary should prompt for real-estate transfer review when real estate exists"
+    );
+    assert(
+        summary.helpCards.some(card => card.title === "Household Coordination"),
+        "Estate projection summary should prompt for household coordination when a spouse exists"
+    );
+
+    logResult("Estate projection summary passed");
 }
 
 function testProjectionChartModes() {
@@ -3114,6 +3219,7 @@ async function runVerification() {
         testPortablePlanExportImport();
         testPremiumSavedScenarioComparisonCard();
         testWithdrawalStrategyOptimizer();
+        testEstateProjectionSummary();
         testProjectionChartModes();
         testProjectionChartDatasets();
         testSharedSimulatorHelpers();

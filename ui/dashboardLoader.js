@@ -6,6 +6,7 @@ import {
     analyzeRetirementPlan
 } from "../analysis/retirementAnalysis.js";
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
+import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 import { StateManager } from "../core/stateManager.js";
 import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
@@ -276,6 +277,100 @@ function renderWithdrawalOptimizerSection({
             <div class="optimizer-note-card">
                 <span>${note.label}</span>
                 <strong>${note.value}</strong>
+            </div>
+        `).join("");
+}
+
+function renderEstateProjectionSection({
+    currentInputs,
+    simulationState,
+    projection
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "premium");
+    const headline = document.getElementById("estateProjectionHeadline");
+    const summary = document.getElementById("estateProjectionSummary");
+    const premiumNote =
+        document.getElementById("estateProjectionPremiumNote");
+    const highlights =
+        document.getElementById("estateProjectionHighlights");
+    const tableBody =
+        document.getElementById("estateProjectionTableBody");
+    const helpGrid =
+        document.getElementById("estatePlanningHelp");
+
+    if (!headline || !summary || !premiumNote || !highlights || !tableBody || !helpGrid) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium estate projection guidance";
+        summary.textContent =
+            "Premium shows the expected net-worth path at every projected age and adds estate-planning prompts based on the assets in the plan.";
+        premiumNote.hidden = false;
+        premiumNote.textContent =
+            dashboardAccountContext?.user?.email
+                ? "This account is currently on the free tier. Upgrade to premium to unlock year-by-year estate projection and estate-planning guidance."
+                : "Sign in with a premium account to unlock year-by-year estate projection and estate-planning guidance.";
+        highlights.hidden = true;
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">Premium estate projection rows will appear here once a premium account is active.</td>
+            </tr>
+        `;
+        helpGrid.innerHTML = "";
+        return;
+    }
+
+    premiumNote.hidden = true;
+
+    const estateProjection =
+        buildEstateProjectionSummary({
+            currentInputs,
+            incomeSources: simulationState?.incomeSources || [],
+            projection
+        });
+
+    headline.textContent = estateProjection.headline;
+    summary.textContent = estateProjection.summary;
+    highlights.hidden = false;
+
+    setElementText(
+        "estateProjectionEndOfLifeNetWorth",
+        estateProjection.highlights?.endOfLifeNetWorth || "-"
+    );
+    setElementText(
+        "estateProjectionPeakNetWorth",
+        estateProjection.highlights?.peakNetWorth || "-"
+    );
+    setElementText(
+        "estateProjectionFirstNegativeAge",
+        estateProjection.highlights?.firstNegativeAge || "None"
+    );
+
+    tableBody.innerHTML =
+        estateProjection.rows.length
+            ? estateProjection.rows.map(row => `
+                <tr>
+                    <td>${row.age}</td>
+                    <td>${row.year}</td>
+                    <td>${row.netWorth}</td>
+                    <td>${row.portfolio}</td>
+                    <td>${row.realEstate}</td>
+                    <td>${row.debts}</td>
+                </tr>
+            `).join("")
+            : `
+                <tr>
+                    <td colspan="6">Estate projection data is not available yet.</td>
+                </tr>
+            `;
+
+    helpGrid.innerHTML =
+        estateProjection.helpCards.map(card => `
+            <div class="estate-help-card">
+                <h3>${card.title}</h3>
+                <p>${card.body}</p>
             </div>
         `).join("");
 }
@@ -956,6 +1051,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 workspaceState?.premiumStressTesting || null
         });
         renderWithdrawalOptimizerSection({
+            simulationState: currentSimulationState,
+            projection: currentProjection
+        });
+        renderEstateProjectionSection({
+            currentInputs,
             simulationState: currentSimulationState,
             projection: currentProjection
         });

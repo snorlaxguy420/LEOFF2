@@ -623,6 +623,67 @@ SCORE PANEL
     line-height: 1.45;
 }
 
+.estate-projection-table-shell {
+    margin-top: 18px;
+}
+
+.estate-projection-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.86);
+    border: 1px solid rgba(30,47,68,0.08);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.estate-projection-table th,
+.estate-projection-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(30,47,68,0.08);
+    font-size: 14px;
+}
+
+.estate-projection-table th {
+    background: rgba(31,77,58,0.08);
+    color: var(--pnw-navy);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.estate-projection-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.estate-help-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.estate-help-card {
+    padding: 16px 18px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.84);
+    border: 1px solid rgba(30,47,68,0.08);
+}
+
+.estate-help-card h3 {
+    margin: 0;
+    color: var(--pnw-navy);
+    font-size: 17px;
+}
+
+.estate-help-card p {
+    margin: 10px 0 0;
+    color: rgba(42,42,42,0.78);
+    line-height: 1.6;
+    font-size: 14px;
+}
+
 .monte-carlo-range-header h3 {
     margin: 6px 0 0;
     color: var(--pnw-navy);
@@ -1605,7 +1666,8 @@ EDIT INPUT BUTTON
     .report-risk-list,
     .report-highlight-grid,
     .dashboard-bottom,
-    .optimizer-note-list {
+    .optimizer-note-list,
+    .estate-help-grid {
         grid-template-columns: 1fr;
     }
 

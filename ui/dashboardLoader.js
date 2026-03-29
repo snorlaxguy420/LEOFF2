@@ -3,8 +3,7 @@ import { renderMonteCarloProjectionChart } from "./monteCarloProjectionChart.js"
 import { getAccountContext } from "./apiClient.js";
 import { hasPremiumAccess } from "./accountEntitlements.js";
 import {
-    analyzeRetirementPlan,
-    calculateReadinessScore
+    analyzeRetirementPlan
 } from "../analysis/retirementAnalysis.js";
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
 import { StateManager } from "../core/stateManager.js";
@@ -206,20 +205,49 @@ function clearTimelineLegend() {
     }
 }
 
-function renderReadinessBreakdown(results, retireAge) {
-    const readiness = calculateReadinessScore(results, retireAge);
-    const breakdown = readiness.breakdown || {};
+function formatReadinessBreakdownValue(value, maxValue, fallback = "--") {
+    if (!Number.isFinite(value) || !Number.isFinite(maxValue)) {
+        return fallback;
+    }
+
+    return `${Math.round(value)} / ${Math.round(maxValue)}`;
+}
+
+function renderReadinessBreakdown(readiness = null) {
+    const breakdown = readiness?.breakdown || {};
+    const maxScores = readiness?.maxScores || {};
 
     document.getElementById("readinessCoverageScore").innerText =
-        `${Math.round(breakdown.coverageScore || 0)} / 30`;
+        formatReadinessBreakdownValue(
+            breakdown.coverageScore,
+            maxScores.coverageScore ?? 30
+        );
     document.getElementById("readinessDeficitScore").innerText =
-        `${Math.round(breakdown.essentialScore || 0)} / 20`;
+        formatReadinessBreakdownValue(
+            breakdown.essentialScore,
+            maxScores.essentialScore ?? 20
+        );
     document.getElementById("readinessLongevityScore").innerText =
-        `${Math.round(breakdown.longevityScore || 0)} / 25`;
+        formatReadinessBreakdownValue(
+            breakdown.longevityScore,
+            maxScores.longevityScore ?? 25
+        );
     document.getElementById("readinessEarlyScore").innerText =
-        `${Math.round(breakdown.earlyScore || 0)} / 15`;
+        formatReadinessBreakdownValue(
+            breakdown.earlyScore,
+            maxScores.earlyScore ?? 15
+        );
     document.getElementById("readinessStabilityScore").innerText =
-        `${Math.round(breakdown.marginScore || 0)} / 10`;
+        formatReadinessBreakdownValue(
+            breakdown.marginScore,
+            maxScores.marginScore ?? 10
+        );
+    document.getElementById("readinessMonteCarloScore").innerText =
+        formatReadinessBreakdownValue(
+            breakdown.monteCarloScore,
+            maxScores.monteCarloScore ?? 20,
+            "Pending"
+        );
 }
 
 function renderExpenseBreakdown(retirementYear) {
@@ -351,7 +379,10 @@ function applyMonteCarloEntitlementState(accountContext = null) {
 
 function renderMonteCarloSection({
     simulationState,
-    retireAge
+    retireAge,
+    inputs,
+    incomeSources,
+    projection
 }) {
     monteCarloRenderToken += 1;
     const currentToken = monteCarloRenderToken;
@@ -402,6 +433,27 @@ function renderMonteCarloSection({
         setElementText("monteCarloIterations", content.iterations);
 
         if (monteCarloPlusEnabled) {
+            const probabilityAdjustedAnalysis =
+                analyzeRetirementPlan({
+                    inputs,
+                    incomeSources,
+                    projection,
+                    monteCarloSummary: monteCarlo
+                });
+
+            document.getElementById("readinessScore").innerText =
+                `${probabilityAdjustedAnalysis.readinessScore} / 100`;
+            document.getElementById("readinessGrade").innerText =
+                probabilityAdjustedAnalysis.readinessGrade;
+            document.getElementById("readinessDescription").innerText =
+                getReadinessGradeDescription(
+                    probabilityAdjustedAnalysis.readinessGrade
+                );
+            renderReadinessBreakdown({
+                breakdown: probabilityAdjustedAnalysis.readinessBreakdown,
+                maxScores: probabilityAdjustedAnalysis.readinessMaxScores
+            });
+
             const projectionChartContent =
                 buildMonteCarloProjectionChartContent(monteCarlo);
 
@@ -723,13 +775,19 @@ document.addEventListener("DOMContentLoaded", async () => {
             avgMargin,
             retirementYear
         });
-        renderReadinessBreakdown(results, retireAge);
+        renderReadinessBreakdown({
+            breakdown: analysis.readinessBreakdown,
+            maxScores: analysis.readinessMaxScores
+        });
         renderExpenseBreakdown(retirementYear);
         renderTaxSnapshot(retirementYear);
         renderShortfallSummary(currentProjection, analysis);
         renderMonteCarloSection({
             simulationState: currentSimulationState,
-            retireAge
+            retireAge,
+            inputs: currentInputs,
+            incomeSources: currentIncomeSources,
+            projection: currentProjection
         });
     }
 

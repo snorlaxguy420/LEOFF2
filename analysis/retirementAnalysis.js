@@ -30,8 +30,8 @@ export function calculateRetirementFailureAge(results) {
     return failureYear?.age ?? null;
 }
 
-export function calculateReadinessScore(results, retireAge) {
-    const readiness = scoreReadiness(results, retireAge);
+export function calculateReadinessScore(results, retireAge, options = {}) {
+    const readiness = scoreReadiness(results, retireAge, options);
 
     return {
         ...readiness,
@@ -42,7 +42,8 @@ export function calculateReadinessScore(results, retireAge) {
 export function analyzeRetirementPlan({
     inputs,
     incomeSources,
-    projection
+    projection,
+    monteCarloSummary = null
 }) {
 
     const results = projection?.results || [];
@@ -51,7 +52,9 @@ export function analyzeRetirementPlan({
     const retirementFailureAge =
         calculateRetirementFailureAge(results);
     const readiness =
-        calculateReadinessScore(results, inputs?.retireAge);
+        calculateReadinessScore(results, inputs?.retireAge, {
+            monteCarlo: monteCarloSummary
+        });
     const assetDepletionAge =
         (results || []).find(result => totalPortfolio(result) <= 0)?.age
         ?? null;
@@ -69,6 +72,11 @@ export function analyzeRetirementPlan({
         assetDepletionAge,
         readinessScore: readiness.score,
         readinessGrade: readiness.grade,
+        readinessBreakdown: readiness.breakdown,
+        readinessMaxScores: readiness.maxScores,
+        readinessProbabilityAdjusted: readiness.probabilityAdjusted,
+        monteCarloDurabilityRatio:
+            readiness.monteCarloDurabilityRatio,
         RetirementReadinessGrade: readiness.RetirementReadinessGrade
     };
 }

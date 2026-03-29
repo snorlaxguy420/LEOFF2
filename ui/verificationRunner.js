@@ -1245,6 +1245,86 @@ function testReadinessScoreUsesRetirementYearsOnly() {
     logResult("Readiness score retirement-year guard passed");
 }
 
+function testProbabilityAdjustedReadinessScore() {
+    const results = [
+        {
+            age: 53,
+            income: 76000,
+            expenses: 70000,
+            expenseBreakdown: {
+                essential: 56000
+            },
+            portfolios: {
+                "401k": 450000
+            }
+        },
+        {
+            age: 54,
+            income: 77000,
+            expenses: 71000,
+            expenseBreakdown: {
+                essential: 56500
+            },
+            portfolios: {
+                "401k": 430000
+            }
+        },
+        {
+            age: 55,
+            income: 78000,
+            expenses: 72000,
+            expenseBreakdown: {
+                essential: 57000
+            },
+            portfolios: {
+                "401k": 410000
+            }
+        }
+    ];
+    const deterministicReadiness =
+        calculateReadinessScore(results, 53);
+    const durableReadiness =
+        calculateReadinessScore(results, 53, {
+            monteCarlo: {
+                successRate: 0.94,
+                essentialSuccessRate: 0.99,
+                medianReadinessScore: 91,
+                medianFailureAge: null,
+                medianAssetDepletionAge: null
+            }
+        });
+    const fragileReadiness =
+        calculateReadinessScore(results, 53, {
+            monteCarlo: {
+                successRate: 0.42,
+                essentialSuccessRate: 0.61,
+                medianReadinessScore: 58,
+                medianFailureAge: 61,
+                medianAssetDepletionAge: 63
+            }
+        });
+
+    assert(
+        deterministicReadiness.probabilityAdjusted === false,
+        "Baseline readiness without Monte Carlo should stay deterministic"
+    );
+    assert(
+        durableReadiness.probabilityAdjusted === true &&
+        Number.isFinite(durableReadiness.breakdown.monteCarloScore),
+        "Monte Carlo durability should contribute a dedicated readiness component"
+    );
+    assert(
+        durableReadiness.score > fragileReadiness.score,
+        "Stronger Monte Carlo durability should produce a higher probability-adjusted readiness score"
+    );
+    assert(
+        durableReadiness.maxScores?.monteCarloScore === 20,
+        "Probability-adjusted readiness should reserve a 20-point Monte Carlo durability contribution"
+    );
+
+    logResult("Probability-adjusted readiness score passed");
+}
+
 function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
     const comparison = compareRetirementAges({
         inputs: {
@@ -2711,6 +2791,7 @@ async function runVerification() {
         testRetirementVulnerabilityEngine();
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
+        testProbabilityAdjustedReadinessScore();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
         testRecommendedRetirementAgeRequiresMonteCarloThreshold();
         testDashboardRecommendationConsistency();

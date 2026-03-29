@@ -243,9 +243,9 @@ Completed / In progress:
 - Monte Carlo-backed recommendation policy now uses a `90%` success-rate threshold for the earliest strict recommended age, separating `workable` retirement ages from more durable `recommended` ones in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js)
 - Monte Carlo now exposes representative best-case, mean, and worst-case net-worth paths directly on the dashboard, giving the report a more premium-style downside/upside visualization in [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/monteCarloProjectionChart.js](/D:/LEOFF%202/ui/monteCarloProjectionChart.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 - Monte Carlo Plus now respects the new account-entitlement layer, using deeper trial counts plus premium-only best/mean/worst path visualization when an authenticated account has premium access in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/accountEntitlements.js](/D:/LEOFF%202/ui/accountEntitlements.js), and [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html)
+- Probability-informed readiness scoring now exists for Monte Carlo Plus, blending deterministic coverage/longevity math with a dedicated Monte Carlo durability component so premium dashboard scores react to success odds and failure timing instead of deterministic projections alone in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 
 Remaining:
-- Probability-informed retirement readiness / success scoring layered on top of Monte Carlo results
 - Social Security optimizer
 - Estate projection
 - Withdrawal strategy optimizer

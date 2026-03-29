@@ -199,6 +199,7 @@ Completed / In progress:
 - The live Lightsail backend has now been migrated from the temporary JSON store to PostgreSQL, with production smoke-test coverage for auth and plan CRUD plus rollback backups of both the legacy `store.json` and the PostgreSQL database
 - Auth-sensitive backend endpoints now use per-IP in-memory rate limiting for `register`, `login`, `forgot-password`, and `reset-password`, with configurable thresholds and retry headers in [backend/src/lib/rateLimit.js](/D:/LEOFF%202/backend/src/lib/rateLimit.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), and [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js)
 - The live backend now has a stronger operational security baseline: runtime secrets moved out of systemd drop-ins into a protected root-owned env file, and root-owned daily PostgreSQL backups now run on a systemd timer with `700` directory permissions and `600` backup files on Lightsail
+- The live backup flow is now encrypted at rest on the server as well: daily PostgreSQL and legacy JSON backups are written as encrypted artifacts with a separate root-only backup key, and older plaintext backup files on Lightsail have been converted to encrypted versions
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
@@ -349,7 +350,7 @@ Remaining:
 
 ## Immediate Next Steps
 
-1. Add encrypted-at-rest protection for the server volume and backup flow now that PostgreSQL and the daily backup path are in place.
+1. Enable and verify Lightsail automatic snapshots, then run a documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
 2. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default, with the explicit goal of avoiding full names, spouse names, full birth dates, SSNs, or financial-account identifiers where they are not strictly necessary.
 3. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
 4. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.

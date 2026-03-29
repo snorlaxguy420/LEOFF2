@@ -1,4 +1,8 @@
 import { assetRegistry } from "../core/assetRegistry.js";
+import {
+    DEFAULT_PREMIUM_STRESS_TESTING,
+    normalizePremiumStressTesting
+} from "./premiumStressTesting.js";
 
 
 /****************************************************************
@@ -40,12 +44,18 @@ export const StateManager = {
             ...defaults.comparisonState,
             ...(nextState.comparisonState || {})
         };
+        const premiumStressTesting =
+            normalizePremiumStressTesting({
+                ...defaults.premiumStressTesting,
+                ...(nextState.premiumStressTesting || {})
+            });
 
         return {
             ...defaults,
             ...nextState,
             simulationState,
             comparisonState,
+            premiumStressTesting,
             moduleState: nextState.moduleState || {}
         };
     },
@@ -75,10 +85,18 @@ export const StateManager = {
 
     },
 
-    saveWorkspaceState({ simulationState = null } = {}) {
+    saveWorkspaceState({
+        simulationState = null,
+        premiumStressTesting = null
+    } = {}) {
+        const defaults = this.defaultState();
 
         const nextState = this.normalizeWorkspaceState({
             ...this.state,
+            premiumStressTesting:
+                premiumStressTesting ??
+                this.state.premiumStressTesting ??
+                defaults.premiumStressTesting,
             simulationState:
                 simulationState ??
                 this.state.simulationState ??
@@ -93,13 +111,26 @@ export const StateManager = {
 
     },
 
-    saveAll({ simulationState = null } = {}){
-        return this.saveWorkspaceState({ simulationState });
+    saveAll({
+        simulationState = null,
+        premiumStressTesting = null
+    } = {}){
+        return this.saveWorkspaceState({
+            simulationState,
+            premiumStressTesting
+        });
     },
-    buildPortablePlan({ simulationState = null } = {}) {
+    buildPortablePlan({
+        simulationState = null,
+        premiumStressTesting = null
+    } = {}) {
         const workspaceState =
             this.normalizeWorkspaceState({
                 ...this.state,
+                premiumStressTesting:
+                    premiumStressTesting ??
+                    this.state.premiumStressTesting ??
+                    this.defaultState().premiumStressTesting,
                 simulationState:
                     simulationState ??
                     this.state.simulationState ??
@@ -217,6 +248,9 @@ loadAll(){
             ,
             comparisonState: {
                 planIds: []
+            },
+            premiumStressTesting: {
+                ...DEFAULT_PREMIUM_STRESS_TESTING
             },
             moduleState: {}
         };

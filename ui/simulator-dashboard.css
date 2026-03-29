@@ -862,6 +862,81 @@ justify-content:flex-end;
 margin-top:16px;
 }
 
+.premium-stress-card{
+margin-top:24px;
+padding:20px 22px;
+border-radius:16px;
+background:linear-gradient(180deg, rgba(248,250,247,.94), rgba(236,242,240,.92));
+border:1px solid rgba(31,77,58,.14);
+}
+
+.premium-stress-head{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:16px;
+}
+
+.premium-stress-head h3{
+margin:6px 0 0;
+color:var(--pnw-navy);
+}
+
+.premium-stress-kicker{
+font-size:12px;
+font-weight:700;
+letter-spacing:.08em;
+text-transform:uppercase;
+color:var(--pnw-evergreen);
+}
+
+.premium-stress-badge{
+padding:6px 10px;
+border-radius:999px;
+background:rgba(31,77,58,.12);
+border:1px solid rgba(31,77,58,.18);
+color:var(--pnw-evergreen);
+font-size:12px;
+font-weight:700;
+white-space:nowrap;
+}
+
+.premium-stress-summary{
+margin:14px 0 0;
+color:rgba(42,42,42,.82);
+line-height:1.6;
+}
+
+.premium-stress-toggle{
+display:flex;
+align-items:center;
+gap:10px;
+margin-top:16px;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.premium-stress-grid{
+margin-top:16px;
+}
+
+.premium-stress-card.is-disabled{
+opacity:.8;
+}
+
+.premium-stress-card.is-disabled .premium-stress-grid,
+.premium-stress-card.is-disabled .premium-stress-actions,
+.premium-stress-card.is-disabled .premium-stress-toggle{
+pointer-events:none;
+}
+
+.premium-stress-footnote{
+margin:14px 0 0;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.7);
+}
+
 .mobile-income-summary{
 display:none;
 }
@@ -1282,6 +1357,11 @@ margin-top:7px;
 body.mobile-simulator .mobile-income-summary{
 display:block;
 margin-top:14px;
+}
+
+body.mobile-simulator .premium-stress-head{
+flex-direction:column;
+align-items:flex-start;
 }
 
 .form-grid input,

@@ -43,8 +43,40 @@ const DEFAULT_MONTE_CARLO_CONFIG = Object.freeze({
         min: -0.1,
         max: 0.1,
         fallbackBase: 0.03
+    }),
+    stressAdjustments: Object.freeze({
+        earlyRetirementShockYears: 0,
+        earlyRetirementShockRate: 0
     })
 });
+
+function mergeMonteCarloConfig(config = {}) {
+    const nextConfig = config || {};
+
+    return Object.fromEntries(
+        Object.entries(DEFAULT_MONTE_CARLO_CONFIG).map(([key, value]) => {
+            const override = nextConfig?.[key];
+
+            if (
+                value &&
+                typeof value === "object" &&
+                !Array.isArray(value)
+            ) {
+                return [
+                    key,
+                    {
+                        ...value,
+                        ...(override && typeof override === "object"
+                            ? override
+                            : {})
+                    }
+                ];
+            }
+
+            return [key, override ?? value];
+        })
+    );
+}
 
 function normalizeSeed(seed) {
     const normalized =
@@ -396,12 +428,40 @@ function buildSampledRates({
 
     incomeSources.forEach(source => {
         if (source?.type === "portfolio") {
-            portfolioReturnPaths[source.name] = sampleRatePath({
+            const portfolioReturnPath = sampleRatePath({
                 baseRate: source?.growthRate,
                 profile: config.portfolioReturn,
                 random,
                 years
             });
+
+            const shockYears =
+                Math.max(
+                    0,
+                    Math.round(
+                        config?.stressAdjustments?.earlyRetirementShockYears || 0
+                    )
+                );
+            const shockRate =
+                Number.isFinite(config?.stressAdjustments?.earlyRetirementShockRate)
+                    ? config.stressAdjustments.earlyRetirementShockRate
+                    : 0;
+
+            if (shockYears > 0 && shockRate !== 0) {
+                for (
+                    let index = 0;
+                    index < Math.min(shockYears, portfolioReturnPath.length);
+                    index += 1
+                ) {
+                    portfolioReturnPath[index] = clamp(
+                        portfolioReturnPath[index] + shockRate,
+                        config?.portfolioReturn?.min ?? -Infinity,
+                        config?.portfolioReturn?.max ?? Infinity
+                    );
+                }
+            }
+
+            portfolioReturnPaths[source.name] = portfolioReturnPath;
         }
 
         if (source?.type === "real_estate") {
@@ -603,10 +663,7 @@ export function runMonteCarloSimulation({
 } = {}) {
     const safeIterations =
         Math.max(1, Math.floor(iterations || 0));
-    const mergedConfig = {
-        ...DEFAULT_MONTE_CARLO_CONFIG,
-        ...(config || {})
-    };
+    const mergedConfig = mergeMonteCarloConfig(config);
     const random = createSeededRandom(seed);
     const startingNetWorth =
         getStartingNetWorth(simulationState);

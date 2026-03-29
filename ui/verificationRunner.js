@@ -64,6 +64,10 @@ import {
     hasPremiumAccess,
     normalizeAccountContext
 } from "./accountEntitlements.js";
+import {
+    buildPremiumStressTestMonteCarloConfig,
+    normalizePremiumStressTesting
+} from "../core/premiumStressTesting.js";
 
 function assert(condition, message) {
     if (!condition) {
@@ -351,6 +355,15 @@ function testPortablePlanExportImport() {
             ...StateManager.defaultState(),
             comparisonState: {
                 planIds: ["plan_alpha", "plan_beta"]
+            },
+            premiumStressTesting: {
+                enabled: true,
+                goodsServicesInflationTargetRate: 0.045,
+                housingInflationTargetRate: 0.04,
+                healthcareInflationTargetRate: 0.075,
+                portfolioDownsideFloorRate: -0.28,
+                earlyRetirementShockYears: 3,
+                earlyRetirementShockRate: -0.12
             }
         });
     const portablePlan =
@@ -402,6 +415,12 @@ function testPortablePlanExportImport() {
         importedState.comparisonState.planIds[0] === "plan_alpha" &&
         importedState.comparisonState.planIds[1] === "plan_beta",
         "Portable plan import should preserve scenario comparison selection state"
+    );
+    assert(
+        importedState.premiumStressTesting?.enabled === true &&
+        importedState.premiumStressTesting?.earlyRetirementShockYears === 3 &&
+        importedState.premiumStressTesting?.portfolioDownsideFloorRate === -0.28,
+        "Portable plan import should preserve premium custom stress-testing settings"
     );
 
     if (originalStorage === null) {
@@ -1325,6 +1344,53 @@ function testProbabilityAdjustedReadinessScore() {
     logResult("Probability-adjusted readiness score passed");
 }
 
+function testPremiumStressTestingConfigBuilder() {
+    const normalizedSettings =
+        normalizePremiumStressTesting({
+            enabled: true,
+            goodsServicesInflationTargetRate: 0.047,
+            housingInflationTargetRate: 0.042,
+            healthcareInflationTargetRate: 0.078,
+            portfolioDownsideFloorRate: -0.25,
+            earlyRetirementShockYears: 4,
+            earlyRetirementShockRate: -0.11
+        });
+    const customConfig =
+        buildPremiumStressTestMonteCarloConfig({
+            premiumStressTesting: normalizedSettings,
+            baseAssumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.032,
+                housingInflationRate: 0.029,
+                healthcareInflationRate: 0.055
+            }
+        });
+
+    assert(
+        Math.round((customConfig?.goodsServicesInflation?.mean || 0) * 10000) === 150,
+        "Premium stress config should shift goods and services inflation toward the configured target"
+    );
+    assert(
+        Math.round((customConfig?.housingInflation?.mean || 0) * 10000) === 130,
+        "Premium stress config should shift housing inflation toward the configured target"
+    );
+    assert(
+        Math.round((customConfig?.healthcareInflation?.mean || 0) * 10000) === 230,
+        "Premium stress config should shift healthcare inflation toward the configured target"
+    );
+    assert(
+        customConfig?.portfolioReturn?.min === -0.25,
+        "Premium stress config should tighten the portfolio downside floor"
+    );
+    assert(
+        customConfig?.stressAdjustments?.earlyRetirementShockYears === 4 &&
+        customConfig?.stressAdjustments?.earlyRetirementShockRate === -0.11,
+        "Premium stress config should include the configured early-retirement shock profile"
+    );
+
+    logResult("Premium stress config builder passed");
+}
+
 function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
     const comparison = compareRetirementAges({
         inputs: {
@@ -2149,6 +2215,24 @@ function testMonteCarloEngine() {
         iterations: 40,
         seed: 12345
     });
+    const stressConfig = buildPremiumStressTestMonteCarloConfig({
+        premiumStressTesting: {
+            enabled: true,
+            goodsServicesInflationTargetRate: 0.05,
+            housingInflationTargetRate: 0.045,
+            healthcareInflationTargetRate: 0.08,
+            portfolioDownsideFloorRate: -0.1,
+            earlyRetirementShockYears: 3,
+            earlyRetirementShockRate: -0.08
+        },
+        baseAssumptions: simulationState?.assumptions || {}
+    });
+    const stressRun = runMonteCarloSimulation({
+        simulationState,
+        iterations: 10,
+        seed: 12345,
+        config: stressConfig
+    });
     const wealthStressSimulationState = structuredClone(simulationState);
     wealthStressSimulationState.incomeSources = [
         ...(wealthStressSimulationState.incomeSources || []),
@@ -2216,6 +2300,11 @@ function testMonteCarloEngine() {
         "Monte Carlo engine should expose whether ending-wealth metrics are trustworthy enough to display"
     );
     assert(
+        stressRun.config?.portfolioReturn?.min === -0.1 &&
+        stressRun.config?.stressAdjustments?.earlyRetirementShockYears === 3,
+        "Monte Carlo engine should preserve custom premium stress-testing config in the aggregate summary"
+    );
+    assert(
         Array.isArray(firstRun.projectionPaths?.ages) &&
         firstRun.projectionPaths.ages.length > 1 &&
         firstRun.projectionPaths.meanNetWorthPath.length === firstRun.projectionPaths.ages.length &&
@@ -2246,6 +2335,15 @@ function testMonteCarloEngine() {
             "Monte Carlo engine should keep sampled healthcare inflation within configured bounds"
         );
     });
+    assert(
+        stressRun.trials.every(trial =>
+            Object.values(trial.sampledRates?.portfolioReturnPaths || {})
+                .every(path =>
+                    path.slice(0, 3).every(rate => rate >= -0.1)
+                )
+        ),
+        "Monte Carlo stress profiles should respect the configured portfolio downside floor during the early shock window"
+    );
     assert(
         exaggeratedRun.wealthMetricsTrusted === false,
         "Monte Carlo engine should flag implausibly wide ending-wealth ranges instead of treating them as trustworthy"
@@ -2792,6 +2890,7 @@ async function runVerification() {
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testProbabilityAdjustedReadinessScore();
+        testPremiumStressTestingConfigBuilder();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
         testRecommendedRetirementAgeRequiresMonteCarloThreshold();
         testDashboardRecommendationConsistency();

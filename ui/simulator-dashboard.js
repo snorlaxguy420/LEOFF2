@@ -25,11 +25,16 @@ import {
 import {
     createPlan as createAccountPlan,
     deletePlan as deleteAccountPlan,
-    getCurrentUser,
+    getAccountContext,
     getPlan as fetchAccountPlan,
     listPlans as listAccountPlans,
     updatePlan as updateAccountPlan
 } from "./apiClient.js";
+import { hasPremiumAccess } from "./accountEntitlements.js";
+import {
+    DEFAULT_PREMIUM_STRESS_TESTING,
+    normalizePremiumStressTesting
+} from "../core/premiumStressTesting.js";
 
 /* ------------------------------------------------
 GLOBAL STATE
@@ -52,11 +57,21 @@ const SUGGESTED_INFLATION_DEFAULTS = {
     housingInflation: "2.8",
     healthcareInflation: "6"
 };
+const SUGGESTED_PREMIUM_STRESS_DEFAULTS = {
+    enabled: false,
+    goodsServicesInflationTargetRate: 0.045,
+    housingInflationTargetRate: 0.04,
+    healthcareInflationTargetRate: 0.075,
+    portfolioDownsideFloorRate: -0.28,
+    earlyRetirementShockYears: 3,
+    earlyRetirementShockRate: -0.12
+};
 const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
 const ACCOUNT_PLAN_META_KEY = "leoffHelperAccountPlanMeta";
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
 const SCENARIO_COMPARISON_MAX_SELECTION = 3;
 let currentAccountUser = null;
+let currentAccountContext = null;
 let currentAccountPlans = [];
 let currentScenarioComparisonPlans = [];
 
@@ -88,6 +103,224 @@ function normalizeScenarioComparisonPlanIds(planIds = []) {
                 .filter(Boolean)
         )
     ).slice(0, SCENARIO_COMPARISON_MAX_SELECTION);
+}
+
+function toPercentFieldValue(rate, fallback) {
+    return Number.isFinite(rate)
+        ? String(Math.round(rate * 1000) / 10)
+        : fallback;
+}
+
+function readOptionalPercentFieldValue(id) {
+    const rawValue =
+        document.getElementById(id)?.value?.trim() || "";
+
+    if (!rawValue) {
+        return null;
+    }
+
+    const parsedValue = Number(rawValue);
+
+    return Number.isFinite(parsedValue)
+        ? parsedValue / 100
+        : null;
+}
+
+function getPremiumStressTestingFieldDefaults() {
+    return {
+        premiumStressTestingEnabled:
+            Boolean(SUGGESTED_PREMIUM_STRESS_DEFAULTS.enabled),
+        premiumStressGoodsServicesInflation:
+            toPercentFieldValue(
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.goodsServicesInflationTargetRate,
+                "4.5"
+            ),
+        premiumStressHousingInflation:
+            toPercentFieldValue(
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.housingInflationTargetRate,
+                "4.0"
+            ),
+        premiumStressHealthcareInflation:
+            toPercentFieldValue(
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.healthcareInflationTargetRate,
+                "7.5"
+            ),
+        premiumStressPortfolioFloor:
+            toPercentFieldValue(
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.portfolioDownsideFloorRate,
+                "-28"
+            ),
+        premiumStressEarlyShockYears:
+            String(SUGGESTED_PREMIUM_STRESS_DEFAULTS.earlyRetirementShockYears),
+        premiumStressEarlyShockReturn:
+            toPercentFieldValue(
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.earlyRetirementShockRate,
+                "-12"
+            )
+    };
+}
+
+function getWorkspacePremiumStressTesting() {
+    return normalizePremiumStressTesting(
+        StateManager.state?.premiumStressTesting ||
+        {}
+    );
+}
+
+function readPremiumStressTestingFromInputs() {
+    const enabled =
+        Boolean(document.getElementById("premiumStressTestingEnabled")?.checked);
+
+    return normalizePremiumStressTesting({
+        enabled,
+        goodsServicesInflationTargetRate:
+            readOptionalPercentFieldValue(
+                "premiumStressGoodsServicesInflation"
+            ),
+        housingInflationTargetRate:
+            readOptionalPercentFieldValue(
+                "premiumStressHousingInflation"
+            ),
+        healthcareInflationTargetRate:
+            readOptionalPercentFieldValue(
+                "premiumStressHealthcareInflation"
+            ),
+        portfolioDownsideFloorRate:
+            readOptionalPercentFieldValue(
+                "premiumStressPortfolioFloor"
+            ),
+        earlyRetirementShockYears:
+            parseInt(
+                document.getElementById("premiumStressEarlyShockYears")?.value || "0",
+                10
+            ) || 0,
+        earlyRetirementShockRate:
+            readOptionalPercentFieldValue(
+                "premiumStressEarlyShockReturn"
+            )
+    });
+}
+
+function syncPremiumStressTestingStateFromInputs() {
+    StateManager.state =
+        StateManager.normalizeWorkspaceState({
+            ...StateManager.state,
+            premiumStressTesting: readPremiumStressTestingFromInputs()
+        });
+
+    return StateManager.state.premiumStressTesting;
+}
+
+function populatePremiumStressTestingInputs(workspaceState = null) {
+    const settings =
+        normalizePremiumStressTesting(
+            workspaceState?.premiumStressTesting ||
+            StateManager.state?.premiumStressTesting ||
+            SUGGESTED_PREMIUM_STRESS_DEFAULTS
+        );
+    const fieldValues = {
+        premiumStressTestingEnabled: settings.enabled,
+        premiumStressGoodsServicesInflation:
+            toPercentFieldValue(
+                settings.goodsServicesInflationTargetRate,
+                getPremiumStressTestingFieldDefaults().premiumStressGoodsServicesInflation
+            ),
+        premiumStressHousingInflation:
+            toPercentFieldValue(
+                settings.housingInflationTargetRate,
+                getPremiumStressTestingFieldDefaults().premiumStressHousingInflation
+            ),
+        premiumStressHealthcareInflation:
+            toPercentFieldValue(
+                settings.healthcareInflationTargetRate,
+                getPremiumStressTestingFieldDefaults().premiumStressHealthcareInflation
+            ),
+        premiumStressPortfolioFloor:
+            toPercentFieldValue(
+                settings.portfolioDownsideFloorRate,
+                getPremiumStressTestingFieldDefaults().premiumStressPortfolioFloor
+            ),
+        premiumStressEarlyShockYears:
+            String(
+                settings.earlyRetirementShockYears ??
+                SUGGESTED_PREMIUM_STRESS_DEFAULTS.earlyRetirementShockYears
+            ),
+        premiumStressEarlyShockReturn:
+            toPercentFieldValue(
+                settings.earlyRetirementShockRate,
+                getPremiumStressTestingFieldDefaults().premiumStressEarlyShockReturn
+            )
+    };
+
+    Object.entries(fieldValues).forEach(([id, value]) => {
+        const field = document.getElementById(id);
+
+        if (!field) {
+            return;
+        }
+
+        if (field instanceof HTMLInputElement && field.type === "checkbox") {
+            field.checked = Boolean(value);
+            return;
+        }
+
+        field.value = String(value ?? "");
+    });
+
+    syncPremiumStressTestingStateFromInputs();
+}
+
+function syncPremiumStressTestingUi() {
+    const card = document.getElementById("premiumStressTestingCard");
+    const badge = document.getElementById("premiumStressTestingBadge");
+    const summary = document.getElementById("premiumStressTestingSummary");
+    const toggle = document.getElementById("premiumStressTestingEnabled");
+    const resetBtn = document.getElementById("resetPremiumStressDefaultsBtn");
+    const premiumEnabled =
+        hasPremiumAccess(currentAccountContext, "monteCarloPlus");
+    const stressSettings =
+        getWorkspacePremiumStressTesting();
+    const stressFields = Array.from(
+        document.querySelectorAll(
+            "#premiumStressTestingCard input:not(#premiumStressTestingEnabled)"
+        )
+    );
+
+    if (!card || !badge || !summary || !toggle) {
+        return;
+    }
+
+    card.classList.toggle("is-disabled", !premiumEnabled);
+    badge.textContent = premiumEnabled
+        ? "Premium Active"
+        : "Premium Only";
+    toggle.disabled = !premiumEnabled;
+
+    stressFields.forEach(field => {
+        field.disabled = !premiumEnabled || !toggle.checked;
+    });
+
+    if (resetBtn) {
+        resetBtn.disabled = !premiumEnabled;
+    }
+
+    if (!premiumEnabled) {
+        summary.textContent = currentAccountUser
+            ? "This account is on the free tier. Upgrade to premium to run harsher Monte Carlo assumptions and sequence-risk stress profiles."
+            : "Sign in with a premium account to define harsher Monte Carlo assumptions for inflation, healthcare, and sequence risk.";
+        return;
+    }
+
+    if (!stressSettings.enabled) {
+        summary.textContent =
+            "Premium custom stress testing is available. Turn it on to run Monte Carlo Plus with harsher inflation, healthcare, and early-recession assumptions.";
+        return;
+    }
+
+    summary.textContent =
+        `Custom premium stress profile active: goods/services inflation ${toPercentFieldValue(stressSettings.goodsServicesInflationTargetRate, "—")}%, healthcare inflation ${toPercentFieldValue(stressSettings.healthcareInflationTargetRate, "—")}%, portfolio floor ${toPercentFieldValue(stressSettings.portfolioDownsideFloorRate, "—")}%, and an early shock of ${toPercentFieldValue(stressSettings.earlyRetirementShockRate, "—")}% for ${stressSettings.earlyRetirementShockYears || 0} years.`;
+    summary.textContent =
+        `Custom premium stress profile active: goods/services inflation ${toPercentFieldValue(stressSettings.goodsServicesInflationTargetRate, "n/a")}%, healthcare inflation ${toPercentFieldValue(stressSettings.healthcareInflationTargetRate, "n/a")}%, portfolio floor ${toPercentFieldValue(stressSettings.portfolioDownsideFloorRate, "n/a")}%, and an early shock of ${toPercentFieldValue(stressSettings.earlyRetirementShockRate, "n/a")}% for ${stressSettings.earlyRetirementShockYears || 0} years.`;
 }
 
 function getScenarioComparisonState() {
@@ -145,6 +378,8 @@ function storeAccountPlanMeta(meta = null) {
 function buildWorkspaceStateForPersistence(simulationState = null) {
     return StateManager.normalizeWorkspaceState({
         ...StateManager.state,
+        premiumStressTesting:
+            readPremiumStressTestingFromInputs(),
         simulationState:
             simulationState ??
             StateManager.getSimulationState() ??
@@ -635,6 +870,8 @@ function applyWorkspaceStateToSimulator(workspaceState, accountPlanMeta = null) 
     populateStandardInputs(
         simulationStateToInputs(importedState.simulationState)
     );
+    populatePremiumStressTestingInputs(importedState);
+    syncPremiumStressTestingUi();
     setActiveSimulatorTab("profile", {
         scrollOnMobile: isPhoneChartLayout()
     });
@@ -651,7 +888,8 @@ function applyWorkspaceStateToSimulator(workspaceState, accountPlanMeta = null) 
 
 async function refreshAccountPlans({ keepStatus = false } = {}) {
     try {
-        currentAccountUser = await getCurrentUser();
+        currentAccountContext = await getAccountContext();
+        currentAccountUser = currentAccountContext?.user || null;
         currentAccountPlans = await listAccountPlans();
 
         const storedPlanMeta = getStoredAccountPlanMeta();
@@ -663,12 +901,14 @@ async function refreshAccountPlans({ keepStatus = false } = {}) {
             storeAccountPlanMeta(null);
         }
     } catch (error) {
+        currentAccountContext = null;
         currentAccountUser = null;
         currentAccountPlans = [];
     }
 
     renderAccountPlansList();
     await loadScenarioComparisonPlans();
+    syncPremiumStressTestingUi();
 
     if (!keepStatus) {
         renderDefaultAccountStatus();
@@ -1391,6 +1631,7 @@ async function init(){
     setupAdditionalPensionUi();
     setupSocialSecurityUi();
     setupInflationDefaultsUi();
+    setupPremiumStressTestingUi();
     setupPlanTransferUi();
     setupAccountPlansUi();
     setupReportButton();   // add this line
@@ -1402,6 +1643,9 @@ async function init(){
             simulationStateToInputs(workspaceState.simulationState)
         );
     }
+
+    populatePremiumStressTestingInputs(workspaceState);
+    syncPremiumStressTestingUi();
 
     runProjection(workspaceState?.simulationState || null);
     await refreshAccountPlans();
@@ -1533,8 +1777,11 @@ function runProjection(existingSimulationState = null){
         incomeSources,
         simulationState
     } = buildCurrentSimulationPayload();
+    const premiumStressTesting =
+        syncPremiumStressTestingStateFromInputs();
 
     StateManager.saveWorkspaceState({
+        premiumStressTesting,
         simulationState: {
             ...existingSimulationState,
             ...simulationState,
@@ -1570,6 +1817,7 @@ function runProjection(existingSimulationState = null){
     });
 
     StateManager.saveWorkspaceState({
+        premiumStressTesting,
         simulationState: {
             ...existingSimulationState,
             ...simulationState,
@@ -1644,6 +1892,34 @@ function setupInflationDefaultsUi() {
         runProjection();
         StateManager.saveAll();
     });
+}
+
+function setupPremiumStressTestingUi() {
+    const toggle = document.getElementById("premiumStressTestingEnabled");
+    const resetBtn = document.getElementById("resetPremiumStressDefaultsBtn");
+
+    if (!toggle) {
+        return;
+    }
+
+    toggle.addEventListener("change", () => {
+        syncPremiumStressTestingStateFromInputs();
+        syncPremiumStressTestingUi();
+    });
+
+    resetBtn?.addEventListener("click", () => {
+        populatePremiumStressTestingInputs({
+            premiumStressTesting: {
+                ...DEFAULT_PREMIUM_STRESS_TESTING,
+                ...SUGGESTED_PREMIUM_STRESS_DEFAULTS
+            }
+        });
+        syncPremiumStressTestingUi();
+        runProjection();
+        StateManager.saveAll();
+    });
+
+    syncPremiumStressTestingUi();
 }
 
 /* ------------------------------------------------

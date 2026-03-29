@@ -7,6 +7,7 @@ import {
 } from "../analysis/retirementAnalysis.js";
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
 import { StateManager } from "../core/stateManager.js";
+import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
 import { runProjection } from "../core/projectionEngine.js";
 import {
     buildSimulationState,
@@ -377,12 +378,66 @@ function applyMonteCarloEntitlementState(accountContext = null) {
     }
 }
 
+function syncPremiumStressTestingNote({
+    premiumStressTesting = null,
+    customStressConfig = null
+} = {}) {
+    const note = document.getElementById("monteCarloStressNote");
+
+    if (!note) {
+        return;
+    }
+
+    if (!monteCarloPlusEnabled) {
+        note.hidden = true;
+        note.textContent = "";
+        return;
+    }
+
+    const settings = premiumStressTesting || {};
+    const customStressEnabled =
+        Boolean(settings?.enabled) &&
+        Boolean(customStressConfig);
+
+    note.hidden = !customStressEnabled;
+
+    if (!customStressEnabled) {
+        note.textContent = "";
+        return;
+    }
+
+    const goodsServicesRate =
+        Number.isFinite(settings?.goodsServicesInflationTargetRate)
+            ? `${Math.round(settings.goodsServicesInflationTargetRate * 1000) / 10}%`
+            : "default";
+    const healthcareRate =
+        Number.isFinite(settings?.healthcareInflationTargetRate)
+            ? `${Math.round(settings.healthcareInflationTargetRate * 1000) / 10}%`
+            : "default";
+    const portfolioFloor =
+        Number.isFinite(settings?.portfolioDownsideFloorRate)
+            ? `${Math.round(settings.portfolioDownsideFloorRate * 1000) / 10}%`
+            : "default";
+    const shockRate =
+        Number.isFinite(settings?.earlyRetirementShockRate)
+            ? `${Math.round(settings.earlyRetirementShockRate * 1000) / 10}%`
+            : "default";
+    const shockYears =
+        Number.isFinite(settings?.earlyRetirementShockYears)
+            ? settings.earlyRetirementShockYears
+            : 0;
+
+    note.textContent =
+        `Custom premium stress profile active: goods/services inflation ${goodsServicesRate}, healthcare inflation ${healthcareRate}, portfolio floor ${portfolioFloor}, and an early shock of ${shockRate} for ${shockYears} years.`;
+}
+
 function renderMonteCarloSection({
     simulationState,
     retireAge,
     inputs,
     incomeSources,
-    projection
+    projection,
+    premiumStressTesting = null
 }) {
     monteCarloRenderToken += 1;
     const currentToken = monteCarloRenderToken;
@@ -393,11 +448,25 @@ function renderMonteCarloSection({
 
     setMonteCarloLoadingState();
 
+    const customStressConfig =
+        monteCarloPlusEnabled
+            ? buildPremiumStressTestMonteCarloConfig({
+                premiumStressTesting,
+                baseAssumptions: simulationState?.assumptions || {}
+            })
+            : null;
+
+    syncPremiumStressTestingNote({
+        premiumStressTesting,
+        customStressConfig
+    });
+
     monteCarloTimeoutId = window.setTimeout(() => {
         const monteCarlo = runMonteCarloSimulation({
             simulationState,
             iterations: monteCarloIterations,
-            seed: MONTE_CARLO_BASE_SEED
+            seed: MONTE_CARLO_BASE_SEED,
+            config: customStressConfig || {}
         });
 
         if (currentToken !== monteCarloRenderToken) {
@@ -787,7 +856,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             retireAge,
             inputs: currentInputs,
             incomeSources: currentIncomeSources,
-            projection: currentProjection
+            projection: currentProjection,
+            premiumStressTesting:
+                workspaceState?.premiumStressTesting || null
         });
     }
 

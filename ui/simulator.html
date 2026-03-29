@@ -322,6 +322,69 @@ Reset to Suggested Defaults
 </button>
 </div>
 
+<section id="premiumStressTestingCard" class="premium-stress-card">
+<div class="premium-stress-head">
+<div>
+<div class="premium-stress-kicker">Premium</div>
+<h3>Custom Stress Testing</h3>
+</div>
+<span id="premiumStressTestingBadge" class="premium-stress-badge">Premium Only</span>
+</div>
+
+<p id="premiumStressTestingSummary" class="premium-stress-summary">
+Sign in with a premium account to define harsher Monte Carlo assumptions for inflation, healthcare, and sequence risk.
+</p>
+
+<label class="premium-stress-toggle">
+<input id="premiumStressTestingEnabled" type="checkbox">
+Enable custom premium stress profile
+</label>
+
+<div class="form-grid premium-stress-grid">
+
+<label>
+Goods &amp; Services Inflation Stress %
+<input id="premiumStressGoodsServicesInflation" type="number" min="0" max="15" step="0.1" value="4.5">
+</label>
+
+<label>
+Housing Inflation Stress %
+<input id="premiumStressHousingInflation" type="number" min="0" max="15" step="0.1" value="4.0">
+</label>
+
+<label>
+Healthcare Inflation Stress %
+<input id="premiumStressHealthcareInflation" type="number" min="0" max="20" step="0.1" value="7.5">
+</label>
+
+<label>
+Portfolio Downside Floor %
+<input id="premiumStressPortfolioFloor" type="number" min="-60" max="0" step="1" value="-28">
+</label>
+
+<label>
+Early-Recession Shock Years
+<input id="premiumStressEarlyShockYears" type="number" min="0" max="10" step="1" value="3">
+</label>
+
+<label>
+Early-Recession Shock Return %
+<input id="premiumStressEarlyShockReturn" type="number" min="-60" max="0" step="1" value="-12">
+</label>
+
+</div>
+
+<div class="assumption-action-row premium-stress-actions">
+<button id="resetPremiumStressDefaultsBtn" type="button" class="secondary-btn">
+Reset Premium Stress Defaults
+</button>
+</div>
+
+<p class="premium-stress-footnote">
+These settings affect Monte Carlo Plus in the dashboard and save with the current workspace when enabled.
+</p>
+</section>
+
 </div>
 
 <div class="mobile-section-actions">

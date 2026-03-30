@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 28, 2026
+Last updated: March 30, 2026
 
 ## Current Status
 
@@ -59,9 +59,11 @@ Completed:
 - V1 retirement vulnerability engine exists in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
 - Retirement vulnerability analysis now includes richer stress categories, severity tiers, and mitigation guidance in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
 - Shared dashboard view-model helpers now own more of the dashboard-specific recommendation, report, and summary derivation in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), reducing inline business logic in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- Probability-informed readiness scoring now exists for Monte Carlo Plus, blending deterministic coverage/longevity math with a dedicated Monte Carlo durability component so premium dashboard scores react to success odds and failure timing instead of deterministic projections alone in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- Readiness labels now use plain-language bands instead of letter grades, with user-facing `Durable`, `Strong`, `Workable`, and `Fragile` states reflected in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 
 Remaining:
-- Revisit readiness scoring once Monte Carlo modeling exists so the dashboard can shift from an interim deterministic composite toward a probability-informed readiness view
+- No major standalone Phase 3 items remain beyond ongoing score tuning and trust-language refinement already tracked under Phase 11
 
 ### Phase 4 - Chart Engine
 Status: Implemented

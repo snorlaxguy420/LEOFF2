@@ -610,3 +610,36 @@ body {
         box-sizing: border-box;
     }
 }
+
+@media (max-width: 430px) {
+    .site-header {
+        padding: 12px 10px;
+    }
+
+    .nav {
+        grid-template-columns: 1fr;
+    }
+
+    .article-shell {
+        padding: 20px 12px 40px;
+    }
+
+    .article-hero h1 {
+        font-size: 30px;
+    }
+
+    .article-dek {
+        font-size: 16px;
+    }
+
+    .article-content,
+    .article-card {
+        padding: 16px;
+    }
+
+    .article-content p,
+    .article-content li {
+        font-size: 16px;
+        line-height: 1.7;
+    }
+}

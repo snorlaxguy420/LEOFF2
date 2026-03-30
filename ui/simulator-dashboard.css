@@ -1445,6 +1445,49 @@ width:100%;
 }
 }
 
+@media (max-width: 430px){
+
+.site-header{
+ padding:12px 10px;
+}
+
+.nav{
+ grid-template-columns:1fr;
+}
+
+.nav a,
+.nav-auth-status{
+ min-height:44px;
+}
+
+body.mobile-simulator .planner-sidebar{
+ grid-template-columns:1fr;
+}
+
+body.mobile-simulator .nav-item{
+ min-height:48px;
+ font-size:14px;
+}
+
+.planner-container{
+ padding:16px 10px;
+}
+
+body.mobile-simulator .planner-input{
+ padding:18px 12px;
+}
+
+.account-plans-card,
+.account-plans-subsection,
+.premium-stress-card{
+ padding:16px 14px;
+}
+
+.account-plan-actions button{
+ width:100%;
+}
+}
+
 .timeline-card{
 
 background:rgba(255,255,255,.22);

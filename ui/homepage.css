@@ -1266,3 +1266,31 @@ text-align:center;
 padding:40px 16px 24px;
 }
 }
+
+@media(max-width:430px){
+
+.site-header{
+padding:12px 10px;
+}
+
+.nav{
+grid-template-columns:1fr;
+}
+
+.hero{
+padding:68px 10px 46px;
+}
+
+.hero-text{
+padding:16px 14px;
+}
+
+.section{
+padding:26px 12px;
+}
+
+.trust-inner{
+justify-content:flex-start;
+gap:10px;
+}
+}

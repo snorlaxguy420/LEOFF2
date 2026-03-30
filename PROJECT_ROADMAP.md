@@ -103,11 +103,11 @@ Completed:
 - Debt modules now emit true `expense` payloads instead of negative `income`, aligning debt treatment with the rest of the projection engine in [modules/assets/debts.js](/D:/LEOFF%202/modules/assets/debts.js) and [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
 - Shared collapsible cards now support module-level validation messaging, and current asset/debt modules now block obviously incomplete saves more gracefully in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js)
 - Asset/debt saved-card summaries are now more consistent in tone and structure, with save-time and restore-time cards sharing the same summary builders across crypto, metals, real estate, debts, and retirement accounts
+- Unsaved draft asset/debt cards no longer persist into saved workspace state or simulation payloads, and restore/import now clears both saved and unsaved draft module cards before rebuilding the saved state in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js), [core/assetRegistry.js](/D:/LEOFF%202/core/assetRegistry.js), and the current asset/debt modules
 - Retirement-account projection now applies an approximate IRS-style required minimum distribution floor for eligible tax-deferred accounts at age 73+, and processes retirement-account sources in a more realistic default order in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
 - Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields on `401k` and `457b`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
 
 Remaining:
-- Continue refining any remaining edge-case behavior across all asset/debt cards
 - Deepen retirement-account withdrawal realism beyond the current baseline rules
 
 ### Phase 6 - Dashboard

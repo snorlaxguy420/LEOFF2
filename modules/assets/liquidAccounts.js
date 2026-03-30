@@ -237,6 +237,7 @@ liquidAccounts.forEach(account => {
 
             savedCards.forEach(savedAccount => {
                 const card = this.createCard();
+                card.dataset.module = this.id;
                 const form =
                     card.querySelector(`.${account.id}-form`);
 

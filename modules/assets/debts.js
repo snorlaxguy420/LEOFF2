@@ -215,6 +215,7 @@ restoreState(state){
     savedCards.forEach(debt => {
 
         const card = this.createCard();
+        card.dataset.module = this.id;
 
         const form =
             card.querySelector(".debt-form");

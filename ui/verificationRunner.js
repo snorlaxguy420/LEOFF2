@@ -2751,6 +2751,7 @@ async function testLiquidAssetModules() {
     checkingCard.querySelector("#checkingCashWithdrawAge").value = "55";
     checkingCard.querySelector("#checkingCashWithdrawType").value = "amount";
     checkingCard.querySelector("#checkingCashWithdrawValue").value = "12000";
+    checkingCard.querySelector(".save-liquid-account").click();
 
     savingsCard.querySelector("#savingsLabel").value = "HYSA";
     savingsCard.querySelector("#savingsBalance").value = "50000";
@@ -2758,6 +2759,7 @@ async function testLiquidAssetModules() {
     savingsCard.querySelector("#savingsWithdrawAge").value = "55";
     savingsCard.querySelector("#savingsWithdrawType").value = "amount";
     savingsCard.querySelector("#savingsWithdrawValue").value = "18000";
+    savingsCard.querySelector(".save-liquid-account").click();
 
     brokerageCard.querySelector("#brokerageLabel").value = "Joint Brokerage";
     brokerageCard.querySelector("#brokerageBalance").value = "180000";
@@ -2765,6 +2767,7 @@ async function testLiquidAssetModules() {
     brokerageCard.querySelector("#brokerageWithdrawAge").value = "55";
     brokerageCard.querySelector("#brokerageWithdrawType").value = "percent";
     brokerageCard.querySelector("#brokerageWithdrawValue").value = "4";
+    brokerageCard.querySelector(".save-liquid-account").click();
 
     const checkingPayload = checkingModule.getSimulationPayloads();
     const savingsPayload = savingsModule.getSimulationPayloads();
@@ -3279,6 +3282,45 @@ function testCollapsibleCardValidation() {
     logResult("Shared card validation passed");
 }
 
+function testUnsavedCardsDoNotPersistOrSimulate() {
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+
+    const cardUi = createCollapsibleCard({
+        moduleId: "verify-unsaved",
+        formClass: "verify-unsaved-form",
+        summaryClass: "verify-unsaved-summary",
+        saveSelector: ".save-unsaved",
+        removeSelector: ".remove-unsaved",
+        editButtonClass: "edit-unsaved",
+        formHTML: `
+            <label>Amount</label>
+            <input id="unsavedAmount" type="number" value="25000">
+            <button class="save-unsaved">Save</button>
+            <button class="remove-unsaved">Remove</button>
+        `,
+        buildSummary: () => "saved"
+    });
+
+    host.appendChild(cardUi.card);
+
+    assert(
+        !cardUi.card.dataset.module,
+        "Unsaved cards should not register as persisted module cards"
+    );
+
+    cardUi.form.querySelector(".save-unsaved").click();
+
+    assert(
+        cardUi.card.dataset.module === "verify-unsaved",
+        "Saved cards should register as persisted module cards"
+    );
+
+    host.remove();
+
+    logResult("Unsaved cards stay out of persisted module state");
+}
+
 async function runVerification() {
     try {
         await runBrowserSmokeTests();
@@ -3324,6 +3366,7 @@ async function runVerification() {
         testModuleRestorePlacement();
         testMixedModuleRestoreAndSimulation();
         testCollapsibleCardValidation();
+        testUnsavedCardsDoNotPersistOrSimulate();
         logResult("All verification checks passed");
     } catch (error) {
         logResult(`Verification failed: ${error.message}`);

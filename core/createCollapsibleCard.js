@@ -15,7 +15,7 @@ export function createCollapsibleCard({
 
     const card = document.createElement("div");
     card.className = "asset-card";
-    card.dataset.module = moduleId;
+    card.dataset.moduleCard = moduleId;
 
     const form = document.createElement("div");
     form.className = formClass;
@@ -53,6 +53,15 @@ export function createCollapsibleCard({
         validationMessage.style.display = message ? "block" : "none";
     }
 
+    function setSavedState(saved) {
+        if (saved) {
+            card.dataset.module = moduleId;
+            return;
+        }
+
+        card.removeAttribute("data-module");
+    }
+
     function collapse() {
         summaryText.innerHTML = buildSummary({ form, card, inputs });
         form.style.display = "none";
@@ -85,6 +94,7 @@ export function createCollapsibleCard({
             }
 
             showValidationMessage("");
+            setSavedState(true);
             setInputsDisabled(true);
             collapse();
         });
@@ -119,6 +129,7 @@ export function createCollapsibleCard({
         expand,
         setCollapsed(collapsed) {
             if (collapsed) {
+                setSavedState(true);
                 setInputsDisabled(true);
                 collapse();
                 return;

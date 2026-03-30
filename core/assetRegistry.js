@@ -95,7 +95,7 @@ restore(moduleState){
 
     // clear existing module UI before restoring
     document
-        .querySelectorAll("[data-module]")
+        .querySelectorAll("[data-module], [data-module-card]")
         .forEach(el => el.remove());
 
     Object.entries(moduleState).forEach(([id, state]) => {

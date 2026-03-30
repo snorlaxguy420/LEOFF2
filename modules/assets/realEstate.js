@@ -263,6 +263,7 @@ restoreState(state) {
     savedCards.forEach(property => {
 
         const card = this.createCard();
+        card.dataset.module = this.id;
         const form = card.querySelector(".property-form");
 
         restoreFieldState(form, property);

@@ -173,6 +173,7 @@ restoreState(state){
     savedCards.forEach(asset => {
 
         const card = this.createCard();
+        card.dataset.module = this.id;
 
         const form =
             card.querySelector(".crypto-form");

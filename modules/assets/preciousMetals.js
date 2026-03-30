@@ -199,6 +199,7 @@ restoreState(state){
     savedCards.forEach(metal => {
 
         const card = this.createCard();
+        card.dataset.module = this.id;
 
         const form =
             card.querySelector(".metal-form");

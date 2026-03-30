@@ -424,6 +424,7 @@ accounts.forEach(account => {
 
             const restoredCards = savedCards.map(savedCard => {
                 const card = this.createCard();
+                card.dataset.module = this.id;
                 const form = card.querySelector(`.${account.id}-form`);
 
                 this.stateFields.forEach(fieldId => {

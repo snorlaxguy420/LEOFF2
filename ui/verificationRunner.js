@@ -39,11 +39,15 @@ import {
     buildPlanningLeverContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
+    buildRiskListEntries,
     buildShortfallSummary,
     buildTaxSnapshotSummary,
     buildTopRiskEntries,
-    getDisplayedRecommendationAge
+    getDisplayedRecommendationAge,
+    getMaximumDashboardRetirementAge,
+    getMinimumDashboardRetirementAge
 } from "../analysis/dashboardViewModel.js";
+import { buildDashboardScenario } from "./dashboardScenario.js";
 import {
     deriveCurrentAgeFromBirthYear,
     parseRetirementAges,
@@ -2346,6 +2350,118 @@ function testDashboardAgeAdjustedIncomeSources() {
     logResult("Dashboard age-adjusted income sources passed");
 }
 
+function testDashboardRetirementAgeBounds() {
+    const boundedToCurrentAge =
+        getMinimumDashboardRetirementAge({
+            profile: {
+                currentAge: 57.2
+            }
+        });
+    const boundedToFloor =
+        getMinimumDashboardRetirementAge({
+            profile: {
+                currentAge: 44
+            }
+        });
+    const maximumWithHigherLifeExpectancy =
+        getMaximumDashboardRetirementAge({
+            profile: {
+                currentAge: 57
+            },
+            lifeExpectancy: 90
+        });
+    const maximumWithShorterLifeExpectancy =
+        getMaximumDashboardRetirementAge({
+            profile: {
+                currentAge: 66
+            },
+            lifeExpectancy: 69
+        });
+
+    assert(
+        boundedToCurrentAge === 58,
+        "Dashboard minimum retirement age should round current age up"
+    );
+    assert(
+        boundedToFloor === 50,
+        "Dashboard minimum retirement age should keep the 50-year floor"
+    );
+    assert(
+        maximumWithHigherLifeExpectancy === 70,
+        "Dashboard maximum retirement age should cap long-horizon scenarios at 70"
+    );
+    assert(
+        maximumWithShorterLifeExpectancy === 66,
+        "Dashboard maximum retirement age should never fall below the minimum age"
+    );
+
+    logResult("Dashboard retirement-age bounds passed");
+}
+
+function testDashboardScenarioBuilder() {
+    const baseInputs = buildDashboardVerificationInputs();
+    const baseSources = [
+        {
+            type: "portfolio",
+            name: "401k",
+            balance: 200000,
+            startAge: 55,
+            growthRate: 0.06,
+            withdrawalType: "amount",
+            withdrawal: 10000,
+            taxable: true,
+            accountType: "401k"
+        },
+        {
+            type: "portfolio",
+            name: "Bridge Brokerage",
+            balance: 90000,
+            startAge: 53,
+            growthRate: 0.05,
+            withdrawalType: "amount",
+            withdrawal: 12000,
+            taxable: true
+        }
+    ];
+    const scenario = buildDashboardScenario({
+        baseInputs,
+        baseSources,
+        baseAssumptions: baseInputs.assumptions,
+        retireAge: 60
+    });
+    const adjustedRetirementLinkedSource =
+        scenario.currentIncomeSources.find(source => source.name === "401k");
+    const preservedOffsetSource =
+        scenario.currentIncomeSources.find(source => source.name === "Bridge Brokerage");
+    const pensionSource =
+        scenario.currentIncomeSources.find(source => source.name === "LEOFF Pension");
+
+    assert(
+        scenario.currentInputs.retireAge === 60 &&
+        scenario.currentInputs.pension.serviceYears === 32,
+        "Dashboard scenario builder should age-adjust retirement inputs before projection"
+    );
+    assert(
+        scenario.currentSimulationState.lifeExpectancy === 100,
+        "Dashboard scenario builder should extend dashboard scenarios through age 100"
+    );
+    assert(
+        adjustedRetirementLinkedSource?.startAge === 60,
+        "Dashboard scenario builder should retime retirement-linked withdrawals to the selected age"
+    );
+    assert(
+        preservedOffsetSource?.startAge === 53,
+        "Dashboard scenario builder should preserve manually offset withdrawal timing"
+    );
+    assert(
+        pensionSource &&
+        scenario.currentProjection?.results?.length > 0,
+        "Dashboard scenario builder should regenerate pension income and a live projection"
+    );
+
+    logResult("Dashboard scenario builder passed");
+}
+
 function testDashboardReportSectionPopulation() {
     const inputs = buildDashboardVerificationInputs();
     const incomeSources = buildSimulationIncomeSources({
@@ -2382,6 +2498,8 @@ function testDashboardReportSectionPopulation() {
         buildTaxSnapshotSummary(retirementYear);
     const topRisks =
         buildTopRiskEntries(vulnerabilityAnalysis);
+    const riskListEntries =
+        buildRiskListEntries(vulnerabilityAnalysis);
     const shortfallSummary =
         buildShortfallSummary({
             projection,
@@ -2406,6 +2524,11 @@ function testDashboardReportSectionPopulation() {
         topRisks.length > 0 &&
         topRisks[0].label !== "Loading risks",
         "Dashboard top risk summary should resolve real risk-card data"
+    );
+    assert(
+        riskListEntries.length > 0 &&
+        typeof riskListEntries[0] === "string",
+        "Dashboard risk list helper should produce list-ready vulnerability entries"
     );
     assert(
         shortfallSummary.cumulativeShortfall !== "--" &&
@@ -3352,8 +3475,10 @@ async function runVerification() {
         testRecommendedRetirementAgeRequiresMonteCarloThreshold();
         testDashboardRecommendationConsistency();
         testDashboardAgeOrderIntegrity();
+        testDashboardRetirementAgeBounds();
         testDashboardAgeAdjustedPensionInputs();
         testDashboardAgeAdjustedIncomeSources();
+        testDashboardScenarioBuilder();
         testDashboardReportSectionPopulation();
         testAccountEntitlements();
         testMonteCarloEngine();

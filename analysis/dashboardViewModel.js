@@ -32,6 +32,29 @@ export function getDisplayedRecommendationAge(analysis = {}, retireAge = null) {
     );
 }
 
+export function getMinimumDashboardRetirementAge(inputs = {}) {
+    const currentAge =
+        Math.max(
+            0,
+            Math.ceil(inputs?.profile?.currentAge || 0)
+        );
+
+    return Math.max(50, currentAge);
+}
+
+export function getMaximumDashboardRetirementAge(inputs = {}) {
+    const minimumAge =
+        getMinimumDashboardRetirementAge(inputs);
+
+    return Math.max(
+        minimumAge,
+        Math.min(
+            Math.max(inputs?.lifeExpectancy || 70, 70) - 5,
+            70
+        )
+    );
+}
+
 export function getMarginExtremes(results = []) {
     if (!Array.isArray(results) || results.length === 0) {
         return null;
@@ -404,6 +427,18 @@ export function buildTopRiskEntries(vulnerabilityAnalysis = {}) {
         explanation: risk.explanation,
         mitigation: risk.mitigation
     }));
+}
+
+export function buildRiskListEntries(vulnerabilityAnalysis = {}) {
+    if (!vulnerabilityAnalysis?.primaryRisk) {
+        return [
+            "No major vulnerability signal was detected under the current V2 stress tests."
+        ];
+    }
+
+    return (vulnerabilityAnalysis.secondaryRisks || [])
+        .slice(0, 3)
+        .map(risk => `${risk.label} (${risk.severityTier})`);
 }
 
 export function buildShortfallSummary({

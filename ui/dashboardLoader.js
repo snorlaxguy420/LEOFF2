@@ -11,15 +11,10 @@ import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrat
 import { StateManager } from "../core/stateManager.js";
 import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
 import { runProjection } from "../core/projectionEngine.js";
-import {
-    buildSimulationState,
-    simulationStateToInputs
-} from "../core/simulationState.js";
-import { buildPensionIncomeSources } from "./simulatorShared.js";
+import { simulationStateToInputs } from "../core/simulationState.js";
 import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulnerability.js";
 import {
-    buildDashboardAgeAdjustedInputs,
-    buildDashboardAgeAdjustedIncomeSources,
+    buildRiskListEntries,
     buildMonteCarloContent,
     buildMonteCarloProjectionChartContent,
     buildExpenseBreakdownSummary,
@@ -32,10 +27,13 @@ import {
     buildTopRiskEntries,
     formatCurrency,
     formatMarginExtremeValue,
+    getMaximumDashboardRetirementAge,
     getDisplayedRecommendationAge,
+    getMinimumDashboardRetirementAge,
     getReadinessBandDescription,
     summarizeDashboardResults
 } from "../analysis/dashboardViewModel.js";
+import { buildDashboardScenario } from "./dashboardScenario.js";
 
 let comparisonChartMode = "bar";
 let monteCarloRenderToken = 0;
@@ -48,28 +46,6 @@ const MONTE_CARLO_BASE_SEED = 424242;
 let monteCarloIterations = FREE_MONTE_CARLO_ITERATIONS;
 let monteCarloPlusEnabled = false;
 let dashboardAccountContext = null;
-
-function getMinimumDashboardRetirementAge(inputs = {}) {
-    const currentAge =
-        Math.max(
-            0,
-            Math.ceil(inputs?.profile?.currentAge || 0)
-        );
-
-    return Math.max(50, currentAge);
-}
-
-function getMaximumDashboardRetirementAge(inputs = {}) {
-    const minimumAge = getMinimumDashboardRetirementAge(inputs);
-
-    return Math.max(
-        minimumAge,
-        Math.min(
-            Math.max(inputs?.lifeExpectancy || 70, 70) - 5,
-            70
-        )
-    );
-}
 
 function updateRetirementAgeLabel(retireAge) {
     const label = document.getElementById("retirementAgeSliderLabel");
@@ -530,6 +506,22 @@ function renderShortfallSummary(projection, analysis) {
     setElementText("reportWorstAnnualDeficit", shortfallSummary.worstAnnualDeficit);
 }
 
+function renderRiskList(vulnerabilityAnalysis) {
+    const riskList = document.getElementById("riskList");
+    if (!riskList) return;
+
+    const riskEntries =
+        buildRiskListEntries(vulnerabilityAnalysis);
+
+    riskList.innerHTML = "";
+
+    riskEntries.forEach(text => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        riskList.appendChild(li);
+    });
+}
+
 function setMonteCarloLoadingState() {
     setElementText("monteCarloHeadline", "Monte Carlo success rate loading...");
     setElementText(
@@ -839,70 +831,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             assumedInflationRate
     };
 
-    function buildProjectionForAge(retireAge) {
-        const currentInputs = buildDashboardAgeAdjustedInputs({
-            baseInputs,
-            retireAge
-        });
-        const currentNonPensionSources =
-            buildDashboardAgeAdjustedIncomeSources({
-                baseSources: baseSavedSources,
-                baseInputs,
-                retireAge
-            });
-        const currentIncomeSources = [
-            ...buildPensionIncomeSources({
-                inputs: currentInputs,
-                retireAge
-            }),
-            ...currentNonPensionSources
-        ];
-        const longevityAge = Math.max(
-            currentInputs.lifeExpectancy || 0,
-            100
-        );
-        const simulationState = buildSimulationState({
-            inputs: currentInputs,
-            incomeSources: currentIncomeSources,
-            assumptions: baseAssumptions,
-            overrides: {
-                retireAge,
-                lifeExpectancy: longevityAge
-            }
-        });
-
-        return {
-            currentInputs,
-            currentIncomeSources,
-            currentProjection: runProjection(simulationState),
-            currentSimulationState: simulationState
-        };
-    }
-
-    function renderRiskList(vulnerabilityAnalysis) {
-        const riskList = document.getElementById("riskList");
-        if (!riskList) return;
-
-        riskList.innerHTML = "";
-
-        function addRisk(text) {
-            const li = document.createElement("li");
-            li.textContent = text;
-            riskList.appendChild(li);
-        }
-
-        if (!vulnerabilityAnalysis?.primaryRisk) {
-            addRisk("No major vulnerability signal was detected under the current V2 stress tests.");
-            return;
-        }
-
-        vulnerabilityAnalysis.secondaryRisks.slice(0, 3).forEach(risk => {
-            addRisk(
-                `${risk.label} (${risk.severityTier})`
-            );
-        });
-    }
-
     function renderDashboardForAge(retireAge) {
         updateRetirementAgeLabel(retireAge);
 
@@ -911,7 +839,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             currentIncomeSources,
             currentProjection,
             currentSimulationState
-        } = buildProjectionForAge(retireAge);
+        } = buildDashboardScenario({
+            baseInputs,
+            baseSources: baseSavedSources,
+            baseAssumptions,
+            retireAge
+        });
         const results = currentProjection.results;
         const analysis = analyzeRetirementPlan({
             inputs: currentInputs,

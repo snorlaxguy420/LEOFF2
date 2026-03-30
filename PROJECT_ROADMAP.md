@@ -131,9 +131,10 @@ Completed:
 - Dashboard now includes a dedicated Monte Carlo Outlook section, separate from the deterministic chart toggle, with stress-tested success, essential-coverage, failure-age, depletion-age, and net-worth-range summaries in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js)
 - Dashboard retirement-age slider modeling now adjusts pension service credit, pension salary assumptions, and retirement-linked portfolio withdrawal timing so later retirement ages compare against the correct retirement start assumptions in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js)
 - Recommended retirement age now requires the earliest age that both avoids portfolio-withdrawal dependence and clears a `90%` Monte Carlo success threshold in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with supporting dashboard copy and regression coverage in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
+- Dashboard retirement-age bounds, age-adjusted projection rebuilding, and vulnerability list content now live in shared helper modules instead of inline page logic in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardScenario.js](/D:/LEOFF%202/ui/dashboardScenario.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 Remaining:
-- Continue removing remaining inline business logic from the dashboard loader
+- Continue trimming section-specific render orchestration from the dashboard loader as needed
 
 ### Phase 7 - LEOFF-Specific Tools
 Status: In progress

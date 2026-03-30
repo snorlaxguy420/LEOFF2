@@ -33,7 +33,7 @@ import {
     formatCurrency,
     formatMarginExtremeValue,
     getDisplayedRecommendationAge,
-    getReadinessGradeDescription,
+    getReadinessBandDescription,
     summarizeDashboardResults
 } from "../analysis/dashboardViewModel.js";
 
@@ -129,6 +129,37 @@ function setElementText(id, value) {
 
     if (el) {
         el.innerText = value;
+    }
+}
+
+function normalizeReadinessBand(analysis = {}) {
+    return analysis?.readinessBand ||
+        analysis?.readinessGrade ||
+        "Fragile";
+}
+
+function applyReadinessBandState(band) {
+    const badge = document.getElementById("readinessGrade");
+
+    if (!badge) {
+        return;
+    }
+
+    badge.innerText = band;
+    badge.classList.remove(
+        "readiness-band-fragile",
+        "readiness-band-workable",
+        "readiness-band-strong",
+        "readiness-band-durable"
+    );
+
+    const normalizedBand =
+        String(band || "")
+            .trim()
+            .toLowerCase();
+
+    if (normalizedBand) {
+        badge.classList.add(`readiness-band-${normalizedBand}`);
     }
 }
 
@@ -699,15 +730,14 @@ function renderMonteCarloSection({
                     projection,
                     monteCarloSummary: monteCarlo
                 });
+            const readinessBand =
+                normalizeReadinessBand(probabilityAdjustedAnalysis);
 
             document.getElementById("readinessScore").innerText =
                 `${probabilityAdjustedAnalysis.readinessScore} / 100`;
-            document.getElementById("readinessGrade").innerText =
-                probabilityAdjustedAnalysis.readinessGrade;
+            applyReadinessBandState(readinessBand);
             document.getElementById("readinessDescription").innerText =
-                getReadinessGradeDescription(
-                    probabilityAdjustedAnalysis.readinessGrade
-                );
+                getReadinessBandDescription(readinessBand);
             renderReadinessBreakdown({
                 breakdown: probabilityAdjustedAnalysis.readinessBreakdown,
                 maxScores: probabilityAdjustedAnalysis.readinessMaxScores
@@ -909,6 +939,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             marginExtremes
         } = dashboardSummary;
         const comparisonChartModeForScreen = comparisonChartMode;
+        const readinessBand = normalizeReadinessBand(analysis);
 
         if (comparisonChartModeForScreen === "bar") {
             clearTimelineLegend();
@@ -951,10 +982,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         document.getElementById("readinessScore").innerText =
             `${analysis.readinessScore} / 100`;
-        document.getElementById("readinessGrade").innerText =
-            analysis.readinessGrade;
+        applyReadinessBandState(readinessBand);
         document.getElementById("readinessDescription").innerText =
-            getReadinessGradeDescription(analysis.readinessGrade);
+            getReadinessBandDescription(readinessBand);
         setElementText("pensionCoverage", Math.round(coverage * 100) + "%");
         setElementText("safetyMargin", "$" + Math.round(avgMargin).toLocaleString());
         setElementText("firstDeficitAge", analysis.retirementFailureAge ?? "Never");

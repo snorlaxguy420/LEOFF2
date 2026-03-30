@@ -7,6 +7,13 @@ function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
 
+export function getReadinessBand(score = 0) {
+    if (score >= 90) return "Durable";
+    if (score >= 75) return "Strong";
+    if (score >= 60) return "Workable";
+    return "Fragile";
+}
+
 function buildDeterministicReadiness({
     coverageScore,
     essentialScore,
@@ -148,7 +155,8 @@ export function calculateReadinessScore(results, retireAge, options = {}) {
     if (!results || !results.length) {
         return {
             score: 0,
-            grade: "F",
+            band: "Fragile",
+            grade: "Fragile",
             breakdown: {
                 coverageScore: 0,
                 essentialScore: 0,
@@ -306,16 +314,12 @@ export function calculateReadinessScore(results, retireAge, options = {}) {
             finalAge
         });
     const score = readiness.score;
-
-    const grade =
-        score >= 90 ? "A" :
-        score >= 80 ? "B" :
-        score >= 70 ? "C" :
-        score >= 60 ? "D" : "F";
+    const band = getReadinessBand(score);
 
     return {
         score,
-        grade,
+        band,
+        grade: band,
         breakdown: readiness.breakdown,
         maxScores: readiness.maxScores,
         monteCarloDurabilityRatio:

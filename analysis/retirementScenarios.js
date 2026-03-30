@@ -208,6 +208,7 @@ export function compareRetirementAges({
             scenarios.push({
                 age,
                 readinessScore: readiness.score,
+                band: readiness.band,
                 grade: readiness.grade,
                 firstDeficitAge: firstDeficit?.age ?? null,
                 monteCarloSuccessRate,

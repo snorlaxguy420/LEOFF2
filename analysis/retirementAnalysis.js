@@ -35,6 +35,7 @@ export function calculateReadinessScore(results, retireAge, options = {}) {
 
     return {
         ...readiness,
+        RetirementReadinessBand: readiness.band,
         RetirementReadinessGrade: readiness.grade
     };
 }
@@ -71,12 +72,14 @@ export function analyzeRetirementPlan({
         retirementFailureAge,
         assetDepletionAge,
         readinessScore: readiness.score,
+        readinessBand: readiness.band,
         readinessGrade: readiness.grade,
         readinessBreakdown: readiness.breakdown,
         readinessMaxScores: readiness.maxScores,
         readinessProbabilityAdjusted: readiness.probabilityAdjusted,
         monteCarloDurabilityRatio:
             readiness.monteCarloDurabilityRatio,
+        RetirementReadinessBand: readiness.RetirementReadinessBand,
         RetirementReadinessGrade: readiness.RetirementReadinessGrade
     };
 }

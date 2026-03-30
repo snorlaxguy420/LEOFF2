@@ -1683,6 +1683,14 @@ function testProbabilityAdjustedReadinessScore() {
         durableReadiness.maxScores?.monteCarloScore === 20,
         "Probability-adjusted readiness should reserve a 20-point Monte Carlo durability contribution"
     );
+    assert(
+        deterministicReadiness.band === "Strong",
+        "Deterministic readiness should now use plain-language bands instead of letter grades"
+    );
+    assert(
+        fragileReadiness.band === "Fragile",
+        "Low readiness scenarios should map into the Fragile band"
+    );
 
     logResult("Probability-adjusted readiness score passed");
 }

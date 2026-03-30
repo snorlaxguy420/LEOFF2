@@ -206,7 +206,7 @@ function buildPremiumSections({
             metrics: [
                 {
                     label: "Readiness",
-                    value: `${readiness.score} / 100 (${readiness.grade})`
+                    value: `${readiness.score} / 100 (${readiness.band || readiness.grade})`
                 },
                 {
                     label: "Retirement Income",

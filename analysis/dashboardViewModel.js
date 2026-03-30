@@ -90,18 +90,19 @@ export function buildMarginRangeSentence(results = []) {
     return `${describeMarginExtreme("Lowest", extremes.lowest)}. ${describeMarginExtreme("Highest", extremes.highest)}.`;
 }
 
-export function getReadinessGradeDescription(grade) {
+export function getReadinessBandDescription(band) {
     const descriptions = {
-        A: "Your retirement is secure and sustainable.",
-        B: "You are in a strong position, with a few things still worth watching.",
-        C: "Good start, but there is room for improvement.",
-        D: "Your plan needs work, but there is still time to strengthen it.",
-        F: "Your current plan is fragile and needs meaningful changes."
+        Durable: "Your retirement plan looks durable under the current assumptions.",
+        Strong: "You are in a strong position, with a few things still worth watching.",
+        Workable: "Your plan can work, but it still carries meaningful pressure points.",
+        Fragile: "Your current plan looks fragile and needs meaningful changes."
     };
 
-    return descriptions[grade] ||
+    return descriptions[band] ||
         "Your retirement outlook is still taking shape.";
 }
+
+export const getReadinessGradeDescription = getReadinessBandDescription;
 
 export function summarizeDashboardResults({
     results = [],

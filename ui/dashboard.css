@@ -806,14 +806,15 @@ SCORE PANEL
 }
 
 
-/* LETTER GRADE */
+/* READINESS BAND */
 
 .score-grade {
 
-    font-size: 56px;
+    font-size: 40px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
     margin-top: 6px;
+    text-align: center;
 
 }
 
@@ -831,14 +832,13 @@ SCORE PANEL
 
 
 /* ======================================================
-GRADE COLORS
+READINESS BAND COLORS
 ====================================================== */
 
-.grade-A { color: #4caf50; }
-.grade-B { color: #8bc34a; }
-.grade-C { color: #ffc107; }
-.grade-D { color: #ff9800; }
-.grade-F { color: #f44336; }
+.readiness-band-durable { color: #9adf9c; }
+.readiness-band-strong { color: #d7ef9c; }
+.readiness-band-workable { color: #ffd36c; }
+.readiness-band-fragile { color: #ff9085; }
 
 
 /* ======================================================
@@ -1610,7 +1610,7 @@ EDIT INPUT BUTTON
     }
 
     .score-grade {
-        font-size: 46px;
+        font-size: 32px;
     }
 
     .score-description {

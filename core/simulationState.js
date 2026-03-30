@@ -35,6 +35,9 @@ export function buildSimulationState({
 
     return {
         profile: {
+            birthMonth: profile.birthMonth ?? null,
+            birthYear: profile.birthYear ?? null,
+            maritalStatus: profile.maritalStatus ?? "single",
             currentAge: profile.currentAge ?? null,
             retirementAge:
                 overrides.retireAge ??
@@ -126,7 +129,12 @@ export function simulationStateToInputs(simulationState = {}) {
     };
 
     return {
-        profile,
+        profile: {
+            ...profile,
+            birthMonth: profile.birthMonth ?? null,
+            birthYear: profile.birthYear ?? null,
+            maritalStatus: profile.maritalStatus ?? "single"
+        },
         retireAge:
             pension.retirementAge ??
             profile.retirementAge ??

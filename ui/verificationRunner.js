@@ -278,6 +278,9 @@ function buildSampleResults() {
 function testSimulationStateRoundTrip() {
     const inputs = {
         profile: {
+            birthMonth: 4,
+            birthYear: 1981,
+            maritalStatus: "married",
             currentAge: 45,
             spouse: {
                 name: "Taylor",
@@ -336,6 +339,9 @@ function testSimulationStateRoundTrip() {
     assert(roundTrip.pension.serviceYears === 25, "Service years round-trip failed");
     assert(roundTrip.pension.currentAnnualPay === 100000, "Current annual pay round-trip failed");
     assert(roundTrip.pension.benefitEnhancement === "lump_sum", "Benefit enhancement round-trip failed");
+    assert(roundTrip.profile.birthMonth === 4, "Birth month round-trip failed");
+    assert(roundTrip.profile.birthYear === 1981, "Birth year round-trip failed");
+    assert(roundTrip.profile.maritalStatus === "married", "Marital status round-trip failed");
     assert(roundTrip.profile.spouse.currentAge === 43, "Spouse current age round-trip failed");
     assert(roundTrip.profile.spouse.retirementAge === 58, "Spouse retirement age round-trip failed");
     assert(roundTrip.profile.spouse.annualIncome === 65000, "Spouse income round-trip failed");
@@ -2809,11 +2815,41 @@ function testMultipleRetirementAccountPayloads() {
 }
 
 function testInputPopulationAndPreviewMetrics() {
+    document.getElementById("profileModuleContainer").innerHTML = `
+        <input id="userName" type="text">
+        <select id="birthMonth">
+            <option value="">Month</option>
+            <option value="4">April</option>
+        </select>
+        <input id="birthYear" type="number">
+        <select id="maritalStatus">
+            <option value="single">Single</option>
+            <option value="married">Married</option>
+        </select>
+        <div id="spouseSection" style="display:none;">
+            <input id="spouseName" type="text">
+            <input id="spouseCurrentAge" type="number">
+            <input id="spouseRetirementAge" type="number">
+            <input id="spouseAnnualIncome" type="number">
+        </div>
+    `;
     document.getElementById("retireAge").value = "";
     document.getElementById("serviceYears").value = "";
     document.getElementById("expenseHousing").value = "";
 
     populateSimulatorInputs({
+        profile: {
+            name: "Geoff",
+            birthMonth: 4,
+            birthYear: 1981,
+            maritalStatus: "married",
+            spouse: {
+                name: "Taylor",
+                currentAge: 43,
+                retirementAge: 58,
+                annualIncome: 65000
+            }
+        },
         retireAge: 53,
         lifeExpectancy: 90,
         pension: {
@@ -2830,7 +2866,8 @@ function testInputPopulationAndPreviewMetrics() {
             claimAge: 67,
             cola: 0.02,
             mode: "benefit62",
-            benefit62: 1800
+            benefit62: 1800,
+            optimize: true
         },
         expenses: {
             housing: 1800,
@@ -2853,6 +2890,26 @@ function testInputPopulationAndPreviewMetrics() {
         }
     });
 
+    assert(
+        document.getElementById("userName").value === "Geoff",
+        "Shared input population failed for profile name"
+    );
+    assert(
+        document.getElementById("birthMonth").value === "4",
+        "Shared input population failed for birth month"
+    );
+    assert(
+        document.getElementById("birthYear").value === "1981",
+        "Shared input population failed for birth year"
+    );
+    assert(
+        document.getElementById("maritalStatus").value === "married",
+        "Shared input population failed for marital status"
+    );
+    assert(
+        document.getElementById("spouseCurrentAge").value === "43",
+        "Shared input population failed for spouse age"
+    );
     assert(
         document.getElementById("retireAge").value === "53",
         "Shared input population failed for retire age"
@@ -2888,6 +2945,10 @@ function testInputPopulationAndPreviewMetrics() {
     assert(
         document.getElementById("ssBenefit62").value === "1800",
         "Shared input population failed for Social Security benefit"
+    );
+    assert(
+        document.getElementById("ssOptimize").checked === true,
+        "Shared input population failed for Social Security optimize toggle"
     );
 
     const metrics = getProjectionPreviewMetrics({

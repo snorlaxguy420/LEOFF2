@@ -43,9 +43,10 @@ Completed:
 - Canonical simulator state now carries `Current Annual Pay` alongside final salary assumptions, allowing pay-based retirement-account accumulation to project consistently across save/restore, simulator, and dashboard flows
 - Retirement account withdrawals now distinguish `401k`, `Roth 401k`, `Traditional IRA`, `Roth IRA`, and `457b` tax treatment in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
 - Expense projection now supports split inflation across goods/services, housing, and healthcare in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [core/projectionEngine.js](/D:/LEOFF%202/core/projectionEngine.js)
+- Canonical state round-tripping now preserves birth month, birth year, and marital-status profile fields needed for trustworthy simulator fallback restores, and shared simulator prefill now restores dependent UI state such as spouse visibility, Social Security optimize, and survivor-option visibility in [core/simulationState.js](/D:/LEOFF%202/core/simulationState.js) and [ui/simulatorUiShared.js](/D:/LEOFF%202/ui/simulatorUiShared.js)
 
 Remaining:
-- Continue refining any remaining restore and input-prefill edge cases to canonical `simulationState`
+- No major standalone Phase 2 items remain beyond incidental restore/input-prefill bugs discovered during future QA
 
 ### Phase 3 - Retirement Analysis Engine
 Status: Implemented

@@ -1,6 +1,47 @@
+function populateProfileInputs(inputs = {}) {
+    const profile = inputs.profile || {};
+    const spouse = profile.spouse || {};
+    const profileValueMap = {
+        userName: profile.name,
+        birthMonth: profile.birthMonth,
+        birthYear: profile.birthYear,
+        maritalStatus: profile.maritalStatus,
+        spouseName: spouse.name,
+        spouseCurrentAge:
+            spouse.currentAge ?? spouse.age,
+        spouseRetirementAge: spouse.retirementAge,
+        spouseAnnualIncome: spouse.annualIncome
+    };
+
+    Object.entries(profileValueMap).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (!el || value === undefined || value === null) return;
+        el.value = value;
+    });
+
+    const maritalStatusEl = document.getElementById("maritalStatus");
+    const spouseSection = document.getElementById("spouseSection");
+
+    if (maritalStatusEl) {
+        maritalStatusEl.dispatchEvent(new Event("change"));
+    } else if (spouseSection) {
+        spouseSection.style.display =
+            profile.maritalStatus === "married" ? "block" : "none";
+    }
+
+    const birthYearEl = document.getElementById("birthYear");
+
+    if (birthYearEl && birthYearEl.value) {
+        birthYearEl.dispatchEvent(new Event("input"));
+        birthYearEl.dispatchEvent(new Event("change"));
+    }
+}
+
 export function populateSimulatorInputs(inputs) {
 
     if (!inputs) return;
+
+    populateProfileInputs(inputs);
 
     const pers2 =
         (inputs.additionalPensions || [])
@@ -64,6 +105,7 @@ export function populateSimulatorInputs(inputs) {
 
     const toggleMap = {
         hasPers2: Boolean(pers2?.enabled),
+        ssOptimize: inputs.socialSecurity?.optimize,
         realToggle: inputs.toggles?.showReal,
         marketFirstToggle: inputs.toggles?.marketFirst
     };
@@ -79,6 +121,12 @@ export function populateSimulatorInputs(inputs) {
     if (pers2Section && hasPers2) {
         pers2Section.style.display =
             hasPers2.checked ? "grid" : "none";
+    }
+
+    const survivorOption = document.getElementById("survivorOption");
+
+    if (survivorOption) {
+        survivorOption.dispatchEvent(new Event("change"));
     }
 
     const event = new CustomEvent("socialSecurity:mode-sync");

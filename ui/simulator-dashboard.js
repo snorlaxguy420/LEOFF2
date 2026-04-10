@@ -53,6 +53,99 @@ const SIMULATOR_TAB_SEQUENCE = [
     "debts",
     "expenses"
 ];
+const SIMULATOR_TAB_META = {
+    profile: {
+        label: "Profile",
+        shortLabel: "Profile",
+        title: "Start with your household baseline",
+        summary:
+            "Set the age and household context that every later retirement estimate depends on.",
+        checklist: [
+            "Add your birth month and birth year.",
+            "Set marital status if household planning matters.",
+            "Use this as the baseline before modeling pension or Social Security."
+        ],
+        navHint: "Household timing"
+    },
+    pension: {
+        label: "Pension",
+        shortLabel: "Pension",
+        title: "Model your core pension income",
+        summary:
+            "Your pension is usually the anchor of the plan, so start with the retirement age and compensation assumptions you trust most.",
+        checklist: [
+            "Set retirement age, service years, and final average salary.",
+            "Choose the survivor option you want to compare.",
+            "Add PERS 2 only if it is part of the real plan."
+        ],
+        navHint: "LEOFF and PERS"
+    },
+    ss: {
+        label: "Social Security",
+        shortLabel: "Social Security",
+        title: "Layer in Social Security timing",
+        summary:
+            "Use a simple claim-age estimate first, then refine the benefit inputs once you know them.",
+        checklist: [
+            "Confirm birth year and claim age.",
+            "Choose the benefit type you actually know.",
+            "Treat this as a timing decision, not a perfect-number exercise."
+        ],
+        navHint: "Claim timing"
+    },
+    retirement: {
+        label: "Retirement Accounts",
+        shortLabel: "Retirement",
+        title: "Add retirement accounts you may draw from",
+        summary:
+            "This is where the planner models balances that support the pension and fill later cash-flow gaps.",
+        checklist: [
+            "Add 457, IRA, Roth, or other retirement balances.",
+            "Use rough balances if exact numbers are not handy.",
+            "Think of this as support income, not the whole plan."
+        ],
+        navHint: "457, IRA, Roth"
+    },
+    assets: {
+        label: "Assets",
+        shortLabel: "Assets",
+        title: "Capture non-retirement assets and reserves",
+        summary:
+            "Savings, brokerage, and property can add flexibility even if they are not your main retirement funding source.",
+        checklist: [
+            "Add liquid reserves first if you have them.",
+            "Include taxable investments and major real assets when relevant.",
+            "Skip anything you are unlikely to use in retirement planning."
+        ],
+        navHint: "Savings and property"
+    },
+    debts: {
+        label: "Debts",
+        shortLabel: "Debts",
+        title: "Account for obligations that follow you into retirement",
+        summary:
+            "Debt changes the cash-flow picture, so include the major obligations that could still exist after you stop working.",
+        checklist: [
+            "Add mortgage or other large recurring debts.",
+            "Focus on obligations that materially affect retirement spending.",
+            "Use this to make the plan more realistic, not more complicated."
+        ],
+        navHint: "Mortgage and loans"
+    },
+    expenses: {
+        label: "Expenses",
+        shortLabel: "Expenses",
+        title: "Finish with the spending baseline",
+        summary:
+            "Monthly expenses unlock the live projection preview, so this is the step that turns the planner on.",
+        checklist: [
+            "Enter current monthly household spending.",
+            "Start with a realistic rough draft instead of perfect categories.",
+            "Use inflation assumptions only if you want to override the defaults."
+        ],
+        navHint: "Monthly spending"
+    }
+};
 const SUGGESTED_INFLATION_DEFAULTS = {
     goodsServicesInflation: "3.29",
     housingInflation: "2.8",
@@ -75,6 +168,166 @@ let currentAccountUser = null;
 let currentAccountContext = null;
 let currentAccountPlans = [];
 let currentScenarioComparisonPlans = [];
+
+function getSimulatorTabMeta(tabId) {
+    return SIMULATOR_TAB_META[tabId] || SIMULATOR_TAB_META.profile;
+}
+
+function renderChecklist(container, items, itemClassName) {
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = (Array.isArray(items) ? items : [])
+        .map(item => `
+            <div class="${itemClassName}">
+                <span aria-hidden="true">+</span>
+                <span>${escapeHtml(item)}</span>
+            </div>
+        `)
+        .join("");
+}
+
+function applySimulatorTabMeta() {
+    getSimulatorTabs().forEach((tab, index) => {
+        const meta = getSimulatorTabMeta(tab.dataset.tab);
+
+        tab.innerHTML = `
+            <span class="nav-item-step">Step ${index + 1}</span>
+            <span class="nav-item-copy">
+                <strong>${escapeHtml(meta.label)}</strong>
+                <small>${escapeHtml(meta.navHint)}</small>
+            </span>
+        `;
+        tab.setAttribute(
+            "aria-label",
+            `Step ${index + 1}: ${meta.label}. ${meta.navHint}.`
+        );
+    });
+}
+
+function renderPlannerStepGuide(activeTabId) {
+    const currentIndex =
+        Math.max(0, SIMULATOR_TAB_SEQUENCE.indexOf(activeTabId));
+    const meta = getSimulatorTabMeta(activeTabId);
+    const kicker = document.getElementById("plannerStepKicker");
+    const title = document.getElementById("plannerStepTitle");
+    const count = document.getElementById("plannerStepCountBadge");
+    const summary = document.getElementById("plannerStepSummary");
+    const checklist = document.getElementById("plannerStepChecklist");
+
+    if (kicker) {
+        kicker.textContent = `Step ${currentIndex + 1}`;
+    }
+
+    if (title) {
+        title.textContent = meta.title;
+    }
+
+    if (count) {
+        count.textContent = `${currentIndex + 1} of ${SIMULATOR_TAB_SEQUENCE.length}`;
+    }
+
+    if (summary) {
+        summary.textContent = meta.summary;
+    }
+
+    renderChecklist(checklist, meta.checklist, "planner-step-check");
+}
+
+function getPlannerNextStepState(inputs) {
+    const profile = inputs?.profile || {};
+    const pension = inputs?.pension || {};
+    const socialSecurity = inputs?.socialSecurity || {};
+
+    if (!profile?.birthYear) {
+        return {
+            title: "Finish the household profile first",
+            summary:
+                "Your birth year anchors retirement timing, Social Security timing, and the overall planning horizon.",
+            checklist: [
+                "Add birth month and birth year.",
+                "Set marital status if spouse planning matters.",
+                "Then move into the pension section."
+            ]
+        };
+    }
+
+    if ((pension?.serviceYears || 0) <= 0 || (pension?.finalAverageSalary || 0) <= 0) {
+        return {
+            title: "Add the pension assumptions that anchor the plan",
+            summary:
+                "The planner gets much more useful once service years and final average salary reflect a realistic retirement path.",
+            checklist: [
+                "Set retirement age, service years, and final average salary.",
+                "Choose a survivor option if you are comparing one.",
+                "Then keep building with accounts and expenses."
+            ]
+        };
+    }
+
+    if (!hasRequiredCurrentExpenses(inputs)) {
+        return {
+            title: "Add current monthly expenses to unlock the live projection",
+            summary:
+                "The preview cards and chart stay conservative until the planner knows what your household spends each month.",
+            checklist: [
+                "Enter housing, groceries, bills, healthcare, and other monthly costs.",
+                "Use rounded numbers if you are still estimating.",
+                "Once expenses are in, the projection preview updates automatically."
+            ]
+        };
+    }
+
+    if (!socialSecurity?.birthYear || !(socialSecurity?.claimAge > 0)) {
+        return {
+            title: "Refine Social Security timing when you are ready",
+            summary:
+                "Your plan is live now, and Social Security is one of the best next refinements for improving the retirement picture.",
+            checklist: [
+                "Add a claim age and whichever benefit number you know.",
+                "Compare timing options if you expect flexibility.",
+                "Then generate the retirement report or save the scenario."
+            ]
+        };
+    }
+
+    return {
+        title: "Your live plan is running",
+        summary:
+            "Keep refining accounts, assets, debts, and stress assumptions, then save the scenario or open the full report when the picture feels right.",
+        checklist: [
+            "Use My Scenarios to save important what-ifs.",
+            "Open the retirement report for the full dashboard.",
+            "Use focused tools when you want to compare a narrower decision."
+        ]
+    };
+}
+
+function renderPlannerNextStepCard(
+    inputs = collectInputs(),
+    activeTabId = getActiveSimulatorTabId()
+) {
+    const title = document.getElementById("plannerNextStepTitle");
+    const summary = document.getElementById("plannerNextStepSummary");
+    const checklist = document.getElementById("plannerNextStepChecklist");
+    const nextStepState = getPlannerNextStepState(inputs);
+    const activeMeta = getSimulatorTabMeta(activeTabId);
+
+    if (title) {
+        title.textContent = nextStepState.title;
+    }
+
+    if (summary) {
+        summary.textContent = `${nextStepState.summary} You are currently in ${activeMeta.label}.`;
+    }
+
+    renderChecklist(
+        checklist,
+        nextStepState.checklist,
+        "planner-next-step-check"
+    );
+}
 
 function buildDefaultAccountScenarioName() {
     const now = new Date();
@@ -1208,8 +1461,6 @@ function scrollActiveModuleIntoView() {
 function updateMobileSectionUi(activeTabId) {
     const currentIndex =
         Math.max(0, SIMULATOR_TAB_SEQUENCE.indexOf(activeTabId));
-    const currentTab = getSimulatorTabs()
-        .find(tab => tab.dataset.tab === activeTabId);
     const prevBtn = document.getElementById("mobilePrevSectionBtn");
     const nextBtn = document.getElementById("mobileNextSectionBtn");
     const label = document.getElementById("mobileSectionLabel");
@@ -1217,10 +1468,16 @@ function updateMobileSectionUi(activeTabId) {
     const previousTabId = SIMULATOR_TAB_SEQUENCE[currentIndex - 1] || null;
     const nextTabId =
         SIMULATOR_TAB_SEQUENCE[currentIndex + 1] || null;
+    const currentMeta = getSimulatorTabMeta(activeTabId);
+    const previousMeta = previousTabId
+        ? getSimulatorTabMeta(previousTabId)
+        : null;
+    const nextMeta = nextTabId
+        ? getSimulatorTabMeta(nextTabId)
+        : null;
 
     if (label) {
-        label.textContent =
-            currentTab?.textContent?.trim() || "Profile";
+        label.textContent = currentMeta.label || "Profile";
     }
 
     if (count) {
@@ -1231,18 +1488,14 @@ function updateMobileSectionUi(activeTabId) {
     if (prevBtn) {
         prevBtn.disabled = !previousTabId;
         prevBtn.textContent = previousTabId
-            ? `Previous: ${getSimulatorTabs()
-                .find(tab => tab.dataset.tab === previousTabId)
-                ?.textContent?.trim() || "Previous"}`
+            ? `Previous: ${previousMeta?.shortLabel || "Previous"}`
             : "Start of Calculator";
     }
 
     if (nextBtn) {
         nextBtn.disabled = !nextTabId;
         nextBtn.textContent = nextTabId
-            ? `Next: ${getSimulatorTabs()
-                .find(tab => tab.dataset.tab === nextTabId)
-                ?.textContent?.trim() || "Next"}`
+            ? `Next: ${nextMeta?.shortLabel || "Next"}`
             : "Final Step Reached";
     }
 }
@@ -1264,6 +1517,8 @@ function setActiveSimulatorTab(targetTabId, { scrollOnMobile = false } = {}) {
     });
 
     updateMobileSectionUi(targetTabId);
+    renderPlannerStepGuide(targetTabId);
+    renderPlannerNextStepCard(collectInputs(), targetTabId);
 
     if (scrollOnMobile) {
         scrollActiveModuleIntoView();
@@ -1539,6 +1794,7 @@ async function init(){
         buttonClassName: "primary-btn"
     });
     loadProfileModule(assetRegistry);
+    applySimulatorTabMeta();
     setupChartToggle();
     setupAutoProjection();
     setupSidebarTabs(); 
@@ -1595,8 +1851,9 @@ function setupAutoProjection(){
 function setupChartToggle(){
 
     const toggleBtn = document.getElementById("chartToggleBtn");
+    const timelineSection = document.querySelector(".timeline-section");
 
-    if(!toggleBtn) return;
+    if(!toggleBtn || timelineSection?.hidden) return;
 
     syncChartModeUi();
 
@@ -1714,6 +1971,7 @@ function runProjection(existingSimulationState = null){
         clearTimeline();
         setReportButtonDisabled(true);
         sessionStorage.removeItem("retirementProjection");
+        renderPlannerNextStepCard(inputs, getActiveSimulatorTabId());
         renderScenarioComparisonList();
         return;
     }
@@ -1740,6 +1998,7 @@ function runProjection(existingSimulationState = null){
     });
 
     renderPreview(projection);
+    renderPlannerNextStepCard(inputs, getActiveSimulatorTabId());
     renderScenarioComparisonList();
 
 }
@@ -1748,16 +2007,26 @@ function setupAdditionalPensionUi() {
 
     const hasPers2 = document.getElementById("hasPers2");
     const pers2Section = document.getElementById("pers2Section");
+    const hasTrs2 = document.getElementById("hasTrs2");
+    const trs2Section = document.getElementById("trs2Section");
 
-    if (!hasPers2 || !pers2Section) return;
+    const toggleAdditionalPensionSection = (toggle, section) => {
+        if (!toggle || !section) {
+            return;
+        }
 
-    const togglePers2Section = () => {
-        pers2Section.style.display =
-            hasPers2.checked ? "grid" : "none";
+        section.style.display =
+            toggle.checked ? "grid" : "none";
     };
 
-    hasPers2.addEventListener("change", togglePers2Section);
-    togglePers2Section();
+    const syncAdditionalPensionSections = () => {
+        toggleAdditionalPensionSection(hasPers2, pers2Section);
+        toggleAdditionalPensionSection(hasTrs2, trs2Section);
+    };
+
+    hasPers2?.addEventListener("change", syncAdditionalPensionSections);
+    hasTrs2?.addEventListener("change", syncAdditionalPensionSections);
+    syncAdditionalPensionSections();
 }
 
 function setupSocialSecurityUi() {
@@ -1841,27 +2110,7 @@ PREVIEW RENDERER
 ------------------------------------------------ */
 
 function renderPreview(projection){
-    const metrics = applyProjectionPreview({
-        projection,
-        setText,
-        onCoverageColor: coveragePercent => {
-            const coverageEl = document.getElementById("incomeCoverage");
-
-            if (!coverageEl) return;
-
-            coverageEl.style.color =
-                coveragePercent < 100 ? "#DB2B39" :
-                coveragePercent < 120 ? "#BC6C25" :
-                "#1F4D3A";
-        }
-    });
-
-    if (!metrics) return;
-
     lastResults = projection.results;
-
-    drawTimeline(projection.results);
-
 }
 
 /* ------------------------------------------------

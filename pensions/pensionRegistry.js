@@ -39,6 +39,7 @@
  */
 import { calculateLEOFF2 } from "./LEOFF2/leoff2Engine.js";
 import { calculatePERS2 } from "./pers2/pers2Engine.js";
+import { calculateTRS2 } from "./trs2/trs2Engine.js";
 
 /*
  * Generic Pension Engine
@@ -86,6 +87,12 @@ const pensionSystems = Object.freeze({
      * Washington State Public Employees' Retirement System Plan 2.
      */
     PERS2: calculatePERS2,
+
+    /**
+     * TRS2
+     * Washington State Teachers' Retirement System Plan 2.
+     */
+    TRS2: calculateTRS2,
 
     /**
      * GENERIC

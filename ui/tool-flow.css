@@ -1,0 +1,76 @@
+.tool-flow-strip{
+display:grid;
+grid-template-columns:repeat(3, minmax(0, 1fr));
+gap:16px;
+margin:0 0 24px;
+}
+
+.tool-flow-card{
+padding:18px;
+border-radius:16px;
+background:rgba(255,255,255,.26);
+backdrop-filter:blur(8px);
+-webkit-backdrop-filter:blur(8px);
+border:1px solid rgba(31,77,58,.12);
+box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+}
+
+.tool-flow-label{
+display:block;
+font-size:11px;
+font-weight:800;
+letter-spacing:.12em;
+text-transform:uppercase;
+color:rgba(42,42,42,.58);
+}
+
+.tool-flow-card h2,
+.tool-flow-card h3{
+margin:10px 0 8px;
+font-size:22px;
+line-height:1.18;
+color:var(--pnw-evergreen);
+}
+
+.tool-flow-card p{
+margin:0;
+line-height:1.6;
+color:rgba(42,42,42,.78);
+}
+
+.tool-flow-links{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:14px;
+}
+
+.tool-flow-links a{
+display:inline-flex;
+align-items:center;
+padding:9px 12px;
+border-radius:999px;
+background:rgba(31,77,58,.08);
+border:1px solid rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:13px;
+font-weight:700;
+text-decoration:none;
+}
+
+@media (max-width: 980px){
+.tool-flow-strip{
+grid-template-columns:1fr;
+}
+}
+
+@media (max-width: 640px){
+.tool-flow-card{
+padding:16px;
+}
+
+.tool-flow-card h2,
+.tool-flow-card h3{
+font-size:20px;
+}
+}

@@ -170,6 +170,35 @@ PERS 2 Hire Date
 
 </div>
 
+<label class="secondary-pension-toggle">
+<input id="hasTrs2" type="checkbox">
+Also add TRS Plan 2
+</label>
+
+<div id="trs2Section" class="form-grid" style="display:none;margin-top:18px;">
+
+<label>
+TRS 2 Service Years
+<input id="trs2ServiceYears" type="number" value="0">
+</label>
+
+<label>
+TRS 2 Average Final Compensation
+<input id="trs2Afc" type="number" value="0">
+</label>
+
+<label>
+Start Drawing TRS Age
+<input id="trs2StartAge" type="number" value="65">
+</label>
+
+<label>
+TRS 2 Hire Date
+<input id="trs2HireDate" type="date">
+</label>
+
+</div>
+
 </div>
 
 </div>
@@ -404,26 +433,33 @@ RIGHT PREVIEW PANEL
 
 <aside class="planner-preview">
 
-<div class="preview-card">
-
-<h3>Retirement Sustainability</h3>
+<div class="preview-card" hidden>
 <div id="retirementStatus">—</div>
 
 </div>
 
-<div class="preview-card">
+<div class="preview-card" hidden>
 
 <h3>First Deficit Year</h3>
 <div id="firstDeficit">—</div>
 
 </div>
 
-<div class="preview-card">
+<div class="preview-card" hidden>
 
 <h3>Income Coverage</h3>
 <div id="incomeCoverage" class="preview-metric">—</div>
 
 
+</div>
+
+<div class="planner-next-step-card">
+<div class="planner-next-step-kicker">What To Do Next</div>
+<h3 id="plannerNextStepTitle">Start with your profile basics</h3>
+<p id="plannerNextStepSummary">
+Enter your timing and household basics first so the rest of the planner can build from the right retirement timeline.
+</p>
+<div id="plannerNextStepChecklist" class="planner-next-step-checklist"></div>
 </div>
 
 <div class="account-plans-card">
@@ -514,11 +550,11 @@ Synced scenarios travel with your LEOFF Helper login. Local import/export stays 
 
 </aside>
 
-<div id="tooltip" class="chart-tooltip"></div>
+<div id="tooltip" class="chart-tooltip" hidden></div>
 
 </div> <!-- planner-grid -->
 
-<section class="timeline-section">
+<section class="timeline-section" hidden>
 
 <div class="timeline-card">
 

@@ -40,10 +40,15 @@ const schema = {
     survivorOption: "text",
     survivorAge: "int",
     hasPers2: "checkbox",
+    hasTrs2: "checkbox",
     pers2ServiceYears: "number",
     pers2Afc: "number",
     pers2StartAge: "number",
     pers2HireDate: "text",
+    trs2ServiceYears: "number",
+    trs2Afc: "number",
+    trs2StartAge: "number",
+    trs2HireDate: "text",
 
     /* =========================
        SOCIAL SECURITY INPUTS
@@ -124,6 +129,30 @@ export function collectInputs() {
    const profileModule = assetRegistry.get("profile");
    const profile = profileModule ? profileModule.getProfile() : null;
 
+    const additionalPensions = [];
+
+    if (raw.hasPers2) {
+        additionalPensions.push({
+            system: "PERS2",
+            enabled: true,
+            serviceYears: raw.pers2ServiceYears,
+            averageFinalCompensation: raw.pers2Afc,
+            retirementAge: raw.pers2StartAge,
+            hireDate: raw.pers2HireDate || null
+        });
+    }
+
+    if (raw.hasTrs2) {
+        additionalPensions.push({
+            system: "TRS2",
+            enabled: true,
+            serviceYears: raw.trs2ServiceYears,
+            averageFinalCompensation: raw.trs2Afc,
+            retirementAge: raw.trs2StartAge,
+            hireDate: raw.trs2HireDate || null
+        });
+    }
+
     return {
 
         profile,
@@ -141,16 +170,7 @@ export function collectInputs() {
             survivorAge: raw.survivorAge
         },
 
-        additionalPensions: raw.hasPers2 ? [
-            {
-                system: "PERS2",
-                enabled: true,
-                serviceYears: raw.pers2ServiceYears,
-                averageFinalCompensation: raw.pers2Afc,
-                retirementAge: raw.pers2StartAge,
-                hireDate: raw.pers2HireDate || null
-            }
-        ] : [],
+        additionalPensions,
 
         /* =========================
            SOCIAL SECURITY OBJECT

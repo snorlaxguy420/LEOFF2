@@ -135,6 +135,32 @@ export function buildPensionIncomeSources({
                 taxCategory: "ordinary_income"
             });
         }
+
+        if (
+            additionalPension.system === "TRS2" &&
+            additionalPension.serviceYears > 0 &&
+            additionalPension.averageFinalCompensation > 0 &&
+            additionalPension.retirementAge > 0
+        ) {
+            const pensionCalculator = getPensionCalculator("TRS2");
+            const pensionResult = pensionCalculator({
+                serviceYears: additionalPension.serviceYears,
+                retirementAge: additionalPension.retirementAge,
+                averageFinalCompensation:
+                    additionalPension.averageFinalCompensation,
+                hireDate: additionalPension.hireDate
+            });
+
+            incomeSources.push({
+                type: "fixed",
+                name: "TRS Plan 2 Pension",
+                annualAmount: pensionResult.annualBenefit,
+                startAge: pensionResult.startAge,
+                growthRate: 0,
+                taxable: true,
+                taxCategory: "ordinary_income"
+            });
+        }
     });
 
     return incomeSources;

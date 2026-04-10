@@ -46,6 +46,9 @@ export function populateSimulatorInputs(inputs) {
     const pers2 =
         (inputs.additionalPensions || [])
             .find(pension => pension.system === "PERS2") || null;
+    const trs2 =
+        (inputs.additionalPensions || [])
+            .find(pension => pension.system === "TRS2") || null;
     const socialSecurityMode =
         inputs.socialSecurity?.mode === "benefitFRA"
             ? "fraBenefit"
@@ -66,6 +69,10 @@ export function populateSimulatorInputs(inputs) {
         pers2Afc: pers2?.averageFinalCompensation,
         pers2StartAge: pers2?.retirementAge,
         pers2HireDate: pers2?.hireDate,
+        trs2ServiceYears: trs2?.serviceYears,
+        trs2Afc: trs2?.averageFinalCompensation,
+        trs2StartAge: trs2?.retirementAge,
+        trs2HireDate: trs2?.hireDate,
         ssBirthYear: inputs.socialSecurity?.birthYear,
         ssClaimAge: inputs.socialSecurity?.claimAge,
         ssCola: (inputs.socialSecurity?.cola || 0) * 100,
@@ -105,6 +112,7 @@ export function populateSimulatorInputs(inputs) {
 
     const toggleMap = {
         hasPers2: Boolean(pers2?.enabled),
+        hasTrs2: Boolean(trs2?.enabled),
         ssOptimize: inputs.socialSecurity?.optimize,
         realToggle: inputs.toggles?.showReal,
         marketFirstToggle: inputs.toggles?.marketFirst
@@ -117,10 +125,17 @@ export function populateSimulatorInputs(inputs) {
 
     const pers2Section = document.getElementById("pers2Section");
     const hasPers2 = document.getElementById("hasPers2");
+    const trs2Section = document.getElementById("trs2Section");
+    const hasTrs2 = document.getElementById("hasTrs2");
 
     if (pers2Section && hasPers2) {
         pers2Section.style.display =
             hasPers2.checked ? "grid" : "none";
+    }
+
+    if (trs2Section && hasTrs2) {
+        trs2Section.style.display =
+            hasTrs2.checked ? "grid" : "none";
     }
 
     const survivorOption = document.getElementById("survivorOption");

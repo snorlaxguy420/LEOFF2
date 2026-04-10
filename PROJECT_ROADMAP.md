@@ -5,7 +5,7 @@ Last updated: March 30, 2026
 ## Current Status
 
 ### Phase 1 - Pension Calculation Engine
-Status: Implemented for LEOFF2 and PERS2
+Status: Implemented for LEOFF2, PERS2, and TRS2
 
 Completed:
 - Dedicated LEOFF2 pension engine exists in [pensions/LEOFF2/leoff2Engine.js](/D:/LEOFF%202/pensions/LEOFF2/leoff2Engine.js)
@@ -21,10 +21,15 @@ Completed:
 - PERS2 engine now exposes formal pension math functions:
   `calculateBasePension()`, `calculateEarlyRetirementReduction()`,
   and `calculateMonthlyPension()`
+- Dedicated TRS2 pension engine now exists in [pensions/trs2/trs2Engine.js](/D:/LEOFF%202/pensions/trs2/trs2Engine.js)
+- TRS2 engine now exposes formal pension math functions:
+  `calculateBasePension()`, `calculateEarlyRetirementReduction()`,
+  and `calculateMonthlyPension()`
+- Simulator support now includes optional TRS Plan 2 inputs as an additional pension alongside LEOFF2 and optional PERS2 in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/inputCollector.js](/D:/LEOFF%202/ui/inputCollector.js), and [ui/simulatorShared.js](/D:/LEOFF%202/ui/simulatorShared.js)
 
 Remaining:
 - Add additional pension-system engines later through the registry pattern
-- Continue expanding multi-pension UI support beyond the current LEOFF2 + optional PERS2 flow
+- Continue expanding multi-pension UI support beyond the current LEOFF2 + optional PERS2 + optional TRS2 flow
 
 ### Phase 2 - Projection Engine
 Status: Implemented and refactored
@@ -236,6 +241,7 @@ Completed:
 - The survivor-options article now links directly into the Survivor Benefit Estimator where relevant, extending internal linking into the new Phase 7 tool
 - Homepage hero CTA stack now links directly into the Survivor Benefit Comparison tool, extending internal linking and tool discovery from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 - The article library now includes a dedicated Monte Carlo guide in [ui/articles/article-monte-carlo-retirement-modeling.html](/D:/LEOFF%202/ui/articles/article-monte-carlo-retirement-modeling.html), and the dashboard Monte Carlo panel plus related retirement guides now link into it from [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), [ui/articles/article-recession-before-retirement.html](/D:/LEOFF%202/ui/articles/article-recession-before-retirement.html), and [ui/articles/article-leoff-retirement.html](/D:/LEOFF%202/ui/articles/article-leoff-retirement.html)
+- The tools directory now has fuller non-article SEO treatment in [ui/tools.html](/D:/LEOFF%202/ui/tools.html) and [ui/tools.css](/D:/LEOFF%202/ui/tools.css), including share metadata, collection/breadcrumb/item-list/FAQ schema, stronger internal linking to guides and tools, and support content that makes the page a more meaningful search landing page
 
 Planned:
 - Technical SEO improvements for non-article pages

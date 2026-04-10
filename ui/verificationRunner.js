@@ -877,6 +877,24 @@ function testSharedSimulatorHelpers() {
             survivorOption: "50%",
             survivorAge: 50
         },
+        additionalPensions: [
+            {
+                system: "PERS2",
+                enabled: true,
+                serviceYears: 12,
+                averageFinalCompensation: 4200,
+                retirementAge: 65,
+                hireDate: "2010-09-01"
+            },
+            {
+                system: "TRS2",
+                enabled: true,
+                serviceYears: 18,
+                averageFinalCompensation: 5100,
+                retirementAge: 65,
+                hireDate: "2009-09-01"
+            }
+        ],
         socialSecurity: {
             claimAge: 67,
             cola: 0.02,
@@ -910,7 +928,7 @@ function testSharedSimulatorHelpers() {
         normalizeLeoffSurvivorOption("50%") === "JOINT_50",
         "Survivor option normalization failed"
     );
-    assert(incomeSources.length === 4, "Income source assembly failed");
+    assert(incomeSources.length === 6, "Income source assembly failed");
     assert(
         incomeSources.some(source => source.name === "LEOFF Pension"),
         "LEOFF pension source missing"
@@ -918,6 +936,14 @@ function testSharedSimulatorHelpers() {
     assert(
         incomeSources.some(source => source.name === "LEOFF Lump Sum"),
         "LEOFF lump sum source missing"
+    );
+    assert(
+        incomeSources.some(source => source.name === "PERS Plan 2 Pension"),
+        "PERS2 pension source missing"
+    );
+    assert(
+        incomeSources.some(source => source.name === "TRS Plan 2 Pension"),
+        "TRS2 pension source missing"
     );
 
     logResult("Shared simulator income helper passed");

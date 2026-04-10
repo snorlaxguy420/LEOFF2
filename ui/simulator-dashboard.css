@@ -384,23 +384,94 @@ opacity:1;
 
 .secondary-pension-card{
 margin-top:24px;
+display:grid;
+gap:14px;
 padding:18px 20px;
-border-radius:12px;
-background:rgba(255,255,255,.48);
-border:1px solid rgba(0,0,0,.08);
+border-radius:16px;
+background:rgba(255,255,255,.58);
+border:1px solid rgba(30,47,68,.10);
+box-shadow:0 10px 24px rgba(30,47,68,.05);
+}
+
+.secondary-pension-head{
+display:grid;
+gap:8px;
+}
+
+.secondary-pension-kicker{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:max-content;
+padding:7px 11px;
+border-radius:999px;
+background:rgba(31,77,58,.10);
+border:1px solid rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:11px;
+font-weight:800;
+letter-spacing:.12em;
+text-transform:uppercase;
+}
+
+.secondary-pension-head h3{
+margin:0;
+font-size:22px;
+line-height:1.15;
+color:var(--pnw-navy);
+}
+
+.secondary-pension-head p{
+margin:0;
+max-width:700px;
+font-size:14px;
+line-height:1.58;
+color:rgba(42,42,42,.74);
+}
+
+.secondary-pension-option{
+display:grid;
+gap:12px;
+padding:14px;
+border-radius:16px;
+background:rgba(255,255,255,.44);
+border:1px solid rgba(31,77,58,.10);
+box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
 }
 
 .secondary-pension-toggle{
 display:flex;
-align-items:center;
-gap:10px;
+justify-content:space-between;
+align-items:flex-start;
+gap:16px;
 font-weight:600;
 color:var(--pnw-evergreen);
+cursor:pointer;
 }
 
 .secondary-pension-toggle input{
-width:auto;
+flex:0 0 auto;
+width:20px;
+height:20px;
 margin:0;
+accent-color:var(--pnw-evergreen);
+}
+
+.secondary-pension-toggle-copy{
+display:grid;
+gap:4px;
+}
+
+.secondary-pension-toggle-copy strong{
+font-size:20px;
+line-height:1.18;
+color:var(--pnw-evergreen);
+}
+
+.secondary-pension-toggle-copy small{
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.72);
 }
 
 .card-action-row{

@@ -121,10 +121,10 @@ color:var(--pnw-evergreen);
 position:relative;
 padding:112px 40px 92px;
 background:
-linear-gradient(rgba(255,255,255,.18), rgba(255,255,255,.42)),
+linear-gradient(rgba(255,255,255,.12), rgba(255,255,255,.34)),
 url("/assets/illustrations/pnw-hero.png");
 background-size:cover;
-background-position:center;
+background-position:center center;
 }
 
 .hero::before{
@@ -142,16 +142,18 @@ pointer-events:none;
 position:relative;
 max-width:1040px;
 margin:0 auto;
-display:block;
+display:flex;
+justify-content:flex-start;
 }
 
 .hero-text{
-background:rgba(255,255,255,.24);
+width:min(700px, 100%);
+background:rgba(255,255,255,.16);
 padding:28px 32px;
 border-radius:20px;
-backdrop-filter:blur(6px);
-border:1px solid rgba(255,255,255,.38);
-box-shadow:0 16px 36px rgba(0,0,0,.08);
+backdrop-filter:blur(4px);
+border:1px solid rgba(255,255,255,.42);
+box-shadow:0 16px 36px rgba(0,0,0,.06);
 }
 
 .hero-kicker,
@@ -172,9 +174,10 @@ text-transform:uppercase;
 
 .hero h1{
 margin:16px 0 18px;
-font-size:52px;
-line-height:1.02;
+font-size:56px;
+line-height:1.01;
 color:var(--pnw-evergreen);
+max-width:12ch;
 }
 
 .hero p{
@@ -241,6 +244,7 @@ margin-top:18px;
 font-size:14px;
 line-height:1.6;
 color:rgba(30,47,68,.78);
+max-width:58ch;
 }
 
 .trust-strip{
@@ -572,6 +576,10 @@ padding:88px 20px 64px;
 .platform-grid,
 .article-list{
 grid-template-columns:1fr;
+}
+
+.hero-inner{
+display:block;
 }
 
 .hero h1{

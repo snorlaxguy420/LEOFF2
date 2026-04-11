@@ -325,6 +325,24 @@ Remaining:
 - Verify live asset paths, SEO metadata, and public page routing after launch
 - Continue hardening the deployment/update workflow for safer live releases
 
+### Phase 14 - Social Media
+Status: In progress
+
+Goals:
+- Establish a lightweight social presence that supports trust, launch visibility, and ongoing product education
+
+Completed / In progress:
+- An official LEOFF Helper Facebook page now exists at [facebook.com/LEOFFHELPER](https://www.facebook.com/LEOFFHELPER/)
+
+Planned:
+- Create and brand the Twitter presence for LEOFF Helper
+- Align profile visuals, bios, and outbound links with the live site and public tool pages
+- Add footer/header social links once the accounts are live and worth linking publicly
+- Publish a first content set around retirement timing, survivor options, pension value, and new-tool releases
+- Reuse article and tool content into short-form social posts that point back to the site
+- Define a simple posting cadence for launch and early beta
+- Track basic engagement and referral traffic from social posts into the public site
+
 ## Deterministic Accuracy Backlog
 
 1. Social Security input fidelity

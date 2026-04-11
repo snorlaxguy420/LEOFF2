@@ -14,10 +14,31 @@ body {
     color: var(--text-dark);
 }
 
+.site-header {
+    padding-bottom: 28px;
+    overflow: visible;
+}
+
+.logo-wrap {
+    position: absolute;
+    left: 40px;
+    top: 100%;
+    transform: translateY(-50%);
+    z-index: 20;
+}
+
+.logo-wrap img {
+    height: 106px;
+}
+
+.nav {
+    padding-left: 260px;
+}
+
 .articles-shell {
     max-width: 1320px;
     margin: 0 auto;
-    padding: 34px 40px 80px;
+    padding: 72px 40px 80px;
 }
 
 .articles-kicker {
@@ -192,6 +213,25 @@ body {
 }
 
 @media (max-width: 1080px) {
+    .site-header {
+        padding-bottom: 18px;
+    }
+
+    .logo-wrap {
+        position: static;
+        left: auto;
+        top: auto;
+        transform: none;
+    }
+
+    .logo-wrap img {
+        height: 68px;
+    }
+
+    .nav {
+        padding-left: 0;
+    }
+
     .articles-hero {
         padding-right: 0;
     }

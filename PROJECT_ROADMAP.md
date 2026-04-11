@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: March 30, 2026
+Last updated: April 11, 2026
 
 ## Current Status
 
@@ -111,9 +111,10 @@ Completed:
 - Unsaved draft asset/debt cards no longer persist into saved workspace state or simulation payloads, and restore/import now clears both saved and unsaved draft module cards before rebuilding the saved state in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js), [core/assetRegistry.js](/D:/LEOFF%202/core/assetRegistry.js), and the current asset/debt modules
 - Retirement-account projection now applies an approximate IRS-style required minimum distribution floor for eligible tax-deferred accounts at age 73+, and processes retirement-account sources in a more realistic default order in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
 - Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields on `401k` and `457b`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
+- Retirement-account withdrawal modeling now treats configured retirement-account draws as need-aware caps instead of unconditional automatic payouts, so tax-advantaged accounts cover the remaining annual spending gap in sequence while still honoring RMD floors where applicable in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 Remaining:
-- Deepen retirement-account withdrawal realism beyond the current baseline rules
+- Continue deepening retirement-account withdrawal realism beyond the current need-aware sequencing baseline, especially around year-by-year tax-aware bridge strategy and later premium tax-detail views
 
 ### Phase 6 - Dashboard
 Status: Implemented
@@ -161,6 +162,7 @@ Completed / In progress:
 - The lifetime-value tool now includes milestone payout checkpoints, copy/print actions, and a one-more-year tradeoff summary so members can see both pension scale and the cost/benefit of waiting
 - Homepage, supporting tool pages, and the articles hub now link into the Lifetime Pension Value Calculator, improving discoverability and internal linking for the new Phase 7 tool
 - Homepage hero now includes a direct launch CTA for the Survivor Benefit Comparison tool, improving discoverability of the estimator from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
+- Focused-tool public labels now use product-facing language instead of internal roadmap wording, removing `Phase 7 Tool` copy from [ui/retirement-age-comparison.html](/D:/LEOFF%202/ui/retirement-age-comparison.html), [ui/survivor-benefit-estimator.html](/D:/LEOFF%202/ui/survivor-benefit-estimator.html), and [ui/lifetime-pension-value-calculator.html](/D:/LEOFF%202/ui/lifetime-pension-value-calculator.html)
 
 Planned:
 - Continue refining the Survivor Benefit Estimator toward closer DRS-table fidelity
@@ -220,7 +222,6 @@ Remaining:
 - Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together
 - Add premium tax-detail views with stronger year-by-year taxable-income and withdrawal-impact visibility
 - Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
-- Replace the temporary file-backed backend store with PostgreSQL once the route contract is stable enough to migrate
 
 ### Phase 10 - Search Engine Optimization
 Status: In progress
@@ -242,6 +243,7 @@ Completed:
 - Homepage hero CTA stack now links directly into the Survivor Benefit Comparison tool, extending internal linking and tool discovery from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
 - The article library now includes a dedicated Monte Carlo guide in [ui/articles/article-monte-carlo-retirement-modeling.html](/D:/LEOFF%202/ui/articles/article-monte-carlo-retirement-modeling.html), and the dashboard Monte Carlo panel plus related retirement guides now link into it from [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), [ui/articles/article-recession-before-retirement.html](/D:/LEOFF%202/ui/articles/article-recession-before-retirement.html), and [ui/articles/article-leoff-retirement.html](/D:/LEOFF%202/ui/articles/article-leoff-retirement.html)
 - The tools directory now has fuller non-article SEO treatment in [ui/tools.html](/D:/LEOFF%202/ui/tools.html) and [ui/tools.css](/D:/LEOFF%202/ui/tools.css), including share metadata, collection/breadcrumb/item-list/FAQ schema, stronger internal linking to guides and tools, and support content that makes the page a more meaningful search landing page
+- The tools directory has since been simplified into a cleaner public navigation hub by removing the redundant tool FAQ stack while keeping the core internal-linking and discovery structure intact in [ui/tools.html](/D:/LEOFF%202/ui/tools.html) and [ui/tools.css](/D:/LEOFF%202/ui/tools.css)
 
 Planned:
 - Technical SEO improvements for non-article pages
@@ -290,6 +292,7 @@ Progress:
 - Dashboard mobile chart controls no longer reserve a large empty block above the retirement-age slider on phone widths, with the chart header now collapsing without the old flex-basis dead space in [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - Retirement Age Comparison and Survivor Benefit Estimator now have stronger phone-specific card, action, and wide-table handling in [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css) and [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css)
 - A tighter `430px` pass now exists across the homepage, simulator shell, dashboard premium/report surfaces, Retirement Age Comparison, Survivor Benefit Estimator, and long-form article shell, reducing cramped header navigation, over-wide phone tables, and oversized card spacing in [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css), [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css), and [ui/articles/article.css](/D:/LEOFF%202/ui/articles/article.css)
+- Homepage, tools, and the article-listing page have also had a first-pass public UX cleanup, including a lighter homepage hero treatment, simpler tools-hub content hierarchy, and corrected articles header/logo behavior in [ui/index.html](/D:/LEOFF%202/ui/index.html), [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/tools.html](/D:/LEOFF%202/ui/tools.html), [ui/tools.css](/D:/LEOFF%202/ui/tools.css), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), and [ui/articles.css](/D:/LEOFF%202/ui/articles.css)
 
 Remaining:
 - Finish real-device QA across the homepage, simulator, dashboard, Retirement Age Comparison, Survivor Benefit Estimator, and at least one article page
@@ -348,6 +351,7 @@ Remaining:
    - Pension income and Social Security taxability now contribute more realistically to taxable-income stacking
    - Projection results now track estimated yearly taxes and taxable income
    - Retirement accounts now accumulate using employee contributions, employer match where applicable, expected annual returns, and a pay path that ramps from `Current Annual Pay` to expected final pay
+   - Tax-advantaged retirement accounts now withdraw against the remaining annual spending need instead of auto-draining their full configured payout once retirement begins, while RMD floors still force minimum distributions where applicable
 
 4. Pension rule depth
    Status: Planned

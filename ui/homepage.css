@@ -22,12 +22,13 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 padding:18px 40px;
+overflow:visible;
 position:relative;
 z-index:10;
 }
 
 .site-header img{
-height:72px;
+height:120px;
 display:block;
 filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));
 }
@@ -36,6 +37,11 @@ filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));
 display:flex;
 align-items:center;
 gap:12px;
+position:absolute;
+left:40px;
+top:100%;
+transform:translateY(-52%);
+z-index:20;
 }
 
 .logo-wrap a{
@@ -66,6 +72,7 @@ display:flex;
 align-items:center;
 flex-wrap:wrap;
 gap:12px;
+padding-left:260px;
 }
 
 .nav a{
@@ -119,7 +126,7 @@ color:var(--pnw-evergreen);
 
 .hero{
 position:relative;
-padding:112px 40px 92px;
+padding:120px 40px 92px;
 background:
 linear-gradient(rgba(255,255,255,.12), rgba(255,255,255,.34)),
 url("/assets/illustrations/pnw-hero.png");
@@ -547,6 +554,7 @@ width:100%;
 display:grid;
 grid-template-columns:repeat(2, minmax(0, 1fr));
 gap:10px;
+padding-left:0;
 }
 
 .nav a,
@@ -580,6 +588,17 @@ grid-template-columns:1fr;
 
 .hero-inner{
 display:block;
+}
+
+.logo-wrap{
+position:static;
+left:auto;
+top:auto;
+transform:none;
+}
+
+.site-header img{
+height:68px;
 }
 
 .hero h1{

@@ -1186,11 +1186,68 @@ function testRetirementAccountRmdProjection() {
         "Traditional IRA RMD floor should raise the net draw above the manual $5,000 amount at age 73"
     );
     assert(
-        rothIraIncome === 5000,
-        "Roth IRA should keep the configured withdrawal when no RMD applies"
+        rothIraIncome === 0,
+        "Roth IRA should stay untouched when no spending need or RMD applies"
     );
 
     logResult("Retirement account RMD projection passed");
+}
+
+function testRetirementAccountNeedAwareSequencing() {
+    const projection = projectTotalRetirement({
+        incomeSources: [
+            {
+                type: "fixed",
+                name: "Pension",
+                startAge: 60,
+                annualAmount: 42000,
+                taxable: true,
+                taxCategory: "ordinary_income"
+            },
+            {
+                type: "portfolio",
+                name: "Traditional IRA",
+                balance: 300000,
+                startAge: 60,
+                growthRate: 0,
+                withdrawalType: "amount",
+                withdrawal: 12000,
+                taxable: true,
+                accountType: "traditional_ira"
+            },
+            {
+                type: "portfolio",
+                name: "Roth IRA",
+                balance: 150000,
+                startAge: 60,
+                growthRate: 0,
+                withdrawalType: "amount",
+                withdrawal: 12000,
+                taxable: false,
+                accountType: "roth_ira"
+            }
+        ],
+        retireAge: 60,
+        lifeExpectancy: 60,
+        baseExpenses: 48000,
+        inflation: 0,
+        showReal: false
+    });
+
+    const age60 = projection.results.find(result => result.age === 60);
+    const traditionalIraIncome = age60?.breakdown?.["Traditional IRA"] || 0;
+    const rothIraIncome = age60?.breakdown?.["Roth IRA"] || 0;
+
+    assert(
+        traditionalIraIncome > 0 && traditionalIraIncome < 12000,
+        "Traditional IRA should now cover only the remaining spending need instead of auto-withdrawing the full configured amount"
+    );
+    assert(
+        rothIraIncome === 0,
+        "Roth IRA should stay preserved when an earlier retirement account can cover the current gap"
+    );
+
+    logResult("Retirement account need-aware sequencing passed");
 }
 
 function testRetirementAccountContributionAccumulation() {
@@ -3486,6 +3543,7 @@ async function runVerification() {
         testSocialSecurityCalculation();
         testRetirementAccountTaxTreatment();
         testRetirementAccountRmdProjection();
+        testRetirementAccountNeedAwareSequencing();
         testRetirementAccountContributionAccumulation();
         testSplitExpenseInflationProjection();
         testPreRetirementEmploymentIncomeProjection();

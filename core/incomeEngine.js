@@ -151,6 +151,68 @@ function getApproximateRequiredMinimumDistribution(balance, currentAge, rules) {
     return balance / factor;
 }
 
+function getPlannedPortfolioWithdrawal({
+    source,
+    balance
+}) {
+    if (balance <= 0) {
+        return 0;
+    }
+
+    if (source.withdrawalType === "percent") {
+        return balance * (source.withdrawalRate || 0);
+    }
+
+    return source.withdrawal || 0;
+}
+
+function solveGrossWithdrawalForNetTarget({
+    source,
+    currentAge,
+    currentTaxableIncome,
+    targetNetWithdrawal,
+    maxGrossWithdrawal
+}) {
+    const safeTarget = Math.max(0, targetNetWithdrawal || 0);
+    const safeMax = Math.max(0, maxGrossWithdrawal || 0);
+
+    if (safeTarget <= 0 || safeMax <= 0) {
+        return 0;
+    }
+
+    const maxResult = applyRetirementAccountTaxTreatment({
+        source,
+        withdrawal: safeMax,
+        currentAge,
+        currentTaxableIncome
+    });
+
+    if (maxResult.netWithdrawal <= safeTarget) {
+        return safeMax;
+    }
+
+    let lowerBound = 0;
+    let upperBound = safeMax;
+
+    for (let iteration = 0; iteration < 18; iteration += 1) {
+        const midpoint = (lowerBound + upperBound) / 2;
+        const midpointResult = applyRetirementAccountTaxTreatment({
+            source,
+            withdrawal: midpoint,
+            currentAge,
+            currentTaxableIncome
+        });
+
+        if (midpointResult.netWithdrawal >= safeTarget) {
+            upperBound = midpoint;
+        } else {
+            lowerBound = midpoint;
+        }
+    }
+
+    return upperBound;
+}
+
 function isRetirementAccountPortfolio(source) {
     return source.type === "portfolio" && !!source.accountType;
 }
@@ -766,10 +828,33 @@ if (source.type === "real_estate") {
                             distributionRules
                         );
 
+                    const plannedWithdrawal =
+                        getPlannedPortfolioWithdrawal({
+                            source,
+                            balance
+                        });
+                    const isRetirementAccount =
+                        !!source.accountType;
+                    const remainingAnnualNeed =
+                        Math.max(
+                            0,
+                            (annualExpenseResult.total + supplementalExpenses) - totalIncome
+                        );
+                    const needAwareGrossWithdrawal =
+                        isRetirementAccount
+                            ? solveGrossWithdrawalForNetTarget({
+                                source,
+                                currentAge,
+                                currentTaxableIncome: yearlyTaxableIncome,
+                                targetNetWithdrawal: remainingAnnualNeed,
+                                maxGrossWithdrawal: plannedWithdrawal
+                            })
+                            : plannedWithdrawal;
+
                     let withdrawal =
-                        source.withdrawalType === "percent"
-                            ? balance * source.withdrawalRate
-                            : source.withdrawal;
+                        isRetirementAccount
+                            ? needAwareGrossWithdrawal
+                            : plannedWithdrawal;
 
                     withdrawal = Math.max(
                         withdrawal,

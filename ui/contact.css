@@ -78,6 +78,10 @@ body {
     color: var(--text-soft);
 }
 
+.contact-card-form {
+    min-width: 0;
+}
+
 .contact-form {
     display: grid;
     gap: 12px;
@@ -205,6 +209,7 @@ body {
     color: var(--pnw-river);
     font-weight: 700;
     text-decoration: none;
+    overflow-wrap: anywhere;
 }
 
 .contact-direct-card a:hover {
@@ -219,11 +224,16 @@ body {
 
 @media (max-width: 720px) {
     .contact-shell {
-        padding: 24px 16px 48px;
+        padding: 20px 14px 44px;
+    }
+
+    .contact-hero {
+        margin-bottom: 20px;
     }
 
     .contact-hero h1 {
-        font-size: 34px;
+        font-size: 32px;
+        line-height: 1.08;
     }
 
     .contact-hero p {
@@ -232,15 +242,106 @@ body {
     }
 
     .contact-card {
-        padding: 20px;
+        padding: 18px;
+        border-radius: 18px;
+    }
+
+    .contact-card h2 {
+        font-size: 26px;
+        line-height: 1.12;
+    }
+
+    .contact-intro {
+        margin-bottom: 16px;
     }
 
     .contact-social-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .contact-primary,
     .contact-secondary {
         width: 100%;
+    }
+
+    .contact-actions {
+        gap: 10px;
+    }
+
+    .contact-social-card {
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 14px;
+        padding: 16px 18px;
+        border-radius: 16px;
+    }
+
+    .contact-social-card img {
+        width: 44px;
+        height: 44px;
+        flex: 0 0 auto;
+    }
+
+    .contact-direct-card {
+        padding: 18px;
+    }
+}
+
+@media (max-width: 430px) {
+    .contact-shell {
+        padding: 18px 12px 40px;
+    }
+
+    .contact-kicker {
+        padding: 7px 11px;
+        font-size: 11px;
+    }
+
+    .contact-hero h1 {
+        font-size: 28px;
+    }
+
+    .contact-hero p,
+    .contact-intro,
+    .contact-footnote {
+        font-size: 15px;
+        line-height: 1.55;
+    }
+
+    .contact-card {
+        padding: 16px;
+        border-radius: 16px;
+    }
+
+    .contact-form {
+        gap: 10px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+        padding: 13px 14px;
+        border-radius: 14px;
+        font-size: 16px;
+    }
+
+    .contact-form textarea {
+        min-height: 150px;
+    }
+
+    .contact-primary,
+    .contact-secondary {
+        min-height: 44px;
+        padding: 11px 16px;
+    }
+
+    .contact-social-card {
+        padding: 14px 16px;
+        gap: 12px;
+    }
+
+    .contact-social-card img {
+        width: 40px;
+        height: 40px;
     }
 }

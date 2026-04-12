@@ -35,6 +35,7 @@
   }
 }
 </script>
+    <script defer src="/ui/analytics.js"></script>
 </head>
 <body>
 
@@ -387,6 +388,42 @@ depletion in the same planning flow as the simulator.
           <div class="account-plan-empty">Premium withdrawal strategy guidance will appear here once the dashboard finishes loading.</div>
       </div>
       <div id="withdrawalOptimizerNotes" class="optimizer-note-list"></div>
+  </section>
+
+  <section class="dashboard-recommendation-panel social-security-optimizer-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Social Security Optimizer</div>
+              <h2 id="socialSecurityOptimizerHeadline">Premium Social Security claiming guidance</h2>
+          </div>
+      </div>
+      <p id="socialSecurityOptimizerSummary" class="dashboard-card-summary">
+          Premium compares claiming at age 62, full retirement age, and age 70 using the current retirement plan.
+      </p>
+      <div id="socialSecurityOptimizerPremiumNote" class="monte-carlo-premium-note" hidden>
+          Premium accounts unlock plan-aware Social Security claiming guidance.
+      </div>
+      <div id="socialSecurityOptimizerHighlights" class="report-highlight-grid optimizer-highlight-grid" hidden>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Best Fit Claim Age</div>
+              <div id="socialSecurityOptimizerRecommendedAge" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Monthly Benefit</div>
+              <div id="socialSecurityOptimizerMonthlyBenefit" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Social Security Through 85</div>
+              <div id="socialSecurityOptimizerCumulativeTo85" class="report-highlight-value">--</div>
+          </div>
+      </div>
+      <div id="socialSecurityOptimizerOptions" class="optimizer-sequence-list">
+          <div class="account-plan-empty">Premium Social Security claiming guidance will appear here once the dashboard finishes loading.</div>
+      </div>
+      <div id="socialSecurityOptimizerNotes" class="optimizer-note-list"></div>
+      <p class="report-inline-note">
+          V1 compares age 62, full retirement age, and age 70 against the current retirement plan. Later versions can add spouse, survivor, and tax-aware claiming guidance.
+      </p>
   </section>
 
   <section class="dashboard-recommendation-panel estate-projection-panel">

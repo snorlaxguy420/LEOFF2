@@ -1,5 +1,5 @@
 (function () {
-    const measurementId = "G-JREZCESGEX";
+    const measurementId = "G-97DNZZJ7BS";
     const hostname = window.location.hostname || "";
     const protocol = window.location.protocol || "";
     const isLocal =

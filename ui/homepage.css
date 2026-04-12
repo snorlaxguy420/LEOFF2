@@ -495,6 +495,23 @@ margin-right:8px;
 opacity:.6;
 }
 
+.footer-links li.social-link-item::before{
+content:none;
+margin-right:0;
+}
+
+.footer-links li.social-link-item{
+display:inline-block;
+margin-right:10px;
+margin-bottom:0;
+}
+
+.footer-links li.social-link-item a{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+}
+
 .site-footer a{
 color:rgba(255,255,255,.9);
 text-decoration:none;

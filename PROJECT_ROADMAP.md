@@ -293,11 +293,13 @@ Progress:
 - Retirement Age Comparison and Survivor Benefit Estimator now have stronger phone-specific card, action, and wide-table handling in [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css) and [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css)
 - A tighter `430px` pass now exists across the homepage, simulator shell, dashboard premium/report surfaces, Retirement Age Comparison, Survivor Benefit Estimator, and long-form article shell, reducing cramped header navigation, over-wide phone tables, and oversized card spacing in [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css), [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css), and [ui/articles/article.css](/D:/LEOFF%202/ui/articles/article.css)
 - Homepage, tools, and the article-listing page have also had a first-pass public UX cleanup, including a lighter homepage hero treatment, simpler tools-hub content hierarchy, and corrected articles header/logo behavior in [ui/index.html](/D:/LEOFF%202/ui/index.html), [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/tools.html](/D:/LEOFF%202/ui/tools.html), [ui/tools.css](/D:/LEOFF%202/ui/tools.css), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), and [ui/articles.css](/D:/LEOFF%202/ui/articles.css)
+- Public contact/discovery UX now has a first local pass through a dedicated [ui/contact.html](/D:/LEOFF%202/ui/contact.html) page and [ui/contact.css](/D:/LEOFF%202/ui/contact.css), giving the site a real `Contact Us` destination with a comment-to-email draft flow, direct email access, and larger Facebook/X links instead of footer-only mailto behavior
 
 Remaining:
 - Finish real-device QA across the homepage, simulator, dashboard, Retirement Age Comparison, Survivor Benefit Estimator, and at least one article page
 - Validate the current responsive pass at `360px`, `390px`, `412px`, `430px`, and `768px`
 - Log and fix any remaining overflow, clipping, tiny touch targets, unreadable charts or tables, awkward spacing, or controls hidden below the fold
+- Push and live-verify the new contact-page flow and make sure public `Contact Us` links, larger social buttons, and footer icon visibility all feel intentional on real devices
 
 ### Phase 13 - Domain and Launch
 Status: In progress
@@ -333,11 +335,13 @@ Goals:
 
 Completed / In progress:
 - An official LEOFF Helper Facebook page now exists at [facebook.com/LEOFFHELPER](https://www.facebook.com/LEOFFHELPER/)
+- An official X presence now exists at [x.com/LEOFFHelper](https://x.com/LEOFFHelper)
+- Public footers now link out to Facebook and X with icon-based social links, replacing the earlier placeholder/fake badge treatment on the public pages
+- A dedicated local contact page now brings together email, comment drafting, and Facebook/X discovery so the social presence is tied to a real public contact surface instead of footer-only links
 
 Planned:
-- Create and brand the Twitter presence for LEOFF Helper
 - Align profile visuals, bios, and outbound links with the live site and public tool pages
-- Add footer/header social links once the accounts are live and worth linking publicly
+- Decide whether social links should also appear in the public header or stay footer/contact-page only
 - Publish a first content set around retirement timing, survivor options, pension value, and new-tool releases
 - Reuse article and tool content into short-form social posts that point back to the site
 - Define a simple posting cadence for launch and early beta

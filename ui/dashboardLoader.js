@@ -207,12 +207,14 @@ function renderWithdrawalOptimizerSection({
         document.getElementById("withdrawalOptimizerPremiumNote");
     const highlights =
         document.getElementById("withdrawalOptimizerHighlights");
+    const bridgePlan =
+        document.getElementById("withdrawalOptimizerBridgePlan");
     const sequence =
         document.getElementById("withdrawalOptimizerSequence");
     const notes =
         document.getElementById("withdrawalOptimizerNotes");
 
-    if (!headline || !summary || !premiumNote || !highlights || !sequence || !notes) {
+    if (!headline || !summary || !premiumNote || !highlights || !bridgePlan || !sequence || !notes) {
         return;
     }
 
@@ -230,6 +232,12 @@ function renderWithdrawalOptimizerSection({
             <div class="optimizer-sequence-item">
                 <h3>Premium optimizer preview</h3>
                 <p>See which accounts to tap first, which dollars to preserve for later, and where bridge-year tax pressure is likely to come from.</p>
+            </div>
+        `;
+        bridgePlan.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Premium bridge-year planner preview</h3>
+                <p>See the cumulative spending gap before Social Security starts, the cleanest bridge funding source, and a step-by-step bridge-year funding sequence.</p>
             </div>
         `;
         notes.innerHTML = "";
@@ -261,9 +269,45 @@ function renderWithdrawalOptimizerSection({
             : "Covered"
     );
     setElementText(
+        "withdrawalOptimizerBridgeGap",
+        optimization.highlights?.cumulativeBridgeGap > 0
+            ? formatCurrency(optimization.highlights.cumulativeBridgeGap)
+            : "Covered"
+    );
+    setElementText(
+        "withdrawalOptimizerPrimaryBridgeSource",
+        optimization.highlights?.primaryBridgeSource || "--"
+    );
+    setElementText(
+        "withdrawalOptimizerBridgePressure",
+        optimization.highlights?.bridgePressure || "--"
+    );
+    setElementText(
         "withdrawalOptimizerTaxDeferredBalance",
         formatCurrency(optimization.highlights?.taxDeferredBalance || 0)
     );
+
+    bridgePlan.innerHTML =
+        optimization.bridgePlan.length
+            ? optimization.bridgePlan.map((entry, index) => `
+                <div class="optimizer-sequence-item optimizer-bridge-item">
+                    <div class="optimizer-sequence-eyebrow">Bridge Step ${index + 1}</div>
+                    <h3>${entry.title}</h3>
+                    <p>${entry.rationale}</p>
+                    ${entry.amount > 0 ? `
+                        <div class="optimizer-bridge-amount">
+                            <span>Potential bridge dollars</span>
+                            <strong>${formatCurrency(entry.amount)}</strong>
+                        </div>
+                    ` : ""}
+                </div>
+            `).join("")
+            : `
+                <div class="optimizer-sequence-item">
+                    <h3>No bridge plan needed yet</h3>
+                    <p>Social Security timing does not create a meaningful bridge window in the current plan.</p>
+                </div>
+            `;
 
     sequence.innerHTML =
         optimization.sequence.length

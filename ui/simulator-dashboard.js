@@ -32,10 +32,15 @@ import {
 } from "./apiClient.js";
 import { hasPremiumAccess } from "./accountEntitlements.js";
 import {
+    applyPremiumStressPreset,
     DEFAULT_PREMIUM_STRESS_TESTING,
+    getPremiumStressPresetLabel,
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
-import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
+import {
+    buildScenarioComparisonCard,
+    buildScenarioComparisonScoreboard
+} from "../analysis/scenarioComparisonSummary.js";
 
 /* ------------------------------------------------
 GLOBAL STATE
@@ -384,6 +389,7 @@ function getPremiumStressTestingFieldDefaults() {
     return {
         premiumStressTestingEnabled:
             Boolean(SUGGESTED_PREMIUM_STRESS_DEFAULTS.enabled),
+        premiumStressPreset: "custom",
         premiumStressGoodsServicesInflation:
             toPercentFieldValue(
                 SUGGESTED_PREMIUM_STRESS_DEFAULTS.goodsServicesInflationTargetRate,
@@ -427,6 +433,9 @@ function readPremiumStressTestingFromInputs() {
 
     return normalizePremiumStressTesting({
         enabled,
+        preset:
+            document.getElementById("premiumStressPreset")?.value ||
+            "custom",
         goodsServicesInflationTargetRate:
             readOptionalPercentFieldValue(
                 "premiumStressGoodsServicesInflation"
@@ -474,6 +483,7 @@ function populatePremiumStressTestingInputs(workspaceState = null) {
         );
     const fieldValues = {
         premiumStressTestingEnabled: settings.enabled,
+        premiumStressPreset: settings.preset || "custom",
         premiumStressGoodsServicesInflation:
             toPercentFieldValue(
                 settings.goodsServicesInflationTargetRate,
@@ -524,11 +534,50 @@ function populatePremiumStressTestingInputs(workspaceState = null) {
     syncPremiumStressTestingStateFromInputs();
 }
 
+function setPremiumStressPresetToCustom() {
+    const presetField =
+        document.getElementById("premiumStressPreset");
+
+    if (presetField && presetField.value !== "custom") {
+        presetField.value = "custom";
+    }
+}
+
+function handlePremiumStressPresetChange() {
+    const presetField =
+        document.getElementById("premiumStressPreset");
+
+    if (!presetField) {
+        return;
+    }
+
+    const currentSettings =
+        getWorkspacePremiumStressTesting();
+    const nextSettings =
+        presetField.value === "custom"
+            ? normalizePremiumStressTesting({
+                ...currentSettings,
+                preset: "custom"
+            })
+            : applyPremiumStressPreset(
+                currentSettings,
+                presetField.value
+            );
+
+    populatePremiumStressTestingInputs({
+        premiumStressTesting: nextSettings
+    });
+    syncPremiumStressTestingUi();
+    renderScenarioComparisonList();
+    StateManager.saveAll();
+}
+
 function syncPremiumStressTestingUi() {
     const card = document.getElementById("premiumStressTestingCard");
     const badge = document.getElementById("premiumStressTestingBadge");
     const summary = document.getElementById("premiumStressTestingSummary");
     const toggle = document.getElementById("premiumStressTestingEnabled");
+    const presetField = document.getElementById("premiumStressPreset");
     const resetBtn = document.getElementById("resetPremiumStressDefaultsBtn");
     const premiumEnabled =
         hasPremiumAccess(currentAccountContext, "monteCarloPlus");
@@ -536,7 +585,7 @@ function syncPremiumStressTestingUi() {
         getWorkspacePremiumStressTesting();
     const stressFields = Array.from(
         document.querySelectorAll(
-            "#premiumStressTestingCard input:not(#premiumStressTestingEnabled)"
+            "#premiumStressTestingCard input:not(#premiumStressTestingEnabled), #premiumStressTestingCard select"
         )
     );
 
@@ -558,12 +607,32 @@ function syncPremiumStressTestingUi() {
         resetBtn.disabled = !premiumEnabled;
     }
 
+    if (presetField) {
+        presetField.disabled = !premiumEnabled || !toggle.checked;
+    }
+
     if (!premiumEnabled) {
         summary.textContent = currentAccountUser
             ? "This account is on the free tier. Upgrade to premium to run harsher Monte Carlo assumptions and sequence-risk stress profiles."
             : "Sign in with a premium account to define harsher Monte Carlo assumptions for inflation, healthcare, and sequence risk.";
         return;
     }
+
+    const stressLead =
+        stressSettings.preset &&
+        stressSettings.preset !== "custom"
+            ? `${getPremiumStressPresetLabel(stressSettings.preset)} stress pack active`
+            : "Custom premium stress profile active";
+
+    if (!stressSettings.enabled) {
+        summary.textContent =
+            "Premium stress packs are available. Turn them on to run Monte Carlo Plus with harsher inflation, healthcare, and early-recession assumptions.";
+        return;
+    }
+
+    summary.textContent =
+        `${stressLead}: goods/services inflation ${toPercentFieldValue(stressSettings.goodsServicesInflationTargetRate, "n/a")}%, healthcare inflation ${toPercentFieldValue(stressSettings.healthcareInflationTargetRate, "n/a")}%, portfolio floor ${toPercentFieldValue(stressSettings.portfolioDownsideFloorRate, "n/a")}%, and an early shock of ${toPercentFieldValue(stressSettings.earlyRetirementShockRate, "n/a")}% for ${stressSettings.earlyRetirementShockYears || 0} years.`;
+    return;
 
     if (!stressSettings.enabled) {
         summary.textContent =
@@ -750,6 +819,8 @@ function renderScenarioComparisonSummary() {
 function renderScenarioComparisonList() {
     const listEl =
         document.getElementById("accountComparisonList");
+    const scoreboardEl =
+        document.getElementById("accountComparisonScoreboard");
     const premiumNoteEl =
         document.getElementById("accountComparisonPremiumNote");
     const premiumComparisonEnabled =
@@ -757,6 +828,11 @@ function renderScenarioComparisonList() {
 
     if (!listEl) {
         return;
+    }
+
+    if (scoreboardEl) {
+        scoreboardEl.hidden = true;
+        scoreboardEl.innerHTML = "";
     }
 
     if (premiumNoteEl) {
@@ -820,6 +896,21 @@ function renderScenarioComparisonList() {
             })
         )
     ];
+    const comparisonScoreboard =
+        premiumComparisonEnabled
+            ? buildScenarioComparisonScoreboard(cards)
+            : [];
+
+    if (scoreboardEl && comparisonScoreboard.length) {
+        scoreboardEl.hidden = false;
+        scoreboardEl.innerHTML = comparisonScoreboard.map(item => `
+            <div class="account-comparison-score-item">
+                <span class="account-comparison-score-label">${escapeHtml(item.label)}</span>
+                <strong class="account-comparison-score-name">${escapeHtml(item.winnerName)}</strong>
+                <span class="account-comparison-score-value">${escapeHtml(item.value)}</span>
+            </div>
+        `).join("");
+    }
 
     listEl.innerHTML = cards.map(card => `
         <div class="account-comparison-card ${card.isCurrentWorkspace ? "is-current" : ""}">
@@ -2079,7 +2170,13 @@ function setupInflationDefaultsUi() {
 
 function setupPremiumStressTestingUi() {
     const toggle = document.getElementById("premiumStressTestingEnabled");
+    const presetField = document.getElementById("premiumStressPreset");
     const resetBtn = document.getElementById("resetPremiumStressDefaultsBtn");
+    const manualFields = Array.from(
+        document.querySelectorAll(
+            "#premiumStressTestingCard input:not(#premiumStressTestingEnabled)"
+        )
+    );
 
     if (!toggle) {
         return;
@@ -2088,6 +2185,22 @@ function setupPremiumStressTestingUi() {
     toggle.addEventListener("change", () => {
         syncPremiumStressTestingStateFromInputs();
         syncPremiumStressTestingUi();
+        renderScenarioComparisonList();
+        StateManager.saveAll();
+    });
+
+    presetField?.addEventListener("change", () => {
+        handlePremiumStressPresetChange();
+    });
+
+    manualFields.forEach(field => {
+        field.addEventListener("change", () => {
+            setPremiumStressPresetToCustom();
+            syncPremiumStressTestingStateFromInputs();
+            syncPremiumStressTestingUi();
+            renderScenarioComparisonList();
+            StateManager.saveAll();
+        });
     });
 
     resetBtn?.addEventListener("click", () => {
@@ -2098,6 +2211,7 @@ function setupPremiumStressTestingUi() {
             }
         });
         syncPremiumStressTestingUi();
+        renderScenarioComparisonList();
         runProjection();
         StateManager.saveAll();
     });

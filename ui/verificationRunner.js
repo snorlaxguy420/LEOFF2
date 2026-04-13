@@ -69,10 +69,15 @@ import {
     normalizeAccountContext
 } from "./accountEntitlements.js";
 import {
+    applyPremiumStressPreset,
     buildPremiumStressTestMonteCarloConfig,
+    getPremiumStressPresetLabel,
     normalizePremiumStressTesting
 } from "../core/premiumStressTesting.js";
-import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
+import {
+    buildScenarioComparisonCard,
+    buildScenarioComparisonScoreboard
+} from "../analysis/scenarioComparisonSummary.js";
 import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
 import { buildSocialSecurityOptimization } from "../analysis/socialSecurityOptimizer.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
@@ -528,6 +533,64 @@ function testPremiumSavedScenarioComparisonCard() {
         },
         premium: true
     });
+    const strongerPremiumCard = buildScenarioComparisonCard({
+        name: "Durable Snapshot",
+        workspaceState: {
+            simulationState: buildSimulationState({
+                inputs: {
+                    profile: {
+                        currentAge: 50
+                    },
+                    retireAge: 58,
+                    lifeExpectancy: 90,
+                    pension: {
+                        serviceYears: 30,
+                        finalAverageSalary: 135000,
+                        currentAnnualPay: 128000,
+                        cola: 0.02,
+                        benefitEnhancement: "tiered_multiplier",
+                        survivorOption: "none"
+                    },
+                    socialSecurity: {
+                        birthYear: 1980,
+                        claimAge: 70,
+                        fraBenefit: 3200
+                    },
+                    expenses: {
+                        monthly: 5200
+                    },
+                    assumptions: {
+                        inflationRate: 0.03,
+                        goodsServicesInflationRate: 0.03,
+                        housingInflationRate: 0.03,
+                        healthcareInflationRate: 0.05
+                    },
+                    toggles: {
+                        showReal: false,
+                        marketFirst: false
+                    }
+                },
+                incomeSources: [
+                    {
+                        type: "fixed",
+                        name: "Bridge Income",
+                        annualAmount: 18000,
+                        startAge: 58,
+                        growthRate: 0
+                    }
+                ]
+            }),
+            premiumStressTesting: applyPremiumStressPreset(
+                { enabled: true },
+                "early_recession"
+            )
+        },
+        premium: true
+    });
+    const comparisonScoreboard = buildScenarioComparisonScoreboard([
+        premiumCard,
+        strongerPremiumCard
+    ]);
 
     assert(
         freeCard.sections.length === 1 &&
@@ -553,6 +616,13 @@ function testPremiumSavedScenarioComparisonCard() {
             metric.value === "Custom premium stress"
         ),
         "Premium saved-scenario comparison should reflect saved premium stress profiles"
+    );
+    assert(
+        comparisonScoreboard.some(item =>
+            item.label === "Best Readiness" &&
+            item.winnerName === "Durable Snapshot"
+        ),
+        "Premium saved-scenario comparison should expose a scoreboard that highlights the stronger scenario"
     );
 
     logResult("Premium saved-scenario comparison card passed");
@@ -682,6 +752,23 @@ function testWithdrawalStrategyOptimizer() {
     assert(
         optimization.notes.some(note => note.label === "Bridge Window"),
         "Withdrawal optimizer should report the Social Security bridge window when one exists"
+    );
+    assert(
+        optimization.highlights?.cumulativeBridgeGap > 0,
+        "Withdrawal optimizer should calculate the cumulative bridge gap before Social Security begins"
+    );
+    assert(
+        optimization.highlights?.primaryBridgeSource &&
+        optimization.highlights.primaryBridgeSource !== "No obvious bridge funding source",
+        "Withdrawal optimizer should identify a primary bridge funding source when bridge assets exist"
+    );
+    assert(
+        optimization.bridgePlan.some(entry =>
+            entry.title.includes("457") ||
+            entry.title.includes("cash") ||
+            entry.title.includes("brokerage")
+        ),
+        "Withdrawal optimizer should generate a bridge-year funding plan with concrete funding steps"
     );
 
     logResult("Withdrawal strategy optimizer passed");
@@ -2008,6 +2095,29 @@ function testPremiumStressTestingConfigBuilder() {
     );
 
     logResult("Premium stress config builder passed");
+}
+
+function testPremiumStressPresetHelpers() {
+    const presetSettings = applyPremiumStressPreset(
+        { enabled: true },
+        "early_recession"
+    );
+
+    assert(
+        presetSettings.preset === "early_recession",
+        "Premium stress presets should persist the selected preset key"
+    );
+    assert(
+        presetSettings.earlyRetirementShockYears === 3 &&
+        presetSettings.earlyRetirementShockRate === -0.18,
+        "Early Retirement Recession should apply the expected shock profile"
+    );
+    assert(
+        getPremiumStressPresetLabel("sticky_inflation") === "Sticky Inflation Decade",
+        "Premium stress presets should expose stable labels for the UI"
+    );
+
+    logResult("Premium stress preset helpers passed");
 }
 
 function testRecommendedRetirementAgeDoesNotGoBelowCurrentAge() {
@@ -3731,6 +3841,7 @@ async function runVerification() {
         testReadinessScoreUsesRetirementYearsOnly();
         testProbabilityAdjustedReadinessScore();
         testPremiumStressTestingConfigBuilder();
+        testPremiumStressPresetHelpers();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
         testRecommendedRetirementAgeRequiresMonteCarloThreshold();
         testDashboardRecommendationConsistency();

@@ -567,6 +567,10 @@ SCORE PANEL
     border-color: rgba(31, 77, 58, 0.12);
 }
 
+.withdrawal-optimizer-panel .optimizer-highlight-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .social-security-optimizer-panel .report-highlight-card {
     background: linear-gradient(180deg, rgba(244,249,250,0.92), rgba(232,239,244,0.86));
     border-color: rgba(63, 124, 133, 0.14);
@@ -605,6 +609,43 @@ SCORE PANEL
     margin: 10px 0 0;
     color: rgba(42, 42, 42, 0.78);
     line-height: 1.6;
+}
+
+.optimizer-sequence-eyebrow {
+    margin-bottom: 8px;
+    color: rgba(30,47,68,0.54);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.optimizer-bridge-item {
+    background: linear-gradient(180deg, rgba(246,250,248,0.92), rgba(237,244,239,0.88));
+    border-color: rgba(31,77,58,0.12);
+}
+
+.optimizer-bridge-amount {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(30,47,68,0.08);
+}
+
+.optimizer-bridge-amount span {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(30,47,68,0.58);
+}
+
+.optimizer-bridge-amount strong {
+    display: block;
+    margin-top: 6px;
+    color: var(--pnw-navy);
+    font-size: 18px;
+    line-height: 1.35;
 }
 
 .optimizer-note-list {
@@ -1266,6 +1307,10 @@ RESPONSIVE
     }
 
     .social-security-optimizer-panel .optimizer-highlight-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .withdrawal-optimizer-panel .optimizer-highlight-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 

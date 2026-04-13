@@ -112,6 +112,89 @@ function buildNote(label, value) {
     return { label, value };
 }
 
+function findBridgeResults(results = [], retireAge = null, socialSecurityClaimAge = null) {
+    if (!Number.isFinite(retireAge) || !Number.isFinite(socialSecurityClaimAge)) {
+        return [];
+    }
+
+    return (results || []).filter(result => {
+        const age = result?.age ?? null;
+
+        return (
+            Number.isFinite(age) &&
+            age >= retireAge &&
+            age < socialSecurityClaimAge
+        );
+    });
+}
+
+function getBridgeNeedTotals(bridgeResults = []) {
+    return bridgeResults.reduce((totals, result) => {
+        const expenses = result?.expenses || 0;
+        const income = result?.income || 0;
+        const gap = Math.max(0, expenses - income);
+
+        return {
+            totalNeed: totals.totalNeed + expenses,
+            coveredIncome: totals.coveredIncome + income,
+            cumulativeGap: totals.cumulativeGap + gap
+        };
+    }, {
+        totalNeed: 0,
+        coveredIncome: 0,
+        cumulativeGap: 0
+    });
+}
+
+function buildBridgeFundingEntry(title, rationale, amount = 0) {
+    return {
+        title,
+        rationale,
+        amount
+    };
+}
+
+function buildBridgePressureLabel({ cumulativeGap = 0, bridgeYears = 0, accessibleBridgeBalance = 0 }) {
+    if (bridgeYears <= 0 || cumulativeGap <= 0) {
+        return "Low";
+    }
+
+    const coverageRatio =
+        accessibleBridgeBalance / Math.max(cumulativeGap, 1);
+
+    if (coverageRatio < 0.75 || bridgeYears >= 8) {
+        return "High";
+    }
+
+    if (coverageRatio < 1.35 || bridgeYears >= 4) {
+        return "Moderate";
+    }
+
+    return "Low";
+}
+
+function pickPrimaryBridgeSource({
+    liquidReserve = 0,
+    taxableBrokerage = 0,
+    publicSafetyException = 0,
+    taxDeferred457 = 0,
+    roth = 0,
+    taxDeferred = 0
+}) {
+    const ranked = [
+        { label: "Checking / savings reserve", amount: liquidReserve },
+        { label: "Taxable brokerage", amount: taxableBrokerage },
+        { label: "Public-safety exception dollars", amount: publicSafetyException },
+        { label: "457(b) balance", amount: taxDeferred457 },
+        { label: "Roth reserve", amount: roth },
+        { label: "Tax-deferred balances", amount: taxDeferred }
+    ].sort((left, right) => right.amount - left.amount);
+
+    return ranked[0]?.amount > 0
+        ? ranked[0].label
+        : "No obvious bridge funding source";
+}
+
 export function buildWithdrawalStrategyOptimization({
     simulationState = {},
     projection = null
@@ -138,6 +221,10 @@ export function buildWithdrawalStrategyOptimization({
         socialSecurityClaimAge > retireAge
             ? socialSecurityClaimAge - retireAge
             : 0;
+    const bridgeResults =
+        findBridgeResults(results, retireAge, socialSecurityClaimAge);
+    const bridgeNeedTotals =
+        getBridgeNeedTotals(bridgeResults);
 
     const liquidReserveAccounts =
         incomeSources.filter(isLiquidReserve);
@@ -157,9 +244,26 @@ export function buildWithdrawalStrategyOptimization({
         roth: sumBalances(rothAccounts),
         taxDeferred: sumBalances(taxDeferredAccounts),
         publicSafetyException: sumBalances(publicSafetyExceptionAccounts),
+        taxDeferred457: sumBalances(
+            taxDeferredAccounts.filter(source => source?.accountType === "457b")
+        ),
         totalPortfolio: totalPortfolio(retirementYearResult)
     };
+    const accessibleBridgeBalance =
+        accountBalances.liquidReserve +
+        accountBalances.taxableBrokerage +
+        accountBalances.publicSafetyException +
+        accountBalances.taxDeferred457;
+    const bridgePressure =
+        buildBridgePressureLabel({
+            cumulativeGap: bridgeNeedTotals.cumulativeGap,
+            bridgeYears,
+            accessibleBridgeBalance
+        });
+    const primaryBridgeSource =
+        pickPrimaryBridgeSource(accountBalances);
     const sequence = [];
+    const bridgePlan = [];
     const notes = [];
 
     if (accountBalances.totalPortfolio <= 0) {
@@ -168,16 +272,27 @@ export function buildWithdrawalStrategyOptimization({
             summary:
                 "The current plan does not have portfolio balances available at retirement, so there is no withdrawal sequence to optimize yet.",
             sequence: [],
+            bridgePlan: [],
             notes: [],
             highlights: {
                 bridgeYears,
                 annualGap,
-                taxDeferredBalance: accountBalances.taxDeferred
+                taxDeferredBalance: accountBalances.taxDeferred,
+                cumulativeBridgeGap: bridgeNeedTotals.cumulativeGap,
+                primaryBridgeSource,
+                bridgePressure
             }
         };
     }
 
     if (bridgeYears > 0 && accountBalances.liquidReserve > 0) {
+        bridgePlan.push(
+            buildBridgeFundingEntry(
+                "Spend cash reserves first",
+                `Use about ${formatCurrency(accountBalances.liquidReserve)} of checking, savings, or cash-like reserves before pulling on more strategic accounts.`,
+                accountBalances.liquidReserve
+            )
+        );
         sequence.push(
             buildSequenceEntry(
                 "Use checking and savings reserves for the first bridge years",
@@ -187,6 +302,13 @@ export function buildWithdrawalStrategyOptimization({
     }
 
     if (bridgeYears > 0 && accountBalances.taxableBrokerage > 0) {
+        bridgePlan.push(
+            buildBridgeFundingEntry(
+                "Use taxable brokerage next",
+                `About ${formatCurrency(accountBalances.taxableBrokerage)} is available in taxable brokerage, which is usually the next-cleanest source after cash reserves during the bridge window.`,
+                accountBalances.taxableBrokerage
+            )
+        );
         sequence.push(
             buildSequenceEntry(
                 "Use taxable brokerage before Roth whenever possible",
@@ -196,6 +318,13 @@ export function buildWithdrawalStrategyOptimization({
     }
 
     if (bridgeYears > 0 && accountBalances.publicSafetyException > 0) {
+        bridgePlan.push(
+            buildBridgeFundingEntry(
+                "Use penalty-free qualified-plan dollars after age 50",
+                `About ${formatCurrency(accountBalances.publicSafetyException)} appears eligible under the public-safety age-50 exception, which can reduce bridge friction before age 59 1/2.`,
+                accountBalances.publicSafetyException
+            )
+        );
         sequence.push(
             buildSequenceEntry(
                 "Lean on penalty-free public-safety qualified plan dollars after age 50",
@@ -203,11 +332,16 @@ export function buildWithdrawalStrategyOptimization({
             )
         );
     } else if (bridgeYears > 0) {
-        const balance457b = sumBalances(
-            taxDeferredAccounts.filter(source => source?.accountType === "457b")
-        );
+        const balance457b = accountBalances.taxDeferred457;
 
         if (balance457b > 0) {
+            bridgePlan.push(
+                buildBridgeFundingEntry(
+                    "Prioritize 457(b) withdrawals in the bridge",
+                    `About ${formatCurrency(balance457b)} sits in 457(b) dollars, which are usually the cleanest tax-deferred bridge source because they avoid the standard early-withdrawal penalty.`,
+                    balance457b
+                )
+            );
             sequence.push(
                 buildSequenceEntry(
                     "Prioritize 457(b) dollars during the bridge window",
@@ -235,6 +369,16 @@ export function buildWithdrawalStrategyOptimization({
         );
     }
 
+    if (bridgeYears > 0 && !bridgePlan.length) {
+        bridgePlan.push(
+            buildBridgeFundingEntry(
+                "Bridge funding needs a custom manual plan",
+                "The current account mix does not show an obvious low-friction bridge source, so this decision likely needs a more intentional tradeoff between current cash flow, penalties, taxes, and preserving later flexibility.",
+                0
+            )
+        );
+    }
+
     if (!sequence.length) {
         sequence.push(
             buildSequenceEntry(
@@ -249,6 +393,26 @@ export function buildWithdrawalStrategyOptimization({
             buildNote(
                 "Bridge Window",
                 `${bridgeYears} year${bridgeYears === 1 ? "" : "s"} until Social Security at age ${socialSecurityClaimAge}`
+            )
+        );
+        notes.push(
+            buildNote(
+                "Cumulative Bridge Gap",
+                bridgeNeedTotals.cumulativeGap > 0
+                    ? `${formatCurrency(bridgeNeedTotals.cumulativeGap)} of uncovered spending before Social Security begins`
+                    : "Bridge years appear covered before Social Security begins"
+            )
+        );
+        notes.push(
+            buildNote(
+                "Primary Bridge Source",
+                primaryBridgeSource
+            )
+        );
+        notes.push(
+            buildNote(
+                "Bridge Pressure",
+                `${bridgePressure} pressure based on bridge length and accessible bridge assets`
             )
         );
     }
@@ -282,18 +446,22 @@ export function buildWithdrawalStrategyOptimization({
 
     const summary =
         annualGap > 0
-            ? `The first retirement year shows about ${formatCurrency(annualGap)} of spending pressure, so withdrawal order matters. The optimizer focuses on the ${bridgeYears > 0 ? `${bridgeYears}-year bridge to Social Security, ` : ""}reducing penalty risk, and keeping Roth flexibility for later years.`
-            : `Current retirement-year income appears to cover planned spending, so the optimizer focuses less on plugging an immediate gap and more on tax order, bridge-year flexibility, and preserving Roth capacity for later years.`;
+            ? `The first retirement year shows about ${formatCurrency(annualGap)} of spending pressure, so withdrawal order matters. ${bridgeYears > 0 ? `This plan also needs to carry a ${bridgeYears}-year bridge to Social Security with ${bridgePressure.toLowerCase()} bridge pressure, so the planner focuses on cumulative bridge funding first, then tax order and Roth preservation.` : "The planner focuses on reducing penalty risk and preserving Roth flexibility for later years."}`
+            : `Current retirement-year income appears to cover planned spending, so the optimizer focuses less on plugging an immediate gap and more on ${bridgeYears > 0 ? `managing the ${bridgeYears}-year bridge to Social Security with ${bridgePressure.toLowerCase()} pressure, ` : ""}tax order, and preserving Roth capacity for later years.`;
 
     return {
         headline: "Suggested withdrawal order for this plan",
         summary,
         sequence,
+        bridgePlan,
         notes,
         highlights: {
             bridgeYears,
             annualGap,
-            taxDeferredBalance: accountBalances.taxDeferred
+            taxDeferredBalance: accountBalances.taxDeferred,
+            cumulativeBridgeGap: bridgeNeedTotals.cumulativeGap,
+            primaryBridgeSource,
+            bridgePressure
         }
     };
 }

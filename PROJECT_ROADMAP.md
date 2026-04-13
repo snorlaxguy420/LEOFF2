@@ -181,6 +181,7 @@ Completed:
 
 Remaining:
 - Optional true one-click PDF generation beyond the browser print-to-PDF flow
+- Add a softer printable `spouse conversation` summary that translates the plan into a cleaner household-discussion format instead of only a technical dashboard/professional-style report
 
 ### Phase 9 - Accounts (Premium Feature)
 Status: In progress
@@ -206,6 +207,9 @@ Completed / In progress:
 - Premium custom stress testing V1 now exists in the simulator and dashboard flow, allowing premium members to persist harsher inflation, healthcare, portfolio-floor, and early-recession assumptions into `workspaceState` and apply them to Monte Carlo Plus runs in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [core/stateManager.js](/D:/LEOFF%202/core/stateManager.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 - Premium saved-scenario comparison now upgrades `My Scenarios` from a plain assumptions snapshot to a richer side-by-side planning compare view for premium accounts, showing readiness, retirement-year income/margin, depletion timing, and key strategy setup details while keeping the lighter snapshot compare available on free accounts in [analysis/scenarioComparisonSummary.js](/D:/LEOFF%202/analysis/scenarioComparisonSummary.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
 - A first-pass premium withdrawal strategy optimizer now exists on the dashboard, turning the current account mix into personalized withdrawal-order, bridge-year, RMD, and Roth-preservation guidance for premium members in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- The premium withdrawal strategy area now includes a real bridge-year funding planner, showing the cumulative bridge gap before Social Security begins, the cleanest bridge funding source, bridge-pressure signaling, and step-by-step bridge funding phases for the current plan in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- Premium custom stress testing now includes named recession-style stress packs in the simulator, letting premium members quickly apply presets like `Early Retirement Recession`, `Sticky Inflation Decade`, `Weak First 10 Years`, or `Healthcare Cost Shock` without hand-tuning every Monte Carlo stress input in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
+- Premium saved-scenario comparison now includes a first-pass decision scoreboard that quickly highlights which compared scenario leads on readiness, retirement margin, downside durability, and net worth at retirement before the user reads the full side-by-side card grid in [analysis/scenarioComparisonSummary.js](/D:/LEOFF%202/analysis/scenarioComparisonSummary.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
 - A first-pass premium estate projection now exists on the dashboard, showing deterministic expected net worth for every projected year of life plus estate-planning prompts around beneficiaries, real-estate transfer planning, household coordination, and when to seek professional help in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - PostgreSQL migration groundwork now exists in the backend through a storage-adapter layer, PostgreSQL schema file, JSON-to-PostgreSQL import script, and backend config support in [backend/src/lib/storage/index.js](/D:/LEOFF%202/backend/src/lib/storage/index.js), [backend/src/lib/storage/postgresStore.js](/D:/LEOFF%202/backend/src/lib/storage/postgresStore.js), [backend/src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql), and [backend/src/migrateJsonStoreToPostgres.js](/D:/LEOFF%202/backend/src/migrateJsonStoreToPostgres.js)
 - The live Lightsail backend has now been migrated from the temporary JSON store to PostgreSQL, with production smoke-test coverage for auth and plan CRUD plus rollback backups of both the legacy `store.json` and the PostgreSQL database
@@ -222,8 +226,11 @@ Remaining:
 - Add billing and payment collection for the first paid offer, starting with one-time checkout for the `LEOFF Decision Pack` before recurring subscriptions
 - Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
 - Continue premium strategy optimization beyond the current withdrawal-order V1, including Social Security timing guidance, deeper bridge-year funding suggestions, and stronger tax-aware income planning
+- Add a premium survivor-option optimizer that goes beyond raw estimator outputs and recommends the strongest fit among `none`, `50%`, `66.67%`, and `100%` options based on household income durability
 - Continue premium estate-planning / estate-advising beyond the current estate-projection V1, including deeper transfer, beneficiary, and professional-review support
 - Add premium advanced printable reports and cleaner export packages for spouse, household, or professional planning discussions, since those help make the paid `Decision Pack` feel tangible
+- Add shareable read-only plan links so users can send a private view of a scenario to a spouse, advisor, attorney, or trusted collaborator without handing over full account access
+- Add major life-event presets inside the planner and `My Scenarios` flow, such as `work one more year`, `pay off mortgage`, `healthcare costs jump`, `buy a second home`, or `spouse retires earlier`, so users can generate high-value comparison scenarios faster
 - Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together
 - Add premium tax-detail views with stronger year-by-year taxable-income and withdrawal-impact visibility
 - Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
@@ -256,6 +263,7 @@ Planned:
 - Page-level keyword targeting beyond the current article library
 - Internal linking strategy expansion across the full site
 - Additional content support for calculator and article pages
+- Build a trusted assumptions library that explains core model defaults and methodology around inflation, return assumptions, Social Security handling, pension COLA treatment, and other planning assumptions in one transparent public reference
 
 ### Phase 11 - Premium Modeling
 Status: In progress
@@ -276,6 +284,7 @@ Completed / In progress:
 
 Remaining:
 - Scenario comparison
+- Add a retirement readiness timeline that shows how the readiness score evolves by year or retirement age instead of only showing a single snapshot score for the current recommendation
 - Continue hardening Monte Carlo assumptions, presentation, and trust language for live beta use
 - Consider adding explicit recession/regime clustering beyond the current independent year-by-year shocks
 

@@ -727,6 +727,45 @@ line-height:1.5;
 color:rgba(42,42,42,.78);
 }
 
+.account-comparison-scoreboard{
+display:grid;
+grid-template-columns:repeat(2, minmax(0, 1fr));
+gap:10px;
+margin-top:12px;
+}
+
+.account-comparison-score-item{
+padding:12px 14px;
+border-radius:12px;
+background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(240,245,242,.9));
+border:1px solid rgba(31,77,58,.14);
+}
+
+.account-comparison-score-label{
+display:block;
+font-size:11px;
+font-weight:800;
+letter-spacing:.08em;
+text-transform:uppercase;
+color:rgba(31,77,58,.72);
+}
+
+.account-comparison-score-name{
+display:block;
+margin-top:6px;
+font-size:15px;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.account-comparison-score-value{
+display:block;
+margin-top:4px;
+font-size:13px;
+line-height:1.5;
+color:rgba(42,42,42,.76);
+}
+
 .account-comparison-premium-note{
 margin-bottom:12px;
 padding:12px 14px;
@@ -1079,6 +1118,18 @@ font-weight:700;
 color:var(--pnw-navy);
 }
 
+.premium-stress-preset{
+display:block;
+margin-top:14px;
+font-weight:700;
+color:var(--pnw-navy);
+}
+
+.premium-stress-preset select{
+margin-top:8px;
+width:100%;
+}
+
 .premium-stress-grid{
 margin-top:16px;
 }
@@ -1417,6 +1468,10 @@ grid-template-columns:1fr;
 }
 
 body.mobile-simulator .account-comparison-grid{
+grid-template-columns:1fr;
+}
+
+body.mobile-simulator .account-comparison-scoreboard{
 grid-template-columns:1fr;
 }
 

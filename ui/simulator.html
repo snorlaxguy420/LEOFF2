@@ -370,6 +370,17 @@ Sign in with a premium account to define harsher Monte Carlo assumptions for inf
 Enable custom premium stress profile
 </label>
 
+<label class="premium-stress-preset">
+Stress Pack
+<select id="premiumStressPreset">
+<option value="custom">Custom</option>
+<option value="early_recession">Early Retirement Recession</option>
+<option value="sticky_inflation">Sticky Inflation Decade</option>
+<option value="weak_first_decade">Weak First 10 Years</option>
+<option value="healthcare_shock">Healthcare Cost Shock</option>
+</select>
+</label>
+
 <div class="form-grid premium-stress-grid">
 
 <label>
@@ -519,6 +530,7 @@ Premium unlocks deeper saved-scenario comparison with readiness, retirement marg
 <div id="accountComparisonSummary" class="account-comparison-summary">
 Sign in to compare the current workspace with synced scenarios.
 </div>
+<div id="accountComparisonScoreboard" class="account-comparison-scoreboard" hidden></div>
 <div class="account-comparison-actions">
 <button id="clearScenarioComparisonBtn" type="button" class="secondary-btn">Clear Comparison</button>
 </div>

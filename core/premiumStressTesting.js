@@ -48,6 +48,7 @@ function normalizePositiveInteger(value, fallback = 0, max = 10) {
 
 export const DEFAULT_PREMIUM_STRESS_TESTING = Object.freeze({
     enabled: false,
+    preset: "custom",
     goodsServicesInflationTargetRate: null,
     housingInflationTargetRate: null,
     healthcareInflationTargetRate: null,
@@ -56,11 +57,68 @@ export const DEFAULT_PREMIUM_STRESS_TESTING = Object.freeze({
     earlyRetirementShockRate: null
 });
 
+export const PREMIUM_STRESS_PRESETS = Object.freeze({
+    custom: {
+        label: "Custom"
+    },
+    early_recession: {
+        label: "Early Retirement Recession",
+        goodsServicesInflationTargetRate: 0.045,
+        housingInflationTargetRate: 0.04,
+        healthcareInflationTargetRate: 0.075,
+        portfolioDownsideFloorRate: -0.32,
+        earlyRetirementShockYears: 3,
+        earlyRetirementShockRate: -0.18
+    },
+    sticky_inflation: {
+        label: "Sticky Inflation Decade",
+        goodsServicesInflationTargetRate: 0.055,
+        housingInflationTargetRate: 0.06,
+        healthcareInflationTargetRate: 0.085,
+        portfolioDownsideFloorRate: -0.22,
+        earlyRetirementShockYears: 2,
+        earlyRetirementShockRate: -0.08
+    },
+    weak_first_decade: {
+        label: "Weak First 10 Years",
+        goodsServicesInflationTargetRate: 0.042,
+        housingInflationTargetRate: 0.04,
+        healthcareInflationTargetRate: 0.072,
+        portfolioDownsideFloorRate: -0.26,
+        earlyRetirementShockYears: 5,
+        earlyRetirementShockRate: -0.10
+    },
+    healthcare_shock: {
+        label: "Healthcare Cost Shock",
+        goodsServicesInflationTargetRate: 0.04,
+        housingInflationTargetRate: 0.038,
+        healthcareInflationTargetRate: 0.11,
+        portfolioDownsideFloorRate: -0.24,
+        earlyRetirementShockYears: 2,
+        earlyRetirementShockRate: -0.09
+    }
+});
+
+function normalizePremiumStressPreset(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+
+    return PREMIUM_STRESS_PRESETS[normalized]
+        ? normalized
+        : "custom";
+}
+
+export function getPremiumStressPresetLabel(value) {
+    const presetKey = normalizePremiumStressPreset(value);
+    return PREMIUM_STRESS_PRESETS[presetKey]?.label || "Custom";
+}
+
 export function normalizePremiumStressTesting(settings = {}) {
     const nextSettings = settings || {};
+    const preset = normalizePremiumStressPreset(nextSettings.preset);
 
     return {
         enabled: Boolean(nextSettings.enabled),
+        preset,
         goodsServicesInflationTargetRate: normalizeRate(
             nextSettings.goodsServicesInflationTargetRate,
             { min: 0, max: 0.15 }
@@ -87,6 +145,17 @@ export function normalizePremiumStressTesting(settings = {}) {
             { min: -0.6, max: 0 }
         )
     };
+}
+
+export function applyPremiumStressPreset(settings = {}, preset = "custom") {
+    const presetKey = normalizePremiumStressPreset(preset);
+    const presetDefinition = PREMIUM_STRESS_PRESETS[presetKey] || PREMIUM_STRESS_PRESETS.custom;
+
+    return normalizePremiumStressTesting({
+        ...settings,
+        ...presetDefinition,
+        preset: presetKey
+    });
 }
 
 export function buildPremiumStressTestMonteCarloConfig({

@@ -1,6 +1,9 @@
 import { runProjection } from "../core/projectionEngine.js";
 import { simulationStateToInputs } from "../core/simulationState.js";
-import { normalizePremiumStressTesting } from "../core/premiumStressTesting.js";
+import {
+    getPremiumStressPresetLabel,
+    normalizePremiumStressTesting
+} from "../core/premiumStressTesting.js";
 import { calculateReadinessScore } from "./readinessScore.js";
 
 function formatCurrency(value) {
@@ -196,6 +199,15 @@ function buildPremiumSections({
         normalizePremiumStressTesting(
             workspaceState?.premiumStressTesting || {}
         );
+    const stressProfileLabel =
+        premiumStressTesting.enabled
+            ? (
+                premiumStressTesting.preset &&
+                premiumStressTesting.preset !== "custom"
+                    ? `${getPremiumStressPresetLabel(premiumStressTesting.preset)} pack`
+                    : "Custom premium stress"
+            )
+            : "Standard";
     const retirementMargin =
         (retirementYearResult?.income || 0) -
         (retirementYearResult?.expenses || annualExpenses || 0);
@@ -269,14 +281,113 @@ function buildPremiumSections({
                 },
                 {
                     label: "Stress Profile",
-                    value:
-                        premiumStressTesting.enabled
-                            ? "Custom premium stress"
-                            : "Standard"
+                    value: stressProfileLabel
                 }
             ]
         }
     ];
+}
+
+function buildPremiumComparisonSnapshot({
+    readiness,
+    retirementYearResult,
+    annualExpenses,
+    failureAge,
+    assetDepletionAge
+}) {
+    return {
+        readinessScore: readiness?.score ?? 0,
+        retirementMargin:
+            (retirementYearResult?.income || 0) -
+            (retirementYearResult?.expenses || annualExpenses || 0),
+        failureAge,
+        assetDepletionAge,
+        retirementNetWorth: retirementYearResult?.netWorth || 0
+    };
+}
+
+function formatScoreboardAge(value) {
+    return Number.isFinite(value)
+        ? `Age ${value}`
+        : "No failure seen";
+}
+
+function pickScoreboardWinner(cards = [], {
+    getComparableValue,
+    getDisplayValue
+}) {
+    const rankedCards = cards
+        .filter(card => card?.comparisonSnapshot)
+        .map(card => ({
+            card,
+            comparableValue: getComparableValue(card.comparisonSnapshot)
+        }))
+        .sort((left, right) => right.comparableValue - left.comparableValue);
+
+    if (!rankedCards.length) {
+        return null;
+    }
+
+    const winner = rankedCards[0].card;
+
+    return {
+        winnerName: winner.name,
+        value: getDisplayValue(winner.comparisonSnapshot)
+    };
+}
+
+export function buildScenarioComparisonScoreboard(cards = []) {
+    const premiumCards =
+        (cards || []).filter(card =>
+            card?.premium &&
+            card?.comparisonSnapshot
+        );
+
+    if (premiumCards.length < 2) {
+        return [];
+    }
+
+    const scoreboards = [
+        {
+            label: "Best Readiness",
+            winner: pickScoreboardWinner(premiumCards, {
+                getComparableValue: snapshot => snapshot.readinessScore ?? -Infinity,
+                getDisplayValue: snapshot => `${snapshot.readinessScore} / 100`
+            })
+        },
+        {
+            label: "Best Retirement Margin",
+            winner: pickScoreboardWinner(premiumCards, {
+                getComparableValue: snapshot => snapshot.retirementMargin ?? -Infinity,
+                getDisplayValue: snapshot => formatSignedCurrency(snapshot.retirementMargin)
+            })
+        },
+        {
+            label: "Strongest Downside Durability",
+            winner: pickScoreboardWinner(premiumCards, {
+                getComparableValue: snapshot =>
+                    Number.isFinite(snapshot.failureAge)
+                        ? snapshot.failureAge
+                        : Number.POSITIVE_INFINITY,
+                getDisplayValue: snapshot => formatScoreboardAge(snapshot.failureAge)
+            })
+        },
+        {
+            label: "Best Net Worth At Retirement",
+            winner: pickScoreboardWinner(premiumCards, {
+                getComparableValue: snapshot => snapshot.retirementNetWorth ?? -Infinity,
+                getDisplayValue: snapshot => formatCurrency(snapshot.retirementNetWorth)
+            })
+        }
+    ];
+
+    return scoreboards
+        .filter(entry => entry?.winner)
+        .map(entry => ({
+            label: entry.label,
+            winnerName: entry.winner.winnerName,
+            value: entry.winner.value
+        }));
 }
 
 export function buildScenarioComparisonCard({
@@ -342,6 +453,13 @@ export function buildScenarioComparisonCard({
         isCurrentWorkspace,
         updatedAt,
         premium: true,
+        comparisonSnapshot: buildPremiumComparisonSnapshot({
+            readiness,
+            retirementYearResult,
+            annualExpenses,
+            failureAge,
+            assetDepletionAge
+        }),
         sections: buildPremiumSections({
             simulationState: safeSimulationState,
             workspaceState: safeWorkspaceState,

@@ -214,14 +214,19 @@ Completed / In progress:
 
 Remaining:
 - Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
-- Add premium billing and payment collection, including checkout/subscription management for `$1.49/month` or `$14.99/year` premium accounts
+- Replace the old low-price subscription-first plan with a clearer staged monetization path:
+  - launch a one-time `LEOFF Decision Pack` first, likely in the `$29-$49` range, bundling Monte Carlo Plus, premium scenario comparison, withdrawal strategy guidance, estate projection, and stronger export/report output around real retirement decisions
+  - keep the core planner, account creation, saved scenarios, and basic dashboard/report flow free so trust and product adoption stay high
+  - only add recurring billing after there is clear ongoing value from tax-detail views, household planning, repeated plan updates, and broader optimization features
+- Add billing and payment collection for the first paid offer, starting with one-time checkout for the `LEOFF Decision Pack` before recurring subscriptions
 - Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
 - Continue premium strategy optimization beyond the current withdrawal-order V1, including Social Security timing guidance, deeper bridge-year funding suggestions, and stronger tax-aware income planning
 - Continue premium estate-planning / estate-advising beyond the current estate-projection V1, including deeper transfer, beneficiary, and professional-review support
-- Add premium advanced printable reports and cleaner export packages for spouse, household, or professional planning discussions
+- Add premium advanced printable reports and cleaner export packages for spouse, household, or professional planning discussions, since those help make the paid `Decision Pack` feel tangible
 - Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together
 - Add premium tax-detail views with stronger year-by-year taxable-income and withdrawal-impact visibility
 - Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
+- Revisit annual/monthly subscription pricing only after the premium offer becomes an ongoing planning product instead of a one-time decision-support purchase
 
 ### Phase 10 - Search Engine Optimization
 Status: In progress
@@ -266,9 +271,9 @@ Completed / In progress:
 - Premium custom stress testing now lets Monte Carlo Plus runs apply persisted harsher inflation, healthcare, downside-floor, and early-recession assumptions from the simulator workspace, creating a clearer member-facing downside-analysis upgrade in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
 - A first-pass withdrawal strategy optimizer now exists for premium dashboards, turning the account mix into suggested withdrawal order, bridge-year funding, RMD watch, and Roth-preservation guidance in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - A first-pass estate projection now exists for premium dashboards, showing expected net worth by projected year of life and wiring in estate-planning prompts around beneficiaries, property transfer, household coordination, and professional review in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
+- The premium Social Security optimizer now has a stronger V2 decision layer, comparing age `62`, full retirement age, and age `70` against the current plan while explaining bridge strain, portfolio draw before claiming, break-even crossovers, monthly-benefit lift, and the clearest best-fit claiming age for the scenario in [analysis/socialSecurityOptimizer.js](/D:/LEOFF%202/analysis/socialSecurityOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 
 Remaining:
-- Social Security optimizer
 - Scenario comparison
 - Continue hardening Monte Carlo assumptions, presentation, and trust language for live beta use
 - Consider adding explicit recession/regime clustering beyond the current independent year-by-year shocks
@@ -394,19 +399,20 @@ Completed:
 - Runtime secrets now load from a protected root-owned env file on the Lightsail host instead of raw systemd drop-ins
 - Root-owned daily backups now run through `leoff-api-backup.timer`, with `700` backup directories and `600` backup files
 - Backup artifacts are now encrypted at rest on the server using a separate root-only backup key, and older plaintext backup files have been converted
+- Lightsail automatic snapshots are now enabled for the production instance on a daily `4:00 AM Pacific` schedule, complementing the app-managed encrypted backup flow
 
 Deferred / To Revisit:
 - Minimize what gets persisted in `workspaceState`, with the explicit intent to avoid full names, spouse names, full birth dates, SSNs, and financial-account identifiers wherever they are not strictly necessary
 
 Next:
-1. Enable and verify Lightsail automatic snapshots, then run a documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
+1. Verify the first successful Lightsail automatic snapshot, then add a short documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
 2. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
 3. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.
 4. Add lightweight access/audit visibility for critical auth and account-management actions so suspicious login, reset, or admin-tier activity is easier to review.
 
 ## Immediate Next Steps
 
-1. Enable and verify Lightsail automatic snapshots, then run a documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
+1. Verify the first successful Lightsail automatic snapshot, then run and document the restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
 2. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default, with the explicit goal of avoiding full names, spouse names, full birth dates, SSNs, or financial-account identifiers where they are not strictly necessary.
 3. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
 4. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.

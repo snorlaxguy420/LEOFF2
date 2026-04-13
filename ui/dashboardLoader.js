@@ -7,6 +7,7 @@ import {
 } from "../analysis/retirementAnalysis.js";
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
 import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
+import { buildSocialSecurityOptimization } from "../analysis/socialSecurityOptimizer.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 import { StateManager } from "../core/stateManager.js";
 import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
@@ -276,6 +277,163 @@ function renderWithdrawalOptimizerSection({
                 <div class="optimizer-sequence-item">
                     <h3>No withdrawal sequence available yet</h3>
                     <p>Add retirement or liquid accounts to generate personalized withdrawal guidance.</p>
+                </div>
+            `;
+
+    notes.innerHTML =
+        optimization.notes.map(note => `
+            <div class="optimizer-note-card">
+                <span>${note.label}</span>
+                <strong>${note.value}</strong>
+            </div>
+        `).join("");
+}
+
+function renderSocialSecurityOptimizerSection({
+    simulationState
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "premium");
+    const headline =
+        document.getElementById("socialSecurityOptimizerHeadline");
+    const summary =
+        document.getElementById("socialSecurityOptimizerSummary");
+    const premiumNote =
+        document.getElementById("socialSecurityOptimizerPremiumNote");
+    const highlights =
+        document.getElementById("socialSecurityOptimizerHighlights");
+    const options =
+        document.getElementById("socialSecurityOptimizerOptions");
+    const notes =
+        document.getElementById("socialSecurityOptimizerNotes");
+
+    if (!headline || !summary || !premiumNote || !highlights || !options || !notes) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium Social Security claiming guidance";
+        summary.textContent =
+            "Premium compares age 62, full retirement age, and age 70 against the current plan so you can see which claiming age best fits the bridge years, portfolio pressure, and late-life income tradeoff.";
+        premiumNote.hidden = false;
+        premiumNote.textContent =
+            dashboardAccountContext?.user?.email
+                ? "This account is currently on the free tier. Upgrade to premium to unlock plan-aware Social Security claiming guidance."
+                : "Sign in with a premium account to unlock plan-aware Social Security claiming guidance.";
+        highlights.hidden = true;
+        options.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Premium optimizer preview</h3>
+                <p>See how claiming at 62, full retirement age, and 70 changes your bridge years, readiness, first deficit age, and late-life guaranteed income.</p>
+            </div>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    premiumNote.hidden = true;
+
+    const optimization =
+        buildSocialSecurityOptimization({
+            simulationState
+        });
+
+    headline.textContent = optimization.headline;
+    summary.textContent = optimization.summary;
+
+    if (!optimization.available) {
+        highlights.hidden = true;
+        options.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Social Security inputs need one more pass</h3>
+                <p>${optimization.summary}</p>
+            </div>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    highlights.hidden = false;
+    setElementText(
+        "socialSecurityOptimizerRecommendedAge",
+        optimization.highlights?.recommendedAge || "--"
+    );
+    setElementText(
+        "socialSecurityOptimizerMonthlyBenefit",
+        optimization.highlights?.recommendedMonthlyBenefit || "--"
+    );
+    setElementText(
+        "socialSecurityOptimizerCumulativeTo85",
+        optimization.highlights?.cumulativeTo85 || "--"
+    );
+    setElementText(
+        "socialSecurityOptimizerWhy",
+        optimization.highlights?.recommendationWhy || "--"
+    );
+
+    options.innerHTML =
+        optimization.options.length
+            ? optimization.options.map(option => `
+                <div class="optimizer-sequence-item">
+                    ${option.badge ? `<div class="social-security-option-badge">${option.badge}</div>` : ""}
+                    <h3>${option.title}</h3>
+                    <p>${option.narrative}</p>
+                    <div class="social-security-option-metrics">
+                        <div>
+                            <span>Best For</span>
+                            <strong>${option.bestFor}</strong>
+                        </div>
+                        <div>
+                            <span>Monthly Benefit</span>
+                            <strong>${option.monthlyBenefit}</strong>
+                        </div>
+                        <div>
+                            <span>Lift vs 62</span>
+                            <strong>${option.monthlyLiftVs62}</strong>
+                        </div>
+                        <div>
+                            <span>Bridge Years</span>
+                            <strong>${option.bridgeYears}</strong>
+                        </div>
+                        <div>
+                            <span>Bridge Strain</span>
+                            <strong>${option.bridgeStrain}</strong>
+                        </div>
+                        <div>
+                            <span>Portfolio Used Before Claim</span>
+                            <strong>${option.bridgePortfolioDraw}</strong>
+                        </div>
+                        <div>
+                            <span>Readiness</span>
+                            <strong>${option.readiness}</strong>
+                        </div>
+                        <div>
+                            <span>First Deficit Age</span>
+                            <strong>${option.firstDeficitAge}</strong>
+                        </div>
+                        <div>
+                            <span>Asset Depletion</span>
+                            <strong>${option.assetDepletionAge}</strong>
+                        </div>
+                        <div>
+                            <span>Social Security Through 85</span>
+                            <strong>${option.cumulativeTo85}</strong>
+                        </div>
+                        <div>
+                            <span>Claim Fit Score</span>
+                            <strong>${option.claimFitScore} / 100</strong>
+                        </div>
+                        <div>
+                            <span>Ending Net Worth</span>
+                            <strong>${option.endingNetWorth}</strong>
+                        </div>
+                    </div>
+                </div>
+            `).join("")
+            : `
+                <div class="optimizer-sequence-item">
+                    <h3>No claiming comparison available yet</h3>
+                    <p>Add birth year, a Social Security benefit estimate, and a retirement age to compare claiming choices.</p>
                 </div>
             `;
 
@@ -1016,6 +1174,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderWithdrawalOptimizerSection({
             simulationState: currentSimulationState,
             projection: currentProjection
+        });
+        renderSocialSecurityOptimizerSection({
+            simulationState: currentSimulationState
         });
         renderEstateProjectionSection({
             currentInputs,

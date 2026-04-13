@@ -74,6 +74,7 @@ import {
 } from "../core/premiumStressTesting.js";
 import { buildScenarioComparisonCard } from "../analysis/scenarioComparisonSummary.js";
 import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
+import { buildSocialSecurityOptimization } from "../analysis/socialSecurityOptimizer.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 
 function assert(condition, message) {
@@ -788,6 +789,180 @@ function testEstateProjectionSummary() {
     );
 
     logResult("Estate projection summary passed");
+}
+
+function testSocialSecurityOptimization() {
+    const delayFriendlyState = buildSimulationState({
+        inputs: {
+            profile: {
+                currentAge: 58
+            },
+            retireAge: 62,
+            lifeExpectancy: 92,
+            pension: {
+                serviceYears: 28,
+                finalAverageSalary: 132000,
+                currentAnnualPay: 126000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "none"
+            },
+            socialSecurity: {
+                birthYear: 1964,
+                claimAge: 67,
+                cola: 0.02,
+                fraBenefit: 2800
+            },
+            expenses: {
+                monthly: 5200,
+                annual: 62400,
+                housing: 1500,
+                groceries: 700,
+                bills: 450,
+                auto: 450,
+                healthcare: 500,
+                insurance: 250,
+                other: 1350
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.03,
+                housingInflationRate: 0.032,
+                healthcareInflationRate: 0.05
+            },
+            toggles: {
+                showReal: false,
+                marketFirst: false
+            }
+        },
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "457 Deferred Comp",
+                balance: 240000,
+                growthRate: 0.06,
+                startAge: 62,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.03,
+                taxable: true,
+                accountType: "457b",
+                penaltyExceptionType: "standard"
+            }
+        ]
+    });
+    const delayFriendlyOptimization =
+        buildSocialSecurityOptimization({
+            simulationState: delayFriendlyState
+        });
+
+    assert(
+        delayFriendlyOptimization.available,
+        "Social Security optimizer should be available when benefit and birth-year inputs exist"
+    );
+    assert(
+        delayFriendlyOptimization.headline.includes("70"),
+        "Social Security optimizer should prefer age 70 when the plan can comfortably carry the bridge"
+    );
+    assert(
+        delayFriendlyOptimization.options.length === 3,
+        "Social Security optimizer should compare age 62, FRA, and 70"
+    );
+    assert(
+        delayFriendlyOptimization.highlights?.recommendationWhy?.length > 20,
+        "Social Security optimizer should explain why the recommended claiming age fits"
+    );
+    assert(
+        delayFriendlyOptimization.options.some(option =>
+            option.bestFor === "Late-life income protection" &&
+            option.monthlyLiftVs62.startsWith("+")
+        ),
+        "Social Security optimizer should surface an actionable best-for label and delayed-claim lift"
+    );
+
+    const bridgeSensitiveState = buildSimulationState({
+        inputs: {
+            profile: {
+                currentAge: 54
+            },
+            retireAge: 55,
+            lifeExpectancy: 90,
+            pension: {
+                serviceYears: 23,
+                finalAverageSalary: 94000,
+                currentAnnualPay: 91000,
+                cola: 0.02,
+                benefitEnhancement: "tiered_multiplier",
+                survivorOption: "none"
+            },
+            socialSecurity: {
+                birthYear: 1970,
+                claimAge: 67,
+                cola: 0.02,
+                fraBenefit: 2300
+            },
+            expenses: {
+                monthly: 7400,
+                annual: 88800,
+                housing: 2200,
+                groceries: 850,
+                bills: 550,
+                auto: 650,
+                healthcare: 700,
+                insurance: 350,
+                other: 2100
+            },
+            assumptions: {
+                inflationRate: 0.03,
+                goodsServicesInflationRate: 0.03,
+                housingInflationRate: 0.035,
+                healthcareInflationRate: 0.055
+            },
+            toggles: {
+                showReal: false,
+                marketFirst: false
+            }
+        },
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "457 Deferred Comp",
+                balance: 45000,
+                growthRate: 0.05,
+                startAge: 55,
+                withdrawalType: "percent",
+                withdrawal: null,
+                withdrawalRate: 0.04,
+                taxable: true,
+                accountType: "457b",
+                penaltyExceptionType: "standard"
+            }
+        ]
+    });
+    const bridgeSensitiveOptimization =
+        buildSocialSecurityOptimization({
+            simulationState: bridgeSensitiveState
+        });
+
+    assert(
+        !bridgeSensitiveOptimization.headline.includes("70"),
+        "Social Security optimizer should not prefer age 70 when bridge pressure is severe"
+    );
+    assert(
+        bridgeSensitiveOptimization.notes.some(note =>
+            note.label.includes("crossover")
+        ),
+        "Social Security optimizer should report crossover notes"
+    );
+    assert(
+        bridgeSensitiveOptimization.options.some(option =>
+            option.bridgeStrain === "High" ||
+            option.bridgeStrain === "Moderate"
+        ),
+        "Social Security optimizer should flag bridge strain for harder early-retirement claiming tradeoffs"
+    );
+
+    logResult("Social Security optimizer passed");
 }
 
 function testProjectionChartModes() {
@@ -3536,6 +3711,7 @@ async function runVerification() {
         testPortablePlanExportImport();
         testPremiumSavedScenarioComparisonCard();
         testWithdrawalStrategyOptimizer();
+        testSocialSecurityOptimization();
         testEstateProjectionSummary();
         testProjectionChartModes();
         testProjectionChartDatasets();

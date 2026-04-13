@@ -7,6 +7,7 @@ Initial backend scaffold for:
 - saved plan CRUD around the canonical `simulationState`
 - out-of-session password recovery via reset links
 - transactional account emails for registration and password recovery
+- user-configurable retirement check-in emails
 
 This first version still defaults to a local JSON file so the API contract can
 stabilize before a database cutover, but it now includes PostgreSQL migration
@@ -93,6 +94,29 @@ Recommended production scheduling:
 - use the same backend environment as the main API service
 - send to `leoffhelper@gmail.com` unless you later want a different recipient
 
+## Retirement check-in email job
+
+The backend now includes a scheduled retirement check-in script:
+
+```powershell
+cd backend
+npm run send-retirement-checkins
+```
+
+What it does:
+
+- checks each account's chosen retirement check-in frequency
+- supports `monthly`, `every_6_months`, `yearly`, or `never`
+- sends the reminder only when that account is actually due
+- includes links back to the planner, dashboard, and contact page
+- updates `lastRetirementCheckInSentAt` only after a real outbound send succeeds
+
+Recommended production scheduling:
+
+- run it once per day on the Lightsail server
+- use the same backend environment as the main API service
+- let each account's own setting decide whether that user receives an email on that run
+
 ## Notes
 
 - Passwords are hashed with Node's `scrypt`.
@@ -109,6 +133,7 @@ Recommended production scheduling:
   emails also fall back to server logging instead of blocking signup.
 - The daily signup summary job uses the same outbound email configuration and
   also falls back to server logging when email delivery is not configured.
+- Retirement check-in emails use the same outbound email configuration.
 - Plans store the canonical `simulationState` and can also persist full
   `workspaceState` so asset/debt module cards restore cleanly.
 - The storage layer is intentionally isolated in `src/lib/store.js` so file and

@@ -89,6 +89,10 @@ function sanitizeUser(user) {
         id: user.id,
         email: user.email,
         displayName: user.displayName || "",
+        retirementCheckInFrequency:
+            normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),
+        lastRetirementCheckInSentAt:
+            normalizeIsoDate(user.lastRetirementCheckInSentAt),
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
     };
@@ -114,6 +118,28 @@ function normalizeIsoDate(value) {
     return Number.isNaN(parsed.getTime())
         ? null
         : parsed.toISOString();
+}
+
+function normalizeRetirementCheckInFrequency(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+
+    if (normalized === "monthly") {
+        return "monthly";
+    }
+
+    if (
+        normalized === "every_6_months" ||
+        normalized === "every-6-months" ||
+        normalized === "semiannual"
+    ) {
+        return "every_6_months";
+    }
+
+    if (normalized === "yearly" || normalized === "annual") {
+        return "yearly";
+    }
+
+    return "never";
 }
 
 function buildUserEntitlements(user = {}) {
@@ -329,6 +355,8 @@ async function handleRegister(req, res) {
         email,
         passwordHash: passwordRecord.hash,
         passwordSalt: passwordRecord.salt,
+        retirementCheckInFrequency: "never",
+        lastRetirementCheckInSentAt: null,
         planTier: "free",
         premiumSource: null,
         premiumGrantedAt: null,
@@ -529,6 +557,12 @@ async function handleUpdateMe(req, res) {
 
     const body = await readJsonBody(req);
     const nextDisplayName = String(body.displayName || "").trim();
+    const nextRetirementCheckInFrequency =
+        body.retirementCheckInFrequency !== undefined
+            ? normalizeRetirementCheckInFrequency(
+                body.retirementCheckInFrequency
+            )
+            : undefined;
     let updatedUser = null;
 
     if (nextDisplayName.length > 80) {
@@ -543,9 +577,28 @@ async function handleUpdateMe(req, res) {
                 return user;
             }
 
+            const normalizedExistingFrequency =
+                normalizeRetirementCheckInFrequency(
+                    user.retirementCheckInFrequency
+                );
+            const frequencyChanged =
+                nextRetirementCheckInFrequency !== undefined &&
+                nextRetirementCheckInFrequency !== normalizedExistingFrequency;
             updatedUser = {
                 ...user,
                 displayName: nextDisplayName,
+                ...(nextRetirementCheckInFrequency !== undefined
+                    ? {
+                        retirementCheckInFrequency:
+                            nextRetirementCheckInFrequency
+                    }
+                    : {}),
+                ...(frequencyChanged && nextRetirementCheckInFrequency !== "never"
+                    ? {
+                        lastRetirementCheckInSentAt:
+                            new Date().toISOString()
+                    }
+                    : {}),
                 updatedAt: new Date().toISOString()
             };
 

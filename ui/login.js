@@ -36,6 +36,12 @@ const VIEW_TITLE = {
 };
 
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
+const RETIREMENT_CHECK_IN_LABELS = {
+    never: "Never",
+    monthly: "Monthly",
+    every_6_months: "Every 6 Months",
+    yearly: "Every Year"
+};
 
 const state = {
     mode: "login",
@@ -83,6 +89,8 @@ const elements = {
     authenticatedCreatedAt: document.querySelector("[data-auth-created-at]"),
     authenticatedPlanTier: document.querySelector("[data-auth-plan-tier]"),
     authenticatedPremiumAccess: document.querySelector("[data-auth-premium-access]"),
+    authenticatedCheckInFrequency: document.querySelector("[data-auth-checkin-frequency]"),
+    authenticatedCheckInLastSent: document.querySelector("[data-auth-checkin-last-sent]"),
     sessionStatus: document.querySelector("[data-session-status]"),
     sessionExpiry: document.querySelector("[data-session-expiry]"),
     sessionRefreshButton: document.querySelector("[data-session-refresh]"),
@@ -90,6 +98,7 @@ const elements = {
     profileForm: document.querySelector("[data-profile-form]"),
     profileSubmit: document.querySelector("[data-profile-submit]"),
     displayNameInput: document.querySelector('[data-profile-form] input[name="displayName"]'),
+    retirementCheckInFrequencySelect: document.querySelector("[data-profile-checkin-frequency]"),
     passwordForm: document.querySelector("[data-password-form]"),
     passwordSubmit: document.querySelector("[data-password-submit]")
 };
@@ -173,6 +182,10 @@ function formatTimestamp(value) {
         hour: "numeric",
         minute: "2-digit"
     });
+}
+
+function formatRetirementCheckInFrequency(value) {
+    return RETIREMENT_CHECK_IN_LABELS[String(value || "").trim().toLowerCase()] || "Never";
 }
 
 function setStatus(message, tone = "neutral") {
@@ -319,6 +332,10 @@ function setProfilePending(pending) {
 
     if (elements.displayNameInput) {
         elements.displayNameInput.disabled = pending;
+    }
+
+    if (elements.retirementCheckInFrequencySelect) {
+        elements.retirementCheckInFrequencySelect.disabled = pending;
     }
 
     if (elements.profileSubmit) {
@@ -486,8 +503,29 @@ function renderAuthenticatedState(accountContext = null) {
             : "Unavailable";
     }
 
+    if (elements.authenticatedCheckInFrequency) {
+        elements.authenticatedCheckInFrequency.textContent = authenticated
+            ? formatRetirementCheckInFrequency(user?.retirementCheckInFrequency)
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedCheckInLastSent) {
+        elements.authenticatedCheckInLastSent.textContent = authenticated
+            ? (
+                user?.lastRetirementCheckInSentAt
+                    ? formatTimestamp(user.lastRetirementCheckInSentAt)
+                    : "Not sent yet"
+            )
+            : "Unavailable";
+    }
+
     if (elements.displayNameInput) {
         elements.displayNameInput.value = user?.displayName || "";
+    }
+
+    if (elements.retirementCheckInFrequencySelect) {
+        elements.retirementCheckInFrequencySelect.value =
+            String(user?.retirementCheckInFrequency || "never").trim().toLowerCase() || "never";
     }
 
     renderSessionInfo(session);
@@ -598,12 +636,17 @@ async function handleProfileSubmit(event) {
     }
 
     const displayName = elements.displayNameInput?.value?.trim() || "";
+    const retirementCheckInFrequency =
+        elements.retirementCheckInFrequencySelect?.value || "never";
 
     setProfilePending(true);
     setStatus("Saving account settings...", "neutral");
 
     try {
-        const accountContext = await updateAccountProfile({ displayName });
+        const accountContext = await updateAccountProfile({
+            displayName,
+            retirementCheckInFrequency
+        });
         renderAuthenticatedState(accountContext);
         setStatus("Account settings updated.", "success");
         broadcastAuthChange("profile", accountContext?.user || null);

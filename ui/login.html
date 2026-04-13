@@ -156,11 +156,22 @@ here while saved-plan syncing continues to expand.
 <div><strong>Member since:</strong> <span data-auth-created-at></span></div>
 <div><strong>Plan tier:</strong> <span data-auth-plan-tier>Free</span></div>
 <div><strong>Monte Carlo Plus:</strong> <span data-auth-premium-access>Not active</span></div>
+<div><strong>Check-in email frequency:</strong> <span data-auth-checkin-frequency>Never</span></div>
+<div><strong>Last check-in email:</strong> <span data-auth-checkin-last-sent>Not sent yet</span></div>
 </div>
 <form class="login-settings-form" data-profile-form>
 <label>
 Preferred Name
 <input type="text" name="displayName" placeholder="How your name should appear">
+</label>
+<label>
+Retirement Check-In Emails
+<select name="retirementCheckInFrequency" data-profile-checkin-frequency>
+<option value="never">Never</option>
+<option value="monthly">Monthly</option>
+<option value="every_6_months">Every 6 Months</option>
+<option value="yearly">Every Year</option>
+</select>
 </label>
 <button type="submit" class="login-submit" data-profile-submit>Save Settings</button>
 </form>

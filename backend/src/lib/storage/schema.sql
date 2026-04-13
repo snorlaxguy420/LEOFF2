@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
     display_name TEXT NOT NULL DEFAULT '',
+    retirement_check_in_frequency TEXT NOT NULL DEFAULT 'never',
+    last_retirement_check_in_sent_at TIMESTAMPTZ NULL,
     plan_tier TEXT NOT NULL DEFAULT 'free',
     premium_source TEXT NULL,
     premium_granted_at TIMESTAMPTZ NULL,
@@ -11,6 +13,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS retirement_check_in_frequency TEXT NOT NULL DEFAULT 'never';
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS last_retirement_check_in_sent_at TIMESTAMPTZ NULL;
 
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,

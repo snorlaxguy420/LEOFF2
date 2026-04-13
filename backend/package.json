@@ -10,6 +10,7 @@
     "db:init": "node ./src/initPostgresSchema.js",
     "migrate-json-store-to-postgres": "node ./src/migrateJsonStoreToPostgres.js",
     "send-daily-signup-summary": "node ./src/sendDailySignupSummary.js",
+    "send-retirement-checkins": "node ./src/sendRetirementCheckInEmails.js",
     "set-user-tier": "node ./src/setUserPlanTier.js"
   },
   "dependencies": {

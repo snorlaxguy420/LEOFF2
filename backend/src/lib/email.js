@@ -32,6 +32,14 @@ export function buildLoginUrl() {
     return buildAbsoluteUrl("/ui/login.html");
 }
 
+export function buildDashboardUrl() {
+    return buildAbsoluteUrl("/ui/retirementDashboard.html");
+}
+
+export function buildContactUrl() {
+    return buildAbsoluteUrl("/ui/contact.html");
+}
+
 async function sendConfiguredEmail({
     toEmails,
     subject,
@@ -234,6 +242,106 @@ function buildSignupSummaryHtml({
     `.trim();
 }
 
+function formatRetirementCheckInFrequencyLabel(frequency) {
+    switch (String(frequency || "").trim().toLowerCase()) {
+    case "monthly":
+        return "monthly";
+    case "every_6_months":
+        return "every 6 months";
+    case "yearly":
+        return "yearly";
+    default:
+        return "custom";
+    }
+}
+
+function buildRetirementCheckInText({
+    displayName,
+    simulatorUrl,
+    dashboardUrl,
+    contactUrl,
+    planCount,
+    latestPlanName,
+    frequency
+}) {
+    const name = displayName || "there";
+    const planLine =
+        planCount > 0
+            ? `You currently have ${planCount} saved scenario${planCount === 1 ? "" : "s"}${latestPlanName ? `, including "${latestPlanName}"` : ""}.`
+            : "You do not have any saved scenarios yet.";
+
+    return [
+        `Hi ${name},`,
+        "",
+        "This is your LEOFF Helper retirement check-in reminder.",
+        planLine,
+        `You asked to receive these reminders ${formatRetirementCheckInFrequencyLabel(frequency)}.`,
+        "",
+        "A good check-in usually means:",
+        "- updating salary, expenses, assets, and debt balances",
+        "- revisiting retirement age and Social Security timing",
+        "- opening saved scenarios to see whether your best-fit plan still holds up",
+        "",
+        `Open the planner: ${simulatorUrl}`,
+        `Open your dashboard: ${dashboardUrl}`,
+        `Need help or want to leave a note? ${contactUrl}`,
+        "",
+        `You can change or disable these emails any time in your account settings at ${buildLoginUrl()}.`
+    ].join("\n");
+}
+
+function buildRetirementCheckInHtml({
+    displayName,
+    simulatorUrl,
+    dashboardUrl,
+    contactUrl,
+    planCount,
+    latestPlanName,
+    frequency
+}) {
+    const name = escapeHtml(displayName || "there");
+    const safeSimulatorUrl = escapeHtml(simulatorUrl);
+    const safeDashboardUrl = escapeHtml(dashboardUrl);
+    const safeContactUrl = escapeHtml(contactUrl);
+    const safeLoginUrl = escapeHtml(buildLoginUrl());
+    const safeLatestPlanName = escapeHtml(latestPlanName || "");
+    const planSummary =
+        planCount > 0
+            ? `You currently have <strong>${planCount}</strong> saved scenario${planCount === 1 ? "" : "s"}${latestPlanName ? `, including <strong>${safeLatestPlanName}</strong>` : ""}.`
+            : "You do not have any saved scenarios yet.";
+
+    return `
+        <div style="font-family:Segoe UI,Arial,sans-serif;color:#1e2f44;line-height:1.6;">
+            <p>Hi ${name},</p>
+            <p>This is your LEOFF Helper retirement check-in reminder.</p>
+            <p>${planSummary}</p>
+            <p>You asked to receive these reminders <strong>${escapeHtml(formatRetirementCheckInFrequencyLabel(frequency))}</strong>.</p>
+            <p>A good check-in usually means:</p>
+            <ul>
+                <li>updating salary, expenses, assets, and debt balances</li>
+                <li>revisiting retirement age and Social Security timing</li>
+                <li>opening saved scenarios to see whether your best-fit plan still holds up</li>
+            </ul>
+            <p>
+                <a
+                    href="${safeSimulatorUrl}"
+                    style="display:inline-block;padding:12px 18px;border-radius:999px;background:#1f4d3a;color:#ffffff;text-decoration:none;font-weight:700;margin-right:8px;"
+                >
+                    Open Planner
+                </a>
+                <a
+                    href="${safeDashboardUrl}"
+                    style="display:inline-block;padding:12px 18px;border-radius:999px;background:#3f7c85;color:#ffffff;text-decoration:none;font-weight:700;"
+                >
+                    Open Dashboard
+                </a>
+            </p>
+            <p>Need help or want to leave a note? <a href="${safeContactUrl}">${safeContactUrl}</a></p>
+            <p>You can change or disable these emails any time in your account settings here: <a href="${safeLoginUrl}">${safeLoginUrl}</a></p>
+        </div>
+    `.trim();
+}
+
 export async function sendPasswordResetEmail({
     toEmail,
     displayName,
@@ -319,5 +427,48 @@ export async function sendDailySignupSummaryEmail({
             `Signup emails: ${newUsers.length ? newUsers.map(user => user.email).join(", ") : "(none)"}`
         ],
         failureMessage: "Daily signup summary email could not be sent."
+    });
+}
+
+export async function sendRetirementCheckInEmail({
+    toEmail,
+    displayName,
+    planCount,
+    latestPlanName,
+    frequency
+}) {
+    const simulatorUrl = buildSimulatorUrl();
+    const dashboardUrl = buildDashboardUrl();
+    const contactUrl = buildContactUrl();
+
+    return sendConfiguredEmail({
+        toEmails: [toEmail],
+        subject: "Your LEOFF Helper retirement check-in",
+        text: buildRetirementCheckInText({
+            displayName,
+            simulatorUrl,
+            dashboardUrl,
+            contactUrl,
+            planCount,
+            latestPlanName,
+            frequency
+        }),
+        html: buildRetirementCheckInHtml({
+            displayName,
+            simulatorUrl,
+            dashboardUrl,
+            contactUrl,
+            planCount,
+            latestPlanName,
+            frequency
+        }),
+        missingConfigLogParts: [
+            "Retirement check-in email delivery not configured.",
+            `Requested email: ${toEmail}`,
+            `Plan count: ${planCount}`,
+            `Latest plan name: ${latestPlanName || "(none)"}`,
+            `Frequency: ${frequency}`
+        ],
+        failureMessage: "Retirement check-in email could not be sent."
     });
 }

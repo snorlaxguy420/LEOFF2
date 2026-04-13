@@ -31,9 +31,36 @@ function normalizeIsoDate(value) {
         : parsed.toISOString();
 }
 
+function normalizeRetirementCheckInFrequency(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+
+    if (normalized === "monthly") {
+        return "monthly";
+    }
+
+    if (
+        normalized === "every_6_months" ||
+        normalized === "every-6-months" ||
+        normalized === "semiannual"
+    ) {
+        return "every_6_months";
+    }
+
+    if (normalized === "yearly" || normalized === "annual") {
+        return "yearly";
+    }
+
+    return "never";
+}
+
 function normalizeUserRecord(user = {}) {
     return {
         ...user,
+        displayName: user.displayName || "",
+        retirementCheckInFrequency:
+            normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),
+        lastRetirementCheckInSentAt:
+            normalizeIsoDate(user.lastRetirementCheckInSentAt),
         planTier: normalizePlanTier(user.planTier),
         premiumSource: normalizePremiumSource(user.premiumSource),
         premiumGrantedAt: normalizeIsoDate(user.premiumGrantedAt),

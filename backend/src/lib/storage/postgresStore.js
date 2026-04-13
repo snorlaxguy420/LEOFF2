@@ -42,10 +42,36 @@ function normalizeIsoDate(value) {
         : parsed.toISOString();
 }
 
+function normalizeRetirementCheckInFrequency(value) {
+    const normalized = String(value || "").trim().toLowerCase();
+
+    if (normalized === "monthly") {
+        return "monthly";
+    }
+
+    if (
+        normalized === "every_6_months" ||
+        normalized === "every-6-months" ||
+        normalized === "semiannual"
+    ) {
+        return "every_6_months";
+    }
+
+    if (normalized === "yearly" || normalized === "annual") {
+        return "yearly";
+    }
+
+    return "never";
+}
+
 function normalizeUserRecord(user = {}) {
     return {
         ...user,
         displayName: user.displayName || "",
+        retirementCheckInFrequency:
+            normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),
+        lastRetirementCheckInSentAt:
+            normalizeIsoDate(user.lastRetirementCheckInSentAt),
         planTier: normalizePlanTier(user.planTier),
         premiumSource: normalizePremiumSource(user.premiumSource),
         premiumGrantedAt: normalizeIsoDate(user.premiumGrantedAt),
@@ -125,6 +151,8 @@ function mapUserRow(row) {
         passwordHash: row.password_hash,
         passwordSalt: row.password_salt,
         displayName: row.display_name,
+        retirementCheckInFrequency: row.retirement_check_in_frequency,
+        lastRetirementCheckInSentAt: row.last_retirement_check_in_sent_at,
         planTier: row.plan_tier,
         premiumSource: row.premium_source,
         premiumGrantedAt: row.premium_granted_at,
@@ -215,6 +243,8 @@ async function syncUsers(client, users) {
                     password_hash,
                     password_salt,
                     display_name,
+                    retirement_check_in_frequency,
+                    last_retirement_check_in_sent_at,
                     plan_tier,
                     premium_source,
                     premium_granted_at,
@@ -223,13 +253,15 @@ async function syncUsers(client, users) {
                     updated_at
                 )
                 VALUES (
-                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     email = EXCLUDED.email,
                     password_hash = EXCLUDED.password_hash,
                     password_salt = EXCLUDED.password_salt,
                     display_name = EXCLUDED.display_name,
+                    retirement_check_in_frequency = EXCLUDED.retirement_check_in_frequency,
+                    last_retirement_check_in_sent_at = EXCLUDED.last_retirement_check_in_sent_at,
                     plan_tier = EXCLUDED.plan_tier,
                     premium_source = EXCLUDED.premium_source,
                     premium_granted_at = EXCLUDED.premium_granted_at,
@@ -243,6 +275,10 @@ async function syncUsers(client, users) {
                 user.passwordHash,
                 user.passwordSalt,
                 user.displayName || "",
+                normalizeRetirementCheckInFrequency(
+                    user.retirementCheckInFrequency
+                ),
+                normalizeIsoDate(user.lastRetirementCheckInSentAt),
                 normalizePlanTier(user.planTier),
                 normalizePremiumSource(user.premiumSource),
                 normalizeIsoDate(user.premiumGrantedAt),

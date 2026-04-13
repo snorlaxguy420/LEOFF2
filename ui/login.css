@@ -508,7 +508,8 @@ body {
 }
 
 .login-settings-form input[type="text"],
-.login-settings-form input[type="password"] {
+.login-settings-form input[type="password"],
+.login-settings-form select {
     width: 100%;
     box-sizing: border-box;
     padding: 13px 14px;
@@ -516,6 +517,11 @@ body {
     border: 1px solid rgba(0, 0, 0, 0.14);
     background: rgba(255,255,255,0.92);
     font-size: 15px;
+}
+
+.login-settings-form select {
+    appearance: none;
+    color: var(--pnw-navy);
 }
 
 .login-password-card {

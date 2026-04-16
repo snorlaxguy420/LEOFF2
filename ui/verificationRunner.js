@@ -1600,6 +1600,45 @@ function testRetirementAccountContributionAccumulationWithRothMatch() {
     logResult("Roth 401k contribution accumulation with employer match passed");
 }
 
+function testRetirementAccountUsesPerAccountIncomeForContributionRates() {
+    const projection = projectTotalRetirement({
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "403(b)",
+                balance: 100000,
+                startAge: 60,
+                growthRate: 0.10,
+                currentAnnualIncome: 80000,
+                employeeContributionRate: 0.10,
+                employerMatchRate: 0.05,
+                withdrawalType: "amount",
+                withdrawal: 1000,
+                taxable: true,
+                accountType: "403b"
+            }
+        ],
+        currentAge: 45,
+        currentAnnualPay: 100000,
+        expectedFinalAnnualPay: 110000,
+        retireAge: 47,
+        lifeExpectancy: 48,
+        baseExpenses: 0,
+        inflation: 0,
+        showReal: false
+    });
+
+    const age47 = projection.results.find(result => result.age === 47);
+    const age47Balance = age47?.portfolios?.["403(b)"] || 0;
+
+    assert(
+        Math.round(age47Balance) === 160820,
+        "Retirement account contribution rates should use the account's own current annual income when provided"
+    );
+
+    logResult("Retirement account per-account contribution income passed");
+}
+
 function testSplitExpenseInflationProjection() {
     const simulationState = buildSimulationState({
         inputs: {
@@ -4126,6 +4165,7 @@ async function runVerification() {
         testReadinessScoreUsesRetirementYearsOnly();
         testProbabilityAdjustedReadinessScore();
         testRetirementAccountContributionAccumulationWithRothMatch();
+        testRetirementAccountUsesPerAccountIncomeForContributionRates();
         testPremiumStressTestingConfigBuilder();
         testPremiumStressPresetHelpers();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();

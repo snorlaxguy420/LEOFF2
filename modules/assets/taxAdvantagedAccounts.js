@@ -29,6 +29,7 @@ const accounts = [
     accountType: "401k",
     balanceId: "four01kBalance",
     growthId: "four01kGrowth",
+    currentAnnualIncomeId: "four01kCurrentAnnualIncome",
     employeeContributionRateId: "four01kEmployeeContributionRate",
     employerMatchRateId: "four01kEmployerMatchRate",
     withdrawAgeId: "four01kWithdrawAge",
@@ -45,6 +46,7 @@ const accounts = [
     accountType: "roth_401k",
     balanceId: "roth401kBalance",
     growthId: "roth401kGrowth",
+    currentAnnualIncomeId: "roth401kCurrentAnnualIncome",
     employeeContributionRateId: "roth401kEmployeeContributionRate",
     employerMatchRateId: "roth401kEmployerMatchRate",
     withdrawAgeId: "roth401kWithdrawAge",
@@ -61,6 +63,7 @@ const accounts = [
     accountType: "traditional_ira",
     balanceId: "iraBalance",
     growthId: "iraGrowth",
+    currentAnnualIncomeId: "iraCurrentAnnualIncome",
     employeeContributionRateId: "iraEmployeeContributionRate",
     employerMatchRateId: "iraEmployerMatchRate",
     withdrawAgeId: "iraWithdrawAge",
@@ -77,6 +80,7 @@ const accounts = [
     accountType: "roth_ira",
     balanceId: "rothBalance",
     growthId: "rothGrowth",
+    currentAnnualIncomeId: "rothCurrentAnnualIncome",
     employeeContributionRateId: "rothEmployeeContributionRate",
     employerMatchRateId: "rothEmployerMatchRate",
     withdrawAgeId: "rothWithdrawAge",
@@ -93,6 +97,7 @@ const accounts = [
     accountType: "457b",
     balanceId: "four57bBalance",
     growthId: "four57bGrowth",
+    currentAnnualIncomeId: "four57bCurrentAnnualIncome",
     employeeContributionRateId: "four57bEmployeeContributionRate",
     employerMatchRateId: "four57bEmployerMatchRate",
     withdrawAgeId: "four57bWithdrawAge",
@@ -109,6 +114,7 @@ const accounts = [
     accountType: "403b",
     balanceId: "four03bBalance",
     growthId: "four03bGrowth",
+    currentAnnualIncomeId: "four03bCurrentAnnualIncome",
     employeeContributionRateId: "four03bEmployeeContributionRate",
     employerMatchRateId: "four03bEmployerMatchRate",
     withdrawAgeId: "four03bWithdrawAge",
@@ -125,6 +131,7 @@ const accounts = [
     accountType: "401a",
     balanceId: "four01aBalance",
     growthId: "four01aGrowth",
+    currentAnnualIncomeId: "four01aCurrentAnnualIncome",
     employeeContributionRateId: "four01aEmployeeContributionRate",
     employerMatchRateId: "four01aEmployerMatchRate",
     withdrawAgeId: "four01aWithdrawAge",
@@ -141,6 +148,7 @@ const accounts = [
     accountType: "tsp",
     balanceId: "tspBalance",
     growthId: "tspGrowth",
+    currentAnnualIncomeId: "tspCurrentAnnualIncome",
     employeeContributionRateId: "tspEmployeeContributionRate",
     employerMatchRateId: "tspEmployerMatchRate",
     withdrawAgeId: "tspWithdrawAge",
@@ -157,6 +165,18 @@ const accounts = [
 
 accounts.forEach(account => {
 
+    function readOptionalNumber(form, fieldId) {
+        const rawValue =
+            form.querySelector(`#${fieldId}`)?.value;
+
+        if (rawValue === undefined || rawValue === null || rawValue === "") {
+            return null;
+        }
+
+        const parsed = parseFloat(rawValue);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+
     function getCards() {
         return Array.from(
             document.querySelectorAll(`[data-module="${account.id}"]`)
@@ -169,6 +189,8 @@ accounts.forEach(account => {
         const displayLabel = customLabel || account.label;
         const balance =
             form.querySelector(`#${account.balanceId}`)?.value || 0;
+        const currentAnnualIncome =
+            readOptionalNumber(form, account.currentAnnualIncomeId);
         const employeeContributionRate =
             parseFloat(
                 form.querySelector(`#${account.employeeContributionRateId}`)?.value || 0
@@ -187,7 +209,7 @@ accounts.forEach(account => {
             form.querySelector(`#${account.withdrawValueId}`)?.value || 0;
         const contributionSummary =
             employeeContributionRate > 0 || employerMatchRate > 0
-                ? `Employee: ${employeeContributionRate}% of pay${employerMatchRate > 0 ? ` | Match: ${employerMatchRate}% of pay` : ""}<br>`
+                ? `${currentAnnualIncome > 0 ? `Contribution income base: $${Number(currentAnnualIncome).toLocaleString()}/yr<br>` : "Contribution income base: shared planner pay assumption<br>"}Employee: ${employeeContributionRate}% of income${employerMatchRate > 0 ? ` | Match: ${employerMatchRate}% of income` : ""}<br>`
                 : "";
 
         return `
@@ -205,6 +227,8 @@ accounts.forEach(account => {
             parseFloat(form.querySelector(`#${account.balanceId}`)?.value || 0);
         const growth =
             parseFloat(form.querySelector(`#${account.growthId}`)?.value || 0);
+        const currentAnnualIncome =
+            readOptionalNumber(form, account.currentAnnualIncomeId);
         const employeeContributionRate =
             parseFloat(
                 form.querySelector(`#${account.employeeContributionRateId}`)?.value || 0
@@ -236,6 +260,13 @@ accounts.forEach(account => {
 
         if (employerMatchRate < 0) {
             return "Employer match rate cannot be negative.";
+        }
+
+        if (
+            (employeeContributionRate > 0 || employerMatchRate > 0) &&
+            (currentAnnualIncome ?? 0) <= 0
+        ) {
+            return "Enter current annual income greater than $0 when using contribution or match percentages.";
         }
 
         if (withdrawAge <= 0) {
@@ -274,6 +305,8 @@ accounts.forEach(account => {
                 (parseFloat(
                     form.querySelector(`#${account.growthId}`)?.value || 0
                 ) || 0) / 100,
+            currentAnnualIncome:
+                readOptionalNumber(form, account.currentAnnualIncomeId),
             employeeContributionRate:
                 (parseFloat(
                     form.querySelector(`#${account.employeeContributionRateId}`)?.value || 0
@@ -321,6 +354,7 @@ accounts.forEach(account => {
             account.labelId,
             account.balanceId,
             account.growthId,
+            account.currentAnnualIncomeId,
             account.employeeContributionRateId,
             account.employerMatchRateId,
             account.withdrawAgeId,
@@ -356,11 +390,14 @@ accounts.forEach(account => {
                 <label>Expected Annual Return (%)</label>
                 <input id="${account.growthId}" type="number" value="7">
 
-                <label>Employee Contribution (% of Annual Pay)</label>
+                <label>Current Annual Income Used for % Contributions</label>
+                <input id="${account.currentAnnualIncomeId}" type="number" value="" placeholder="Use this account's income base">
+
+                <label>Employee Contribution (% of Annual Income)</label>
                 <input id="${account.employeeContributionRateId}" type="number" value="0">
 
                 ${account.employerMatchRateId ? `
-                <label>Employer Contribution / Match (% of Annual Pay)</label>
+                <label>Employer Contribution / Match (% of Annual Income)</label>
                 <input id="${account.employerMatchRateId}" type="number" value="0">
                 ` : ""}
 

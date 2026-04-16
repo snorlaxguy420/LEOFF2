@@ -519,6 +519,42 @@ export function projectTotalRetirement({
         return factor;
     }
 
+    function getContributionIncomeForYear(source, yearIndex) {
+        const sourceCurrentAnnualIncome =
+            Number.isFinite(source?.currentAnnualIncome)
+                ? source.currentAnnualIncome
+                : null;
+        const sourceExpectedFinalAnnualIncome =
+            Number.isFinite(source?.expectedFinalAnnualIncome)
+                ? source.expectedFinalAnnualIncome
+                : null;
+
+        if (sourceCurrentAnnualIncome !== null) {
+            if (
+                sourceExpectedFinalAnnualIncome !== null &&
+                preRetirementYears > 0
+            ) {
+                const annualStep =
+                    (sourceExpectedFinalAnnualIncome - sourceCurrentAnnualIncome) /
+                    preRetirementYears;
+
+                return Math.max(
+                    sourceCurrentAnnualIncome + (annualStep * yearIndex),
+                    0
+                );
+            }
+
+            return Math.max(sourceCurrentAnnualIncome, 0);
+        }
+
+        return getAmortizedAnnualPay({
+            currentAnnualPay,
+            expectedFinalAnnualPay,
+            yearIndex,
+            totalYears: preRetirementYears
+        });
+    }
+
     function getSourceGrowthRateForYear(source, yearIndex) {
         return getRateForYear({
             baseRate: source?.growthRate || 0,
@@ -788,9 +824,11 @@ if (source.type === "real_estate") {
                 const openingBalance = balance;
 
                 if (balance > 0 && currentAge < source.startAge) {
+                    const contributionIncome =
+                        getContributionIncomeForYear(source, year);
                     const annualContribution =
                         currentAge < retireAge
-                            ? employmentIncome *
+                            ? contributionIncome *
                               Math.max(
                                   (source.employeeContributionRate || 0) +
                                   (source.employerMatchRate || 0),

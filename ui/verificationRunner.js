@@ -1771,6 +1771,49 @@ function testDebtPayloadConsistency() {
     logResult("Debt payload consistency passed");
 }
 
+function testDebtExpenseDropsAfterPayoff() {
+    const debtSource = {
+        type: "expense",
+        name: "Mortgage",
+        startAge: 60,
+        endAge: 63,
+        annualAmount: 12000,
+        growthRate: 0,
+        taxable: false
+    };
+
+    const projection = runProjection(
+        buildSimulationState({
+            inputs: {
+                profile: {
+                    currentAge: 60
+                },
+                retireAge: 60,
+                lifeExpectancy: 64,
+                expenses: {
+                    monthly: 24000 / 12,
+                    annual: 24000
+                }
+            },
+            incomeSources: [debtSource]
+        })
+    );
+
+    const age62 = projection.results.find(result => result.age === 62);
+    const age63 = projection.results.find(result => result.age === 63);
+
+    assert(
+        Math.round(age62?.expenses || 0) === 36000,
+        "Debt expense should still be included before payoff year ends"
+    );
+    assert(
+        Math.round(age63?.expenses || 0) === 24000,
+        "Debt expense should drop out once the payoff window ends"
+    );
+
+    logResult("Debt expense payoff drop passed");
+}
+
 async function testDebtModuleCardFlow() {
     await import("../modules/assets/debts.js");
 
@@ -3836,6 +3879,7 @@ async function runVerification() {
         testSpouseIncomeStopsAtSpouseRetirement();
         testRentalIncomeProjectionBreakdown();
         testDebtPayloadConsistency();
+        testDebtExpenseDropsAfterPayoff();
         testRetirementVulnerabilityEngine();
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();

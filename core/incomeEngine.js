@@ -765,9 +765,11 @@ if (source.type === "real_estate") {
             let income = 0;
 
             if (source.type === "expense") {
+                const hasEndAge =
+                    Number.isFinite(source.endAge);
                 if (
                     currentAge >= source.startAge &&
-                    (!source.endAge || currentAge <= source.endAge)
+                    (!hasEndAge || currentAge < source.endAge)
                 ) {
                     const yearsActive = currentAge - source.startAge;
                     supplementalExpenses +=

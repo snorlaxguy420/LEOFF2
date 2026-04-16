@@ -360,7 +360,7 @@ accounts.forEach(account => {
                 <input id="${account.employeeContributionRateId}" type="number" value="0">
 
                 ${account.employerMatchRateId ? `
-                <label>Employer Match (% of Annual Pay)</label>
+                <label>Employer Contribution / Match (% of Annual Pay)</label>
                 <input id="${account.employerMatchRateId}" type="number" value="0">
                 ` : ""}
 

@@ -57,6 +57,10 @@ body {
 
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .dashboard-shell {
 
     max-width: 1400px;

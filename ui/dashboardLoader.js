@@ -219,26 +219,58 @@ function renderWithdrawalOptimizerSection({
         return;
     }
 
+    const optimization =
+        buildWithdrawalStrategyOptimization({
+            simulationState,
+            projection
+        });
+
     if (!premiumEnabled) {
-        headline.textContent = "Premium withdrawal strategy guidance";
+        headline.textContent = "Withdrawal strategy snapshot";
         summary.textContent =
-            "Premium turns your account mix into a suggested withdrawal order, bridge-year funding plan, and tax-order guidance.";
+            optimization.summary;
         premiumNote.hidden = false;
         premiumNote.textContent =
             dashboardAccountContext?.user?.email
-                ? "This account is currently on the free tier. Upgrade to premium to unlock personalized withdrawal order, bridge-year, and tax-order guidance."
-                : "Sign in with a premium account to unlock personalized withdrawal order, bridge-year, and tax-order guidance.";
-        highlights.hidden = true;
+                ? "This account is currently on the free tier. Premium unlocks the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance."
+                : "Sign in with a premium account to unlock the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance.";
+        highlights.hidden = false;
+        highlights.innerHTML = `
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Bridge Years</div>
+                <div class="report-highlight-value">${optimization.highlights?.bridgeYears ? `${optimization.highlights.bridgeYears}` : "0"}</div>
+            </div>
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Retirement-Year Gap</div>
+                <div class="report-highlight-value">${optimization.highlights?.annualGap > 0 ? formatCurrency(optimization.highlights.annualGap) : "Covered"}</div>
+            </div>
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Cumulative Bridge Gap</div>
+                <div class="report-highlight-value">${optimization.highlights?.cumulativeBridgeGap > 0 ? formatCurrency(optimization.highlights.cumulativeBridgeGap) : "Covered"}</div>
+            </div>
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Primary Bridge Source</div>
+                <div class="report-highlight-value report-highlight-value-note">${optimization.highlights?.primaryBridgeSource || "--"}</div>
+            </div>
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Bridge Pressure</div>
+                <div class="report-highlight-value">${optimization.highlights?.bridgePressure || "--"}</div>
+            </div>
+            <div class="report-highlight-card">
+                <div class="report-highlight-label">Tax-Deferred Balance</div>
+                <div class="report-highlight-value">${formatCurrency(optimization.highlights?.taxDeferredBalance || 0)}</div>
+            </div>
+        `;
         sequence.innerHTML = `
             <div class="optimizer-sequence-item">
-                <h3>Premium optimizer preview</h3>
-                <p>See which accounts to tap first, which dollars to preserve for later, and where bridge-year tax pressure is likely to come from.</p>
+                <h3>Premium withdrawal order</h3>
+                <p>Premium turns this snapshot into a ranked withdrawal sequence so you can see which dollars to tap first, which dollars to preserve, and where bridge-year tax friction is most likely to show up.</p>
             </div>
         `;
         bridgePlan.innerHTML = `
             <div class="optimizer-sequence-item">
-                <h3>Premium bridge-year planner preview</h3>
-                <p>See the cumulative spending gap before Social Security starts, the cleanest bridge funding source, and a step-by-step bridge-year funding sequence.</p>
+                <h3>Premium bridge-year planner</h3>
+                <p>Premium expands this into a step-by-step bridge plan that shows how to cover the years before Social Security starts without burning the wrong accounts too early.</p>
             </div>
         `;
         notes.innerHTML = "";
@@ -247,15 +279,35 @@ function renderWithdrawalOptimizerSection({
 
     premiumNote.hidden = true;
 
-    const optimization =
-        buildWithdrawalStrategyOptimization({
-            simulationState,
-            projection
-        });
-
     headline.textContent = optimization.headline;
     summary.textContent = optimization.summary;
     highlights.hidden = false;
+    highlights.innerHTML = `
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Bridge Years</div>
+            <div id="withdrawalOptimizerBridgeYears" class="report-highlight-value">--</div>
+        </div>
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Retirement-Year Gap</div>
+            <div id="withdrawalOptimizerAnnualGap" class="report-highlight-value">--</div>
+        </div>
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Cumulative Bridge Gap</div>
+            <div id="withdrawalOptimizerBridgeGap" class="report-highlight-value">--</div>
+        </div>
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Primary Bridge Source</div>
+            <div id="withdrawalOptimizerPrimaryBridgeSource" class="report-highlight-value report-highlight-value-note">--</div>
+        </div>
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Bridge Pressure</div>
+            <div id="withdrawalOptimizerBridgePressure" class="report-highlight-value">--</div>
+        </div>
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">Tax-Deferred Balance</div>
+            <div id="withdrawalOptimizerTaxDeferredBalance" class="report-highlight-value">--</div>
+        </div>
+    `;
 
     setElementText(
         "withdrawalOptimizerBridgeYears",

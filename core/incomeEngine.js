@@ -705,6 +705,7 @@ orderedIncomeSources.forEach(source => {
         let supplementalExpenses = 0;
         const employmentIncome = getEmploymentIncome(currentAge);
         const spouseIncome = getSpouseEmploymentIncome(currentAge);
+        const annualExpenseResult = calculateAnnualExpenses(year);
 
         if (employmentIncome > 0) {
             totalIncome += employmentIncome;
@@ -929,7 +930,7 @@ if (source.type === "real_estate") {
             }
         });
 
-        const annualExpenseResult = calculateAnnualExpenses(year);
+    
         let adjustedExpenses =
             annualExpenseResult.total + supplementalExpenses;
 

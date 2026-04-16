@@ -29,23 +29,80 @@
    HELPER — Mortgage Payment
 ========================================================= */
 
-export function calculateAnnualMortgagePayment(
+export function calculateMonthlyMortgagePayment(
     balance,
     rate,
     years
 ){
 
-    if (!balance || !rate || !years) return 0;
+    if (!balance || !years) return 0;
 
     const monthlyRate = rate / 12;
     const payments = years * 12;
 
-    const monthlyPayment =
+    if (!monthlyRate) {
+        return balance / payments;
+    }
+
+    return (
         balance *
         (monthlyRate * Math.pow(1 + monthlyRate, payments)) /
-        (Math.pow(1 + monthlyRate, payments) - 1);
+        (Math.pow(1 + monthlyRate, payments) - 1)
+    );
+
+}
+
+export function calculateAnnualMortgagePayment(
+    balance,
+    rate,
+    years,
+    extraMonthlyPrincipal = 0
+){
+
+    const monthlyPayment =
+        calculateMonthlyMortgagePayment(
+            balance,
+            rate,
+            years
+        ) + Math.max(extraMonthlyPrincipal || 0, 0);
 
     return monthlyPayment * 12;
+
+}
+
+export function calculateMortgageYearsToPayoff(
+    balance,
+    rate,
+    years,
+    extraMonthlyPrincipal = 0
+) {
+
+    if (!balance || !years) return 0;
+
+    const scheduledMonthlyPayment =
+        calculateMonthlyMortgagePayment(balance, rate, years);
+    const totalMonthlyPayment =
+        scheduledMonthlyPayment + Math.max(extraMonthlyPrincipal || 0, 0);
+
+    if (totalMonthlyPayment <= 0) {
+        return 0;
+    }
+
+    const monthlyRate = rate / 12;
+
+    if (!monthlyRate) {
+        return (balance / totalMonthlyPayment) / 12;
+    }
+
+    if (totalMonthlyPayment <= balance * monthlyRate) {
+        return years;
+    }
+
+    const months =
+        Math.log(totalMonthlyPayment / (totalMonthlyPayment - balance * monthlyRate)) /
+        Math.log(1 + monthlyRate);
+
+    return months / 12;
 
 }
 
@@ -171,6 +228,7 @@ export function generateRealEstatePayloads({
     mortgageBalance,
     mortgageRate,
     mortgageYearsRemaining,
+    mortgageExtraPrincipalPayment,
     appreciation,
     rentalGrowthRate,
     propertyTaxRate,
@@ -224,7 +282,15 @@ export function generateRealEstatePayloads({
         calculateAnnualMortgagePayment(
             mortgageBalance,
             mortgageRate,
-            mortgageYearsRemaining
+            mortgageYearsRemaining,
+            mortgageExtraPrincipalPayment
+        );
+    const mortgagePayoffYears =
+        calculateMortgageYearsToPayoff(
+            mortgageBalance,
+            mortgageRate,
+            mortgageYearsRemaining,
+            mortgageExtraPrincipalPayment
         );
 
     if (mortgagePayment > 0){
@@ -237,7 +303,7 @@ export function generateRealEstatePayloads({
 
             startAge: currentAge,
 
-            endAge: currentAge + mortgageYearsRemaining,
+            endAge: currentAge + mortgagePayoffYears,
 
             annualAmount: mortgagePayment,
 
@@ -300,7 +366,9 @@ export function generateRealEstatePayloads({
     mortgage: {
         balance: mortgageBalance,
         rate: mortgageRate,
-        yearsRemaining: mortgageYearsRemaining
+        yearsRemaining: mortgagePayoffYears,
+        scheduledYearsRemaining: mortgageYearsRemaining,
+        extraPrincipalPayment: mortgageExtraPrincipalPayment || 0
     }
 
     });

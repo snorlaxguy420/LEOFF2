@@ -562,6 +562,29 @@ SCORE PANEL
     border: 1px solid rgba(31, 77, 58, 0.14);
 }
 
+.spouse-conversation-panel .spouse-conversation-grid {
+    margin-top: 18px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.spouse-conversation-card {
+    background: linear-gradient(180deg, rgba(247, 248, 245, 0.92), rgba(238, 243, 239, 0.88));
+    border-color: rgba(31, 77, 58, 0.12);
+}
+
+.spouse-conversation-panel .report-highlight-value {
+    font-size: 20px;
+}
+
+.spouse-conversation-prompts {
+    margin-top: 18px;
+}
+
+.spouse-conversation-item {
+    background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(241,245,241,0.84));
+    border-color: rgba(31, 77, 58, 0.10);
+}
+
 .withdrawal-optimizer-panel .report-highlight-card {
     background: linear-gradient(180deg, rgba(246,250,248,0.9), rgba(239,231,220,0.86));
     border-color: rgba(31, 77, 58, 0.12);
@@ -1311,6 +1334,10 @@ RESPONSIVE
     }
 
     .withdrawal-optimizer-panel .optimizer-highlight-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .spouse-conversation-panel .spouse-conversation-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 

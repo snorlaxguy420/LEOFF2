@@ -67,6 +67,8 @@ function validateRealEstateForm(form) {
     const mortgageRate = readNumber(form.querySelector("#mortgageRate"));
     const mortgageYearsRemaining =
         readNumber(form.querySelector("#mortgageYearsRemaining"));
+    const mortgageExtraPrincipalPayment =
+        readNumber(form.querySelector("#mortgageExtraPrincipalPayment"));
 
     if (propertyValue <= 0 && monthlyRent <= 0) {
         return "Enter either a property value or monthly rent greater than $0 before saving.";
@@ -78,6 +80,10 @@ function validateRealEstateForm(form) {
 
     if (mortgageBalance > 0 && mortgageRate < 0) {
         return "Mortgage rate cannot be negative.";
+    }
+
+    if (mortgageExtraPrincipalPayment < 0) {
+        return "Extra principal payment cannot be negative.";
     }
 
     return null;
@@ -121,6 +127,7 @@ assetRegistry.registerAsset({
         "mortgageBalance",
         "mortgageRate",
         "mortgageYearsRemaining",
+        "mortgageExtraPrincipalPayment",
         "propertyAppreciation",
         "propertyTaxRate",
         "insuranceCost",
@@ -182,6 +189,9 @@ createCard() {
 
         <label>Mortgage Years Remaining</label>
         <input id="mortgageYearsRemaining" type="number" value="25">
+
+        <label>Extra Principal Payment (monthly $)</label>
+        <input id="mortgageExtraPrincipalPayment" type="number" value="0">
 
         <hr>
 
@@ -331,6 +341,8 @@ getSimulationPayloads(inputs) {
 
         const mortgageYears =
             readNumber(form.querySelector("#mortgageYearsRemaining"));
+        const mortgageExtraPrincipalPayment =
+            readNumber(form.querySelector("#mortgageExtraPrincipalPayment"));
 
         const appreciation =
             readPercent(form.querySelector("#propertyAppreciation"));
@@ -362,6 +374,7 @@ getSimulationPayloads(inputs) {
             mortgageBalance,
             mortgageRate,
             mortgageYearsRemaining: mortgageYears,
+            mortgageExtraPrincipalPayment,
 
             appreciation,
             rentalGrowthRate,

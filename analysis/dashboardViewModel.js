@@ -407,6 +407,203 @@ export function buildTaxSnapshotSummary(retirementYear = {}) {
     };
 }
 
+function formatAgeLabel(age, fallback = "Not set") {
+    return Number.isFinite(age)
+        ? `Age ${age}`
+        : fallback;
+}
+
+function formatSurvivorOptionLabel(option) {
+    if (option === "50%") {
+        return "50% survivor option";
+    }
+
+    if (option === "66%" || option === "66.67%") {
+        return "66.67% survivor option";
+    }
+
+    if (option === "100%") {
+        return "100% survivor option";
+    }
+
+    if (!option || option === "none") {
+        return "Single life / no survivor pension";
+    }
+
+    return String(option);
+}
+
+function findResultForAge(results = [], age) {
+    if (!Number.isFinite(age)) {
+        return null;
+    }
+
+    return results.find(result => result?.age === age) || null;
+}
+
+export function buildSpouseConversationSummary({
+    currentInputs = {},
+    analysis = {},
+    vulnerabilityAnalysis = {},
+    projection = {}
+}) {
+    const spouse = currentInputs?.profile?.spouse;
+
+    if (!spouse) {
+        return {
+            available: false,
+            headline: "Household conversation guide",
+            summary:
+                "Add spouse age, retirement age, and income in the calculator to generate a cleaner household discussion summary for the report.",
+            snapshot: [],
+            prompts: [],
+            note: "This section is meant to translate the technical plan into a household conversation before a retirement decision is finalized."
+        };
+    }
+
+    const retireAge =
+        currentInputs?.retireAge ??
+        currentInputs?.profile?.retirementAge ??
+        null;
+    const recommendedAge =
+        getDisplayedRecommendationAge(analysis, retireAge);
+    const spouseRetirementAge =
+        Number.isFinite(spouse?.retirementAge)
+            ? spouse.retirementAge
+            : null;
+    const spouseAnnualIncome =
+        Number.isFinite(spouse?.annualIncome)
+            ? spouse.annualIncome
+            : 0;
+    const survivorOptionLabel =
+        formatSurvivorOptionLabel(currentInputs?.pension?.survivorOption);
+    const results = projection?.results || [];
+    const retirementYear =
+        findResultForAge(results, retireAge) ||
+        results[0] ||
+        null;
+    const preSpouseRetirementYear =
+        findResultForAge(results, spouseRetirementAge - 1);
+    const spouseRetirementYear =
+        findResultForAge(results, spouseRetirementAge);
+    const primaryRiskLabel =
+        vulnerabilityAnalysis?.primaryRisk?.label ||
+        "Current income margin";
+    const selectedMargin =
+        (retirementYear?.income || 0) - (retirementYear?.expenses || 0);
+    const selectedMarginLabel =
+        selectedMargin >= 0
+            ? `+${formatCurrency(selectedMargin)}`
+            : `-${formatCurrency(Math.abs(selectedMargin))}`;
+    const spouseTransitionDelta =
+        preSpouseRetirementYear && spouseRetirementYear
+            ? Math.max(
+                0,
+                (preSpouseRetirementYear?.income || 0) -
+                (spouseRetirementYear?.income || 0)
+            )
+            : 0;
+
+    let summary =
+        `This summary reframes the current plan as a household decision instead of only a technical report. The selected retirement age is ${formatAgeLabel(retireAge)}, and the current model preference is ${formatAgeLabel(recommendedAge)}.`;
+
+    if (
+        Number.isFinite(retireAge) &&
+        Number.isFinite(recommendedAge) &&
+        retireAge < recommendedAge
+    ) {
+        summary += ` The model still prefers waiting until ${formatAgeLabel(recommendedAge)} for a stronger margin and lower stress exposure.`;
+    }
+
+    if (spouseAnnualIncome > 0 && Number.isFinite(spouseRetirementAge)) {
+        summary += ` Spouse income of ${formatCurrency(spouseAnnualIncome)} per year is currently modeled through ${formatAgeLabel(spouseRetirementAge - 1, "the year before spouse retirement")}.`;
+    }
+
+    const prompts = [];
+
+    if (spouseAnnualIncome > 0 && Number.isFinite(spouseRetirementAge)) {
+        prompts.push({
+            title: "Talk through the spouse-income transition",
+            body:
+                spouseTransitionDelta > 0
+                    ? `The projection shows household income dropping by about ${formatCurrency(spouseTransitionDelta)} when spouse income ends at ${formatAgeLabel(spouseRetirementAge)}. Decide whether that transition still feels comfortable at your planned retirement timing.`
+                    : `Spouse income is modeled through ${formatAgeLabel(spouseRetirementAge - 1, "the year before spouse retirement")}. Confirm that the plan still feels realistic once that paycheck is gone.`
+        });
+    } else {
+        prompts.push({
+            title: "Confirm the household income assumptions",
+            body:
+                "This report does not currently include a meaningful spouse-income assumption. If spouse work income matters to the decision, add it before using the report as a final household planning document."
+        });
+    }
+
+    if (!currentInputs?.pension?.survivorOption || currentInputs.pension.survivorOption === "none") {
+        prompts.push({
+            title: "Revisit the survivor-income decision",
+            body:
+                "The pension is currently modeled as single life with no survivor continuation. Confirm that this still matches what the surviving spouse could live on if the retiree dies first."
+        });
+    } else {
+        prompts.push({
+            title: "Pressure-test the survivor election",
+            body:
+                `The plan currently uses the ${survivorOptionLabel}. Confirm that the lower retiree benefit is worth the surviving-spouse protection in your actual household budget.`
+        });
+    }
+
+    if (Number.isFinite(analysis?.retirementFailureAge)) {
+        prompts.push({
+            title: "Agree on the backup move before pressure hits",
+            body:
+                `Under the current assumptions, the first modeled deficit appears at age ${analysis.retirementFailureAge}. Decide in advance whether your first response would be to work longer, trim spending, or change withdrawals.`
+        });
+    } else {
+        prompts.push({
+            title: "Name the household pressure point now",
+            body:
+                `The current report does not show a modeled deficit, but the main stress signal is still ${primaryRiskLabel}. Decide what you would change first if that risk turns out worse than expected.`
+        });
+    }
+
+    return {
+        available: true,
+        headline: "Household conversation guide",
+        summary,
+        snapshot: [
+            {
+                label: "Selected Retirement Age",
+                value: formatAgeLabel(retireAge)
+            },
+            {
+                label: "Current Model Preference",
+                value: formatAgeLabel(recommendedAge)
+            },
+            {
+                label: "Spouse Retirement Age",
+                value: formatAgeLabel(spouseRetirementAge, "Not modeled")
+            },
+            {
+                label: "Spouse Income in Plan",
+                value:
+                    spouseAnnualIncome > 0
+                        ? `${formatCurrency(spouseAnnualIncome)}/yr`
+                        : "Not modeled"
+            },
+            {
+                label: "Survivor Election",
+                value: survivorOptionLabel
+            },
+            {
+                label: "Retirement-Year Margin",
+                value: selectedMarginLabel
+            }
+        ],
+        prompts,
+        note:
+            `Primary watch item: ${primaryRiskLabel}. Use this page to align on timing, survivor protection, and which fallback move the household would actually make first.`
+    };
+}
+
 export function buildTopRiskEntries(vulnerabilityAnalysis = {}) {
     const topRisks = (vulnerabilityAnalysis?.risks || []).slice(0, 3);
 

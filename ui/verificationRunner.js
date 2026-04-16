@@ -14,7 +14,11 @@ import {
     buildSimulationIncomeSources,
     normalizeLeoffSurvivorOption
 } from "./simulatorShared.js";
-import { generateRealEstatePayloads } from "../core/realEstateEngine.js";
+import {
+    calculateAnnualMortgagePayment,
+    calculateMortgageYearsToPayoff,
+    generateRealEstatePayloads
+} from "../core/realEstateEngine.js";
 import {
     calculateSocialSecurityAgeFactor,
     calculateSocialSecurityIncomeSource,
@@ -41,6 +45,7 @@ import {
     buildRecommendationContent,
     buildRiskListEntries,
     buildShortfallSummary,
+    buildSpouseConversationSummary,
     buildTaxSnapshotSummary,
     buildTopRiskEntries,
     getDisplayedRecommendationAge,
@@ -126,6 +131,7 @@ const SMOKE_TEST_PAGES = [
             "#retirementAgeSlider",
             "#downloadPdfBtn",
             "#recommendationHeadline",
+            "#spouseConversationHeadline",
             "#monteCarloHeadline",
             "#planningLeverHeadline",
             "#readinessCoverageScore",
@@ -1556,6 +1562,44 @@ function testRetirementAccountContributionAccumulation() {
     logResult("Retirement account contribution accumulation passed");
 }
 
+function testRetirementAccountContributionAccumulationWithRothMatch() {
+    const projection = projectTotalRetirement({
+        incomeSources: [
+            {
+                type: "portfolio",
+                name: "Roth 401k",
+                balance: 100000,
+                startAge: 60,
+                growthRate: 0.10,
+                employeeContributionRate: 0.10,
+                employerMatchRate: 0.05,
+                withdrawalType: "amount",
+                withdrawal: 1000,
+                taxable: false,
+                accountType: "roth_401k"
+            }
+        ],
+        currentAge: 45,
+        currentAnnualPay: 100000,
+        expectedFinalAnnualPay: 110000,
+        retireAge: 47,
+        lifeExpectancy: 48,
+        baseExpenses: 0,
+        inflation: 0,
+        showReal: false
+    });
+
+    const age47 = projection.results.find(result => result.age === 47);
+    const age47Balance = age47?.portfolios?.["Roth 401k"] || 0;
+
+    assert(
+        Math.round(age47Balance) === 169400,
+        "Roth 401k should now support pay-based employer match accumulation like other retirement accounts"
+    );
+
+    logResult("Roth 401k contribution accumulation with employer match passed");
+}
+
 function testSplitExpenseInflationProjection() {
     const simulationState = buildSimulationState({
         inputs: {
@@ -1730,6 +1774,82 @@ function testRentalIncomeProjectionBreakdown() {
     );
 
     logResult("Rental income projection breakdown passed");
+}
+
+function testRealEstateExtraPrincipalPayment() {
+    const baselinePayment =
+        calculateAnnualMortgagePayment(
+            240000,
+            0.06,
+            30
+        );
+    const acceleratedPayment =
+        calculateAnnualMortgagePayment(
+            240000,
+            0.06,
+            30,
+            300
+        );
+    const baselineYears =
+        calculateMortgageYearsToPayoff(
+            240000,
+            0.06,
+            30
+        );
+    const acceleratedYears =
+        calculateMortgageYearsToPayoff(
+            240000,
+            0.06,
+            30,
+            300
+        );
+    const payloads =
+        generateRealEstatePayloads({
+            label: "Primary Home",
+            type: "primary",
+            propertyValue: 500000,
+            monthlyRent: 0,
+            vacancyRate: 0,
+            mortgageBalance: 240000,
+            mortgageRate: 0.06,
+            mortgageYearsRemaining: 30,
+            mortgageExtraPrincipalPayment: 300,
+            appreciation: 0.03,
+            rentalGrowthRate: 0,
+            propertyTaxRate: 0,
+            maintenanceRate: 0,
+            insuranceCost: 0,
+            currentAge: 60,
+            inflation: 0.03
+        });
+    const mortgageExpense =
+        payloads.find(payload => payload.name === "Primary Home Mortgage");
+    const balanceSheetAsset =
+        payloads.find(payload => payload.type === "real_estate");
+
+    assert(
+        acceleratedPayment > baselinePayment,
+        "Extra principal should increase the modeled annual mortgage payment"
+    );
+    assert(
+        acceleratedYears < baselineYears,
+        "Extra principal should shorten the modeled mortgage payoff timeline"
+    );
+    assert(
+        Math.round(mortgageExpense?.annualAmount || 0) === Math.round(acceleratedPayment),
+        "Real estate mortgage payload should include the extra principal payment"
+    );
+    assert(
+        Math.round((mortgageExpense?.endAge || 0) * 10) ===
+        Math.round((60 + acceleratedYears) * 10),
+        "Real estate mortgage payload should shorten the mortgage end age when extra principal is added"
+    );
+    assert(
+        Math.round((balanceSheetAsset?.mortgage?.extraPrincipalPayment || 0) * 100) === 30000,
+        "Real estate balance-sheet payload should preserve the extra principal payment metadata"
+    );
+
+    logResult("Real estate extra principal payment passed");
 }
 
 function testDebtPayloadConsistency() {
@@ -2349,6 +2469,126 @@ function testDashboardRecommendationConsistency() {
     );
 
     logResult("Dashboard recommendation consistency passed");
+}
+
+function testSpouseConversationSummary() {
+    const inputs = {
+        profile: {
+            currentAge: 46,
+            maritalStatus: "married",
+            spouse: {
+                name: "Taylor",
+                currentAge: 44,
+                retirementAge: 58,
+                annualIncome: 62000
+            }
+        },
+        retireAge: 55,
+        lifeExpectancy: 90,
+        pension: {
+            serviceYears: 26,
+            finalAverageSalary: 118000,
+            currentAnnualPay: 112000,
+            cola: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            survivorOption: "50%",
+            survivorAge: 44
+        },
+        socialSecurity: {
+            birthYear: 1980,
+            claimAge: 67,
+            cola: 0.02,
+            fraBenefit: 2600
+        },
+        expenses: {
+            monthly: 6200,
+            annual: 74400,
+            housing: 2100,
+            groceries: 800,
+            bills: 500,
+            auto: 450,
+            healthcare: 700,
+            insurance: 350,
+            other: 1300,
+            essentialMonthly: 4300,
+            essentialAnnual: 51600
+        },
+        assumptions: {
+            inflationRate: 0.03,
+            goodsServicesInflationRate: 0.03,
+            housingInflationRate: 0.035,
+            healthcareInflationRate: 0.05
+        }
+    };
+    const incomeSources = [];
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const projection = runProjection(simulationState);
+    const analysis = analyzeRetirementPlan({
+        inputs,
+        incomeSources,
+        projection
+    });
+    const vulnerabilityAnalysis =
+        runRetirementVulnerabilityAnalysis({
+            inputs,
+            incomeSources,
+            projection,
+            assumedInflationRate:
+                inputs?.assumptions?.goodsServicesInflationRate ?? 0.03
+        });
+    const spouseConversation =
+        buildSpouseConversationSummary({
+            currentInputs: inputs,
+            analysis,
+            vulnerabilityAnalysis,
+            projection
+        });
+    const noSpouseConversation =
+        buildSpouseConversationSummary({
+            currentInputs: {
+                ...inputs,
+                profile: {
+                    ...inputs.profile,
+                    spouse: null
+                }
+            },
+            analysis,
+            vulnerabilityAnalysis,
+            projection
+        });
+
+    assert(
+        spouseConversation.available === true,
+        "Spouse conversation summary should be available when spouse data exists"
+    );
+    assert(
+        spouseConversation.snapshot.length === 6,
+        "Spouse conversation summary should include household snapshot cards"
+    );
+    assert(
+        spouseConversation.prompts.length === 3,
+        "Spouse conversation summary should produce three household prompts"
+    );
+    assert(
+        spouseConversation.summary.includes("household decision") &&
+        spouseConversation.note.includes("Primary watch item"),
+        "Spouse conversation summary should generate printable discussion copy"
+    );
+    assert(
+        spouseConversation.snapshot.some(item => item.label === "Survivor Election" && item.value.includes("50%")),
+        "Spouse conversation summary should reflect the modeled survivor election"
+    );
+    assert(
+        noSpouseConversation.available === false &&
+        noSpouseConversation.summary.includes("Add spouse age"),
+        "Spouse conversation summary should fall back cleanly when spouse data is absent"
+    );
+
+    logResult("Spouse conversation summary passed");
 }
 
 function testRetirementAgeComparisonMonotonicity() {
@@ -3878,17 +4118,20 @@ async function runVerification() {
         testPreRetirementEmploymentIncomeProjection();
         testSpouseIncomeStopsAtSpouseRetirement();
         testRentalIncomeProjectionBreakdown();
+        testRealEstateExtraPrincipalPayment();
         testDebtPayloadConsistency();
         testDebtExpenseDropsAfterPayoff();
         testRetirementVulnerabilityEngine();
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testProbabilityAdjustedReadinessScore();
+        testRetirementAccountContributionAccumulationWithRothMatch();
         testPremiumStressTestingConfigBuilder();
         testPremiumStressPresetHelpers();
         testRecommendedRetirementAgeDoesNotGoBelowCurrentAge();
         testRecommendedRetirementAgeRequiresMonteCarloThreshold();
         testDashboardRecommendationConsistency();
+        testSpouseConversationSummary();
         testDashboardAgeOrderIntegrity();
         testDashboardRetirementAgeBounds();
         testDashboardAgeAdjustedPensionInputs();

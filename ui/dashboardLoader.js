@@ -23,6 +23,7 @@ import {
     buildPlanningLeverContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
+    buildSpouseConversationSummary,
     buildShortfallSummary,
     buildTaxSnapshotSummary,
     buildTopRiskEntries,
@@ -708,6 +709,65 @@ function renderShortfallSummary(projection, analysis) {
     setElementText("reportWorstAnnualDeficit", shortfallSummary.worstAnnualDeficit);
 }
 
+function renderSpouseConversationSection({
+    currentInputs,
+    analysis,
+    vulnerabilityAnalysis,
+    projection
+}) {
+    const headline = document.getElementById("spouseConversationHeadline");
+    const summary = document.getElementById("spouseConversationSummary");
+    const snapshot = document.getElementById("spouseConversationSnapshot");
+    const prompts = document.getElementById("spouseConversationPrompts");
+    const note = document.getElementById("spouseConversationNote");
+
+    if (!headline || !summary || !snapshot || !prompts || !note) {
+        return;
+    }
+
+    const content = buildSpouseConversationSummary({
+        currentInputs,
+        analysis,
+        vulnerabilityAnalysis,
+        projection
+    });
+
+    headline.textContent = content.headline;
+    summary.textContent = content.summary;
+    note.textContent = content.note;
+
+    snapshot.innerHTML =
+        content.snapshot.length
+            ? content.snapshot.map(item => `
+                <div class="report-highlight-card spouse-conversation-card">
+                    <div class="report-highlight-label">${item.label}</div>
+                    <div class="report-highlight-value">${item.value}</div>
+                </div>
+            `).join("")
+            : `
+                <div class="report-highlight-card spouse-conversation-card">
+                    <div class="report-highlight-label">Setup Needed</div>
+                    <div class="report-highlight-value report-highlight-value-note">Add spouse planning inputs in the calculator to populate this section.</div>
+                </div>
+            `;
+
+    prompts.innerHTML =
+        content.prompts.length
+            ? content.prompts.map((item, index) => `
+                <div class="optimizer-sequence-item spouse-conversation-item">
+                    <div class="optimizer-sequence-eyebrow">Conversation ${index + 1}</div>
+                    <h3>${item.title}</h3>
+                    <p>${item.body}</p>
+                </div>
+            `).join("")
+            : `
+                <div class="optimizer-sequence-item spouse-conversation-item">
+                    <h3>Spouse planning inputs not found</h3>
+                    <p>Add spouse age, retirement age, and income in the calculator to generate a household discussion summary.</p>
+                </div>
+            `;
+}
+
 function renderRiskList(vulnerabilityAnalysis) {
     const riskList = document.getElementById("riskList");
     if (!riskList) return;
@@ -1198,6 +1258,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             vulnerabilityAnalysis,
             avgMargin,
             retirementYear
+        });
+        renderSpouseConversationSection({
+            currentInputs,
+            analysis,
+            vulnerabilityAnalysis,
+            projection: currentProjection
         });
         renderReadinessBreakdown({
             breakdown: analysis.readinessBreakdown,

@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: April 11, 2026
+Last updated: April 16, 2026
 
 ## Current Status
 
@@ -110,8 +110,9 @@ Completed:
 - Asset/debt saved-card summaries are now more consistent in tone and structure, with save-time and restore-time cards sharing the same summary builders across crypto, metals, real estate, debts, and retirement accounts
 - Unsaved draft asset/debt cards no longer persist into saved workspace state or simulation payloads, and restore/import now clears both saved and unsaved draft module cards before rebuilding the saved state in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js), [core/assetRegistry.js](/D:/LEOFF%202/core/assetRegistry.js), and the current asset/debt modules
 - Retirement-account projection now applies an approximate IRS-style required minimum distribution floor for eligible tax-deferred accounts at age 73+, and processes retirement-account sources in a more realistic default order in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
-- Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields on `401k` and `457b`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
+- Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields across `401k`, `Roth 401k`, `Traditional IRA`, `Roth IRA`, `457b`, `403(b)`, `401(a)`, and `TSP`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
 - Retirement-account withdrawal modeling now treats configured retirement-account draws as need-aware caps instead of unconditional automatic payouts, so tax-advantaged accounts cover the remaining annual spending gap in sequence while still honoring RMD floors where applicable in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
+- Real estate cards now support an `Extra Principal Payment (monthly $)` field, and the real-estate engine now increases annual mortgage expense plus shortens mortgage payoff timing when extra principal is modeled in [modules/assets/realEstate.js](/D:/LEOFF%202/modules/assets/realEstate.js), [core/realEstateEngine.js](/D:/LEOFF%202/core/realEstateEngine.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 Remaining:
 - Continue deepening retirement-account withdrawal realism beyond the current need-aware sequencing baseline, especially around year-by-year tax-aware bridge strategy and later premium tax-detail views
@@ -178,10 +179,10 @@ Completed:
 - The full printable report now includes a recommendation section, readiness score breakdown, expense breakdown, tax snapshot, top 3 risks, shortfall summary, and print-only stacked bar/line charts in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
 - Browser smoke testing now verifies the new report sections on the dashboard in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 - The report now includes a browser-native PDF export flow through a dedicated `Download PDF` action on [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- The printable dashboard report now includes a softer `Spouse Conversation Summary` section that translates the plan into household-discussion prompts around timing, spouse income, survivor elections, and fallback decisions in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
 
 Remaining:
 - Optional true one-click PDF generation beyond the browser print-to-PDF flow
-- Add a softer printable `spouse conversation` summary that translates the plan into a cleaner household-discussion format instead of only a technical dashboard/professional-style report
 
 ### Phase 9 - Accounts (Premium Feature)
 Status: In progress

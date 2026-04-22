@@ -139,6 +139,13 @@ Recommended production scheduling:
 - The storage layer is intentionally isolated in `src/lib/store.js` so file and
   PostgreSQL backends can share the same route layer with minimal churn.
 
+## Operations docs
+
+- Production security baseline:
+  [docs/production-security-baseline.md](/D:/LEOFF%202/backend/docs/production-security-baseline.md)
+- Backup restore drill:
+  [docs/backup-restore-drill.md](/D:/LEOFF%202/backend/docs/backup-restore-drill.md)
+
 ## PostgreSQL migration groundwork
 
 The backend now includes the first PostgreSQL migration pieces:

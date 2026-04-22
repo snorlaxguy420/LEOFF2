@@ -2,6 +2,31 @@
 Builds a normalized simulation state object for engine consumption.
 This keeps UI callers from assembling projection state ad hoc.
 */
+function deriveCurrentAgeFromBirthYear(birthYear) {
+    const parsedBirthYear = Number(birthYear);
+    const currentYear = new Date().getFullYear();
+
+    if (
+        !Number.isFinite(parsedBirthYear) ||
+        parsedBirthYear < 1900 ||
+        parsedBirthYear > currentYear
+    ) {
+        return null;
+    }
+
+    return currentYear - parsedBirthYear;
+}
+
+function deriveBirthYearFromCurrentAge(currentAge) {
+    const parsedCurrentAge = Number(currentAge);
+
+    if (!Number.isFinite(parsedCurrentAge) || parsedCurrentAge <= 0) {
+        return null;
+    }
+
+    return new Date().getFullYear() - parsedCurrentAge;
+}
+
 export function buildSimulationState({
     inputs = {},
     incomeSources = [],
@@ -32,6 +57,13 @@ export function buildSimulationState({
     const healthcareInflationRate =
         mergedAssumptions.healthcareInflationRate ??
         inflationRate;
+    const spouseCurrentAge =
+        profile.spouse?.currentAge ??
+        profile.spouse?.age ??
+        deriveCurrentAgeFromBirthYear(profile.spouse?.birthYear);
+    const spouseBirthYear =
+        profile.spouse?.birthYear ??
+        deriveBirthYearFromCurrentAge(spouseCurrentAge);
 
     return {
         profile: {
@@ -52,10 +84,9 @@ export function buildSimulationState({
             spouse: profile.spouse
                 ? {
                     name: profile.spouse.name ?? "",
-                    currentAge:
-                        profile.spouse.currentAge ??
-                        profile.spouse.age ??
-                        null,
+                    birthYear: spouseBirthYear,
+                    currentAge: spouseCurrentAge,
+                    age: spouseCurrentAge,
                     retirementAge:
                         profile.spouse.retirementAge ?? null,
                     annualIncome:
@@ -81,7 +112,12 @@ export function buildSimulationState({
         },
         additionalPensions,
         incomeSources,
-        socialSecurity,
+        socialSecurity: {
+            ...socialSecurity,
+            spouse: {
+                ...(socialSecurity?.spouse || {})
+            }
+        },
         expenses: {
             monthly: expenses.monthly ?? 0,
             essentialMonthly: expenses.essentialMonthly ?? 0,
@@ -120,6 +156,16 @@ export function simulationStateToInputs(simulationState = {}) {
     const expenses = state.expenses || {};
     const socialSecurity = state.socialSecurity || {};
     const toggles = state.toggles || {};
+    const spouseBirthYear =
+        profile.spouse?.birthYear ??
+        deriveBirthYearFromCurrentAge(
+            profile.spouse?.currentAge ??
+            profile.spouse?.age
+        );
+    const spouseCurrentAge =
+        profile.spouse?.currentAge ??
+        profile.spouse?.age ??
+        deriveCurrentAgeFromBirthYear(spouseBirthYear);
 
     const survivorOptionMap = {
         SINGLE: "none",
@@ -133,7 +179,15 @@ export function simulationStateToInputs(simulationState = {}) {
             ...profile,
             birthMonth: profile.birthMonth ?? null,
             birthYear: profile.birthYear ?? null,
-            maritalStatus: profile.maritalStatus ?? "single"
+            maritalStatus: profile.maritalStatus ?? "single",
+            spouse: profile.spouse
+                ? {
+                    ...profile.spouse,
+                    birthYear: spouseBirthYear,
+                    currentAge: spouseCurrentAge,
+                    age: spouseCurrentAge
+                }
+                : null
         },
         retireAge:
             pension.retirementAge ??
@@ -163,7 +217,18 @@ export function simulationStateToInputs(simulationState = {}) {
             benefit62: socialSecurity.benefit62 ?? 0,
             benefitFRA: socialSecurity.benefitFRA ?? 0,
             benefit70: socialSecurity.benefit70 ?? 0,
-            optimize: socialSecurity.optimize ?? false
+            optimize: socialSecurity.optimize ?? false,
+            spouse: {
+                enabled: socialSecurity?.spouse?.enabled ?? false,
+                birthYear: socialSecurity?.spouse?.birthYear ?? null,
+                claimAge: socialSecurity?.spouse?.claimAge ?? null,
+                cola: socialSecurity?.spouse?.cola ?? 0,
+                mode: socialSecurity?.spouse?.mode ?? "fraBenefit",
+                fraBenefit: socialSecurity?.spouse?.fraBenefit ?? 0,
+                benefit62: socialSecurity?.spouse?.benefit62 ?? 0,
+                benefitFRA: socialSecurity?.spouse?.benefitFRA ?? 0,
+                benefit70: socialSecurity?.spouse?.benefit70 ?? 0
+            }
         },
         expenses: {
             monthly: expenses.monthly ?? 0,

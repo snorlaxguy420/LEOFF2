@@ -33,12 +33,7 @@ import "../modules/profiles/profileModule.js";
 
 document.addEventListener("DOMContentLoaded", async () => {
 
-    console.log("Initializing simulator");
-
     await loadAssetModules();
-
-    const assets = assetRegistry.getAll();
-    console.log("Loaded assets:", assets);
 
     buildAssetButtons(assetRegistry);
 
@@ -61,6 +56,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 loadProfileModule(assetRegistry);
 
+    showPendingPlannerStatus();
+
 });
 /* =========================================================
    GLOBAL STATE
@@ -73,8 +70,49 @@ const legendContainer = document.getElementById("legend");
 const outputContainer = document.getElementById("output");
 const realToggle = document.getElementById("realToggle");
 const totalIncomeToggle = document.getElementById("showTotalIncomeLine");
+const plannerStatusMessage = document.getElementById("plannerStatusMessage");
 
 const EXPENSE_COLOR = "#DB2B39";
+
+function showPlannerStatus(message, tone = "error") {
+    if (!plannerStatusMessage) {
+        return;
+    }
+
+    plannerStatusMessage.hidden = false;
+    plannerStatusMessage.dataset.tone = tone;
+    plannerStatusMessage.textContent = message;
+}
+
+function clearPlannerStatus() {
+    if (!plannerStatusMessage) {
+        return;
+    }
+
+    plannerStatusMessage.hidden = true;
+    plannerStatusMessage.textContent = "";
+    delete plannerStatusMessage.dataset.tone;
+}
+
+function showPendingPlannerStatus() {
+    try {
+        const raw = sessionStorage.getItem("plannerStatusMessage");
+
+        if (!raw) {
+            return;
+        }
+
+        sessionStorage.removeItem("plannerStatusMessage");
+
+        const parsed = JSON.parse(raw);
+
+        if (parsed?.message) {
+            showPlannerStatus(parsed.message, parsed.tone || "error");
+        }
+    } catch (error) {
+        sessionStorage.removeItem("plannerStatusMessage");
+    }
+}
 
 /* =========================================================
    DOM INITIALIZATION (RESTORED)
@@ -200,16 +238,14 @@ runButton.addEventListener("click", () => {
 const profileModule = assetRegistry.get("profile");
 
 if (!profileModule) {
-alert("Profile module not loaded.");
+showPlannerStatus("The household profile module did not load. Refresh the page and try again.");
 return;
 }
 
 const profile = profileModule.getProfile?.();
 
 if (!profile || !profile.birthYear || !profile.birthMonth) {
-
-alert("Please complete the Household Profile before running the simulation.");
-
+showPlannerStatus("Complete the Household Profile before running the calculator.");
 return;
 
 }
@@ -221,6 +257,8 @@ runSimulation();
 }
 
 function runSimulation() {
+
+    clearPlannerStatus();
 
     const inputs = collectInputs();
 const profileModule = assetRegistry.get("profile");
@@ -240,7 +278,6 @@ if (profileModule && typeof profileModule.getProfile === "function") {
         inputs,
         assetRegistry
     });
-    console.log("Income Sources:", incomeSources);
 
     const simulationState = buildSimulationState({
         inputs,

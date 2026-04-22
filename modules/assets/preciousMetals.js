@@ -1,8 +1,6 @@
 import { assetRegistry } from "../../core/assetRegistry.js";
 import { createCollapsibleCard } from "../../core/createCollapsibleCard.js";
 
-console.log("Precious metals asset module loaded");
-
 /* ------------------------------------------------
 Helpers
 ------------------------------------------------ */

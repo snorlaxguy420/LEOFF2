@@ -1,7 +1,5 @@
 import { assetRegistry } from "../../core/assetRegistry.js";
 
-console.log("Profile module loaded");
-
 /* -----------------------------
 Age calculation
 ----------------------------- */
@@ -22,6 +20,19 @@ function calculateAge(month, year) {
 
 }
 
+function calculateAgeFromBirthYear(year) {
+
+    if (!year) return null;
+
+    const currentYear = new Date().getFullYear();
+
+    if (year < 1900 || year > currentYear) {
+        return null;
+    }
+
+    return currentYear - year;
+}
+
 function syncSocialSecurityBirthYear(value) {
 
     const ssBirthYear = document.getElementById("ssBirthYear");
@@ -29,6 +40,15 @@ function syncSocialSecurityBirthYear(value) {
     if (!ssBirthYear || !value) return;
 
     ssBirthYear.value = value;
+}
+
+function syncSpouseSocialSecurityBirthYear(value) {
+
+    const spouseSsBirthYear = document.getElementById("spouseSsBirthYear");
+
+    if (!spouseSsBirthYear || !value) return;
+
+    spouseSsBirthYear.value = value;
 }
 
 /* -----------------------------
@@ -49,7 +69,7 @@ assetRegistry.registerAsset({
         "birthYear",
         "maritalStatus",
         "spouseName",
-        "spouseCurrentAge",
+        "spouseBirthYear",
         "spouseRetirementAge",
         "spouseAnnualIncome"
     ],
@@ -108,8 +128,8 @@ createCard() {
                     <input id="spouseName" type="text">
                 </label>
 
-                <label>Spouse Current Age
-                    <input id="spouseCurrentAge" type="number">
+                <label>Spouse Birth Year
+                    <input id="spouseBirthYear" type="number">
                 </label>
 
                 <label>Spouse Retirement Age
@@ -128,6 +148,7 @@ createCard() {
     const maritalStatus = card.querySelector("#maritalStatus");
     const spouseSection = card.querySelector("#spouseSection");
     const birthYearInput = card.querySelector("#birthYear");
+    const spouseBirthYearInput = card.querySelector("#spouseBirthYear");
 
     maritalStatus.addEventListener("change", () => {
 
@@ -144,6 +165,16 @@ createCard() {
         birthYearInput.addEventListener("input", syncBirthYear);
         birthYearInput.addEventListener("change", syncBirthYear);
         syncBirthYear();
+    }
+
+    if (spouseBirthYearInput) {
+        const syncSpouseBirthYear = () => {
+            syncSpouseSocialSecurityBirthYear(spouseBirthYearInput.value);
+        };
+
+        spouseBirthYearInput.addEventListener("input", syncSpouseBirthYear);
+        spouseBirthYearInput.addEventListener("change", syncSpouseBirthYear);
+        syncSpouseBirthYear();
     }
 
     return card;
@@ -184,8 +215,18 @@ restoreState(state){
     if(!state) return null;
 
     const card = this.createCard();
+    const restoredState = { ...state };
 
-    Object.entries(state).forEach(([id,val]) => {
+    if (!restoredState.spouseBirthYear && restoredState.spouseCurrentAge) {
+        const spouseCurrentAge = parseInt(restoredState.spouseCurrentAge, 10);
+        const currentYear = new Date().getFullYear();
+
+        if (Number.isFinite(spouseCurrentAge) && spouseCurrentAge > 0) {
+            restoredState.spouseBirthYear = currentYear - spouseCurrentAge;
+        }
+    }
+
+    Object.entries(restoredState).forEach(([id,val]) => {
 
         const el = card.querySelector("#"+id);
 
@@ -202,6 +243,9 @@ restoreState(state){
 
     syncSocialSecurityBirthYear(
         card.querySelector("#birthYear")?.value
+    );
+    syncSpouseSocialSecurityBirthYear(
+        card.querySelector("#spouseBirthYear")?.value
     );
 
     return card;
@@ -231,8 +275,10 @@ getProfile(){
     const currentAge =
         calculateAge(birthMonth, birthYear);
 
+    const spouseBirthYear =
+        parseInt(document.getElementById("spouseBirthYear")?.value) || null;
     const spouseCurrentAge =
-        parseInt(document.getElementById("spouseCurrentAge")?.value) || null;
+        calculateAgeFromBirthYear(spouseBirthYear);
     const spouseRetirementAge =
         parseInt(document.getElementById("spouseRetirementAge")?.value) || null;
     const spouseAnnualIncome =
@@ -249,6 +295,7 @@ getProfile(){
         spouse: maritalStatus === "married" ? {
 
             name: spouseName,
+            birthYear: spouseBirthYear,
             currentAge: spouseCurrentAge,
             age: spouseCurrentAge,
             retirementAge: spouseRetirementAge,

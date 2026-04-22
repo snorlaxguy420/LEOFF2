@@ -173,7 +173,7 @@ function buildFreeMetrics({
         },
         {
             label: "SS Claim Age",
-            value: socialSecurity.claimAge || "-"
+            value: formatHouseholdSocialSecurityClaimAge(socialSecurity)
         },
         {
             label: "Housing Inflation",
@@ -182,6 +182,19 @@ function buildFreeMetrics({
             )
         }
     ];
+}
+
+function formatHouseholdSocialSecurityClaimAge(socialSecurity = {}) {
+    const primaryClaimAge =
+        socialSecurity?.claimAge || null;
+    const spouseClaimAge =
+        socialSecurity?.spouse?.claimAge || null;
+
+    if (primaryClaimAge && spouseClaimAge) {
+        return `${primaryClaimAge} / spouse ${spouseClaimAge}`;
+    }
+
+    return primaryClaimAge || spouseClaimAge || "-";
 }
 
 function buildPremiumSections({
@@ -277,7 +290,7 @@ function buildPremiumSections({
                 },
                 {
                     label: "SS Claim Age",
-                    value: socialSecurity.claimAge || "-"
+                    value: formatHouseholdSocialSecurityClaimAge(socialSecurity)
                 },
                 {
                     label: "Stress Profile",

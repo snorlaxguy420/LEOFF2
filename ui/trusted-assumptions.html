@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trusted Assumptions Library | LEOFF Helper</title>
+<meta name="description" content="Review the core planning assumptions, default methodology, and known modeling boundaries currently used in LEOFF Helper retirement planning reports.">
+<meta name="keywords" content="retirement planning assumptions, monte carlo assumptions, LEOFF Helper methodology, retirement calculator defaults, pension planning assumptions">
+<meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://leoffhelper.com/trusted-assumptions">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="Trusted Assumptions Library | LEOFF Helper">
+<meta property="og:description" content="Review the current planning assumptions, default methodology, and modeling boundaries behind LEOFF Helper dashboard results.">
+<meta property="og:url" content="https://leoffhelper.com/trusted-assumptions">
+<meta property="og:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Trusted Assumptions Library | LEOFF Helper">
+<meta name="twitter:description" content="Review the current planning assumptions, default methodology, and modeling boundaries behind LEOFF Helper dashboard results.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<link rel="stylesheet" href="/ui/articles/article.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Trusted Assumptions Library",
+  "url": "https://leoffhelper.com/trusted-assumptions",
+  "description": "A public reference page that explains the current planning assumptions, methodology, and modeling boundaries used by LEOFF Helper."
+}
+</script>
+    <script defer src="/ui/analytics.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/index.html">Home</a>
+<a href="/ui/simulator.html">Calculator</a>
+<a href="/ui/articles.html">Articles</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<div class="article-bg">
+<main class="article-shell">
+
+<section class="article-hero">
+<div class="article-kicker">Methodology</div>
+<h1>Trusted Assumptions Library</h1>
+<p class="article-dek">
+This page is the public reference for the core defaults, modeling choices, and
+known boundaries currently used in LEOFF Helper. Use it with the dashboard when
+you want to understand what the report is actually assuming.
+</p>
+<div class="article-meta">
+<span>LEOFF Helper</span>
+<span>Methodology Reference</span>
+<span>Live Beta</span>
+</div>
+</section>
+
+<div class="article-layout">
+
+<aside class="article-sidebar">
+<div class="article-card">
+<h3>In This Library</h3>
+<ul>
+<li><a href="#purpose">What this page is for</a></li>
+<li><a href="#inflation">Inflation assumptions</a></li>
+<li><a href="#returns">Return and growth assumptions</a></li>
+<li><a href="#social-security">Social Security handling</a></li>
+<li><a href="#pension">Pension and salary handling</a></li>
+<li><a href="#monte-carlo">Monte Carlo boundaries</a></li>
+<li><a href="#limits">Known limits</a></li>
+</ul>
+</div>
+
+<div class="article-card">
+<h3>Use It With</h3>
+<p>
+This page pairs with the live
+<a href="/ui/retirementDashboard.html">retirement dashboard</a>
+and the guide on
+<a href="/ui/articles/article-monte-carlo-retirement-modeling.html">how Monte Carlo modeling works</a>.
+</p>
+</div>
+
+<div class="article-card">
+<h3>Why It Exists</h3>
+<p>
+The goal is not to claim false precision. The goal is to make the current model
+legible enough that users can judge whether a result is directionally useful,
+overconfident, or in need of a closer human review.
+</p>
+</div>
+</aside>
+
+<article class="article-content">
+<h2 id="purpose">What this page is for</h2>
+<p>
+LEOFF Helper is meant to support retirement decisions, not replace judgment,
+professional tax advice, or legal planning. That means the dashboard should be
+transparent about what it assumes instead of pretending every result is exact.
+</p>
+<p>
+This library documents the current live-beta assumptions that matter most when
+reading the dashboard: inflation, account growth, Social Security handling,
+pension math inputs, and the current Monte Carlo stress model.
+</p>
+
+<div class="article-callout">
+<strong>Use this page as a trust layer</strong>
+<p>
+If the dashboard output surprises you, this is the first place to check whether
+the underlying assumptions match the way you actually expect retirement to work.
+</p>
+</div>
+
+<h2 id="inflation">Inflation assumptions</h2>
+<p>
+The planner no longer treats inflation as one flat number everywhere. It now
+supports separate assumptions for goods and services, housing, and healthcare.
+</p>
+<ul>
+<li>Goods and services inflation defaults to the general day-to-day spending path used in the current workspace.</li>
+<li>Housing inflation is modeled separately so housing-heavy plans do not hide behind a generic blended rate.</li>
+<li>Healthcare inflation is modeled separately because late-career and post-retirement medical costs tend to behave differently from baseline household inflation.</li>
+</ul>
+<p>
+If a user leaves the inflation split at the suggested defaults, the dashboard is
+using the current built-in assumption set. If a user overrides those fields, the
+dashboard uses the user-entered rates instead.
+</p>
+
+<h2 id="returns">Return and growth assumptions</h2>
+<p>
+Deterministic projections still need baseline growth assumptions. Those
+assumptions are not promises; they are planning anchors.
+</p>
+<ul>
+<li>Retirement accounts and portfolios use the configured growth assumptions inside the current plan inputs.</li>
+<li>Real-estate value growth and rent growth are modeled separately so a property can appreciate without assuming rent rises at the exact same rate.</li>
+<li>Mortgage payoff timing now reflects configured extra-principal payments when those are present.</li>
+</ul>
+<p>
+If you think the baseline return path is too optimistic or too conservative, the
+best fix is to change the underlying assumptions in the plan rather than simply
+reading more into a single dashboard output.
+</p>
+
+<h2 id="social-security">Social Security handling</h2>
+<p>
+Social Security is now handled with more input fidelity than the earliest
+versions of the planner. Users can model known monthly benefit values and claim
+timing rather than relying only on a rough generic estimate.
+</p>
+<ul>
+<li>The planner can normalize known benefit inputs at age 62, full retirement age, or age 70 into the shared engine.</li>
+<li>The premium Social Security optimizer compares age 62, FRA, and age 70 against the current plan rather than treating claiming as an isolated math problem.</li>
+<li>The dashboard still treats Social Security claiming as a plan input, not a guaranteed recommendation independent of all other spending and withdrawal choices.</li>
+</ul>
+
+<h2 id="pension">Pension, salary, and retirement-age handling</h2>
+<p>
+The dashboard now adjusts pension-sensitive assumptions when the retirement-age
+slider moves. That matters because waiting longer changes more than the start
+date.
+</p>
+<ul>
+<li>Service credit is adjusted when the selected retirement age changes.</li>
+<li>Final average salary assumptions are age-adjusted from current annual pay toward the selected retirement timing.</li>
+<li>Portfolio withdrawal timing also shifts with the selected retirement age so the report does not compare mismatched timelines.</li>
+</ul>
+<p>
+For LEOFF2, PERS2, and TRS2, the planner uses dedicated pension engines and
+formal pension functions rather than one-off UI math.
+</p>
+
+<h2 id="monte-carlo">Monte Carlo boundaries</h2>
+<p>
+Monte Carlo is a stress test layered on top of the deterministic plan. It is not
+the same thing as a crystal ball.
+</p>
+<ul>
+<li>It currently varies inflation, portfolio returns, and real-estate growth year by year around the current plan assumptions.</li>
+<li>It does not automatically invent new spending behavior, new tax law, new survivor choices, or new pension rules.</li>
+<li>Premium stress testing can push the run into harsher custom downside assumptions, but it is still bounded by the current modeling framework.</li>
+<li>The dashboard uses stable seeding across retirement ages so slider comparisons stay more comparable instead of redrawing a completely unrelated random sample each time.</li>
+</ul>
+
+<blockquote>
+Monte Carlo is best used to judge durability, not certainty.
+</blockquote>
+
+<h2 id="limits">Known modeling limits and things not to over-read</h2>
+<p>
+There are still important things the current model does not fully capture. A few
+examples matter more than others:
+</p>
+<ul>
+<li>Tax modeling is stronger than before, but still not a substitute for a year-by-year CPA review.</li>
+<li>Monte Carlo uses independent year-by-year shocks today and does not yet model richer regime clustering or full recession-state persistence.</li>
+<li>Estate guidance is planning support, not legal advice, and should not be treated as a trust or probate strategy.</li>
+<li>The dashboard can inform retirement timing, but it should not be used as the only basis for irrevocable choices without pressure-testing the assumptions.</li>
+</ul>
+
+<h2>How to use this library responsibly</h2>
+<p>
+If a result looks too good, check the retirement age, expense inputs, portfolio
+growth assumptions, and bridge years first. If a result looks too bad, check the
+same things before assuming the planner is broken. In both cases, the key
+question is whether the plan assumptions are believable for the household making
+the decision.
+</p>
+<p>
+If you want to adjust the plan, go back to the
+<a href="/ui/simulator.html">calculator</a>.
+If you want to see the current report interpretation layer, open the
+<a href="/ui/retirementDashboard.html">dashboard</a>.
+If you want the stress-model details, read
+<a href="/ui/articles/article-monte-carlo-retirement-modeling.html">How Monte Carlo Modeling Works in LEOFF Helper</a>.
+</p>
+</article>
+
+</div>
+
+</main>
+</div>
+
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Retirement Calculator</a></li>
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/contact.html">Contact Us</a></li>
+<li class="social-link-item"><a href="https://www.facebook.com/LEOFFHELPER/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><img src="/assets/illustrations/facebook2.png" alt="Facebook" width="20" height="20"></a></li>
+<li class="social-link-item"><a href="https://x.com/LEOFFHelper" target="_blank" rel="noopener noreferrer" aria-label="X"><img src="/assets/illustrations/twitter2.png" alt="X" width="20" height="20"></a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+<h4>Subscribe for Retirement Tips</h4>
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+</div>
+</div>
+
+<div class="footer-bottom">
+<p>© 2024 LEOFF Helper - Not affiliated with any government agency</p>
+</div>
+</footer>
+
+<script type="module" src="/ui/authHeader.js"></script>
+</body>
+</html>

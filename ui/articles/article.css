@@ -23,7 +23,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 40px;
+    padding: 18px 40px 28px;
+    overflow: visible;
     position: relative;
     z-index: 10;
 }
@@ -32,6 +33,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: absolute;
+    left: 40px;
+    top: 100%;
+    transform: translateY(-52%);
+    z-index: 20;
 }
 
 .logo-wrap a {
@@ -57,12 +63,13 @@ body {
 }
 
 .logo-wrap img {
-    height: 72px;
+    height: 120px;
     filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.25));
 }
 
 .nav {
     margin-left: auto;
+    padding-left: 260px;
 }
 
 .nav a {
@@ -137,7 +144,7 @@ body {
 .article-shell {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 36px 40px 80px;
+    padding: 88px 40px 80px;
 }
 
 .article-hero {
@@ -487,11 +494,15 @@ body {
     }
 
     .logo-wrap {
+        position: static;
+        left: auto;
+        top: auto;
+        transform: none;
         gap: 10px;
     }
 
     .logo-wrap img {
-        height: 62px;
+        height: 68px;
     }
 
     .logo-wrap::after {
@@ -505,6 +516,7 @@ body {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
+        padding-left: 0;
     }
 
     .nav a {
@@ -553,7 +565,7 @@ body {
     }
 
     .logo-wrap img {
-        height: 52px;
+        height: 56px;
     }
 
     .logo-wrap::after {
@@ -562,7 +574,7 @@ body {
     }
 
     .article-shell {
-        padding: 24px 16px 48px;
+        padding: 72px 12px 48px;
     }
 
     .article-hero h1 {

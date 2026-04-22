@@ -25,6 +25,7 @@ const NAMED_INCOME_COLORS = {
     "LEOFF Pension": "#1F4D3A",
     "PERS Plan 2 Pension": "#2E5F49",
     "Social Security": "#3F7C85",
+    "Spouse Social Security": "#5C7C8A",
     "LEOFF Lump Sum": "#B46A3C",
     "Rental Income": "#6B4F3A",
     "Portfolio Assets": "#1E2F44",
@@ -279,6 +280,44 @@ function prepareIncomeVsExpenseResults(results, incomeSources = []) {
     };
 }
 
+function prepareIncomeVsExpenseLineResults(results, incomeSources = []) {
+    const basePrepared =
+        prepareIncomeVsExpenseResults(results, incomeSources);
+    const retirementPortfolioSources =
+        (incomeSources || []).filter(source =>
+            source?.type === "portfolio" &&
+            !!source?.accountType &&
+            !!source?.name
+        );
+
+    if (!retirementPortfolioSources.length) {
+        return basePrepared;
+    }
+
+    const preparedResults =
+        (basePrepared.results || []).map(result => {
+            const portfolioBalances = result?.portfolios || {};
+            const nextBreakdown = {
+                ...(result?.breakdown || {})
+            };
+
+            retirementPortfolioSources.forEach(source => {
+                nextBreakdown[source.name] =
+                    portfolioBalances[source.name] || 0;
+            });
+
+            return {
+                ...result,
+                breakdown: nextBreakdown
+            };
+        });
+
+    return {
+        results: preparedResults,
+        rendererOptions: basePrepared.rendererOptions
+    };
+}
+
 function preparePensionIncomeResults(results, incomeSources = []) {
     const pensionNames = new Set(
         (incomeSources || [])
@@ -386,6 +425,10 @@ export function renderProjectionChart({
 
         if (dataset === "assetsOverTime") {
             return prepareAssetsOverTimeResults(results);
+        }
+
+        if (dataset === "incomeVsExpenses" && mode === "line") {
+            return prepareIncomeVsExpenseLineResults(results, incomeSources);
         }
 
         return prepareIncomeVsExpenseResults(results, incomeSources);

@@ -1,3 +1,13 @@
+function deriveBirthYearFromAge(age) {
+    const parsedAge = Number(age);
+
+    if (!Number.isFinite(parsedAge) || parsedAge <= 0) {
+        return null;
+    }
+
+    return new Date().getFullYear() - parsedAge;
+}
+
 function populateProfileInputs(inputs = {}) {
     const profile = inputs.profile || {};
     const spouse = profile.spouse || {};
@@ -7,8 +17,9 @@ function populateProfileInputs(inputs = {}) {
         birthYear: profile.birthYear,
         maritalStatus: profile.maritalStatus,
         spouseName: spouse.name,
-        spouseCurrentAge:
-            spouse.currentAge ?? spouse.age,
+        spouseBirthYear:
+            spouse.birthYear ??
+            deriveBirthYearFromAge(spouse.currentAge ?? spouse.age),
         spouseRetirementAge: spouse.retirementAge,
         spouseAnnualIncome: spouse.annualIncome
     };
@@ -53,6 +64,20 @@ export function populateSimulatorInputs(inputs) {
         inputs.socialSecurity?.mode === "benefitFRA"
             ? "fraBenefit"
             : (inputs.socialSecurity?.mode || "fraBenefit");
+    const spouseSocialSecurityMode =
+        inputs.socialSecurity?.spouse?.mode === "benefitFRA"
+            ? "fraBenefit"
+            : (inputs.socialSecurity?.spouse?.mode || "fraBenefit");
+    const spouseSocialSecurityEnabled =
+        Boolean(
+            inputs.socialSecurity?.spouse?.enabled ||
+            inputs.socialSecurity?.spouse?.birthYear ||
+            inputs.socialSecurity?.spouse?.claimAge ||
+            inputs.socialSecurity?.spouse?.fraBenefit ||
+            inputs.socialSecurity?.spouse?.benefit62 ||
+            inputs.socialSecurity?.spouse?.benefitFRA ||
+            inputs.socialSecurity?.spouse?.benefit70
+        );
 
     const valueMap = {
         retireAge: inputs.retireAge,
@@ -83,6 +108,16 @@ export function populateSimulatorInputs(inputs) {
         ssBenefit62: inputs.socialSecurity?.benefit62,
         ssBenefitFRA: inputs.socialSecurity?.benefitFRA,
         ssBenefit70: inputs.socialSecurity?.benefit70,
+        spouseSsBirthYear: inputs.socialSecurity?.spouse?.birthYear,
+        spouseSsClaimAge: inputs.socialSecurity?.spouse?.claimAge,
+        spouseSsCola: (inputs.socialSecurity?.spouse?.cola || 0) * 100,
+        spouseSsMode: spouseSocialSecurityMode,
+        spouseSsFraBenefit:
+            inputs.socialSecurity?.spouse?.fraBenefit ||
+            inputs.socialSecurity?.spouse?.benefitFRA,
+        spouseSsBenefit62: inputs.socialSecurity?.spouse?.benefit62,
+        spouseSsBenefitFRA: inputs.socialSecurity?.spouse?.benefitFRA,
+        spouseSsBenefit70: inputs.socialSecurity?.spouse?.benefit70,
         expenseHousing: inputs.expenses?.housing,
         expenseGroceries: inputs.expenses?.groceries,
         expenseBills: inputs.expenses?.bills,
@@ -114,6 +149,7 @@ export function populateSimulatorInputs(inputs) {
         hasPers2: Boolean(pers2?.enabled),
         hasTrs2: Boolean(trs2?.enabled),
         ssOptimize: inputs.socialSecurity?.optimize,
+        includeSpouseSocialSecurity: spouseSocialSecurityEnabled,
         realToggle: inputs.toggles?.showReal,
         marketFirstToggle: inputs.toggles?.marketFirst
     };

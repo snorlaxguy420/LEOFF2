@@ -1,6 +1,6 @@
 import { renderProjectionChart } from "./projectionChart.js";
 import { renderMonteCarloProjectionChart } from "./monteCarloProjectionChart.js";
-import { getAccountContext } from "./apiClient.js";
+import { getAccountContext, getSharedPlan } from "./apiClient.js";
 import { hasPremiumAccess } from "./accountEntitlements.js";
 import {
     analyzeRetirementPlan
@@ -8,6 +8,8 @@ import {
 import { runMonteCarloSimulation } from "../analysis/monteCarloEngine.js";
 import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
 import { buildSocialSecurityOptimization } from "../analysis/socialSecurityOptimizer.js";
+import { buildSurvivorOptionOptimization } from "../analysis/survivorOptionOptimizer.js";
+import { buildTaxDetailView } from "../analysis/taxDetailView.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 import { StateManager } from "../core/stateManager.js";
 import { buildPremiumStressTestMonteCarloConfig } from "../core/premiumStressTesting.js";
@@ -17,10 +19,14 @@ import { runRetirementVulnerabilityAnalysis } from "../analysis/retirementVulner
 import {
     buildRiskListEntries,
     buildMonteCarloContent,
+    buildMonteCarloTrustContent,
     buildMonteCarloProjectionChartContent,
     buildExpenseBreakdownSummary,
+    buildHouseholdDecisionBrief,
     buildMarginOverviewText,
     buildPlanningLeverContent,
+    buildProfessionalReviewSummary,
+    buildReadinessTimelineContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
     buildSpouseConversationSummary,
@@ -48,6 +54,111 @@ const MONTE_CARLO_BASE_SEED = 424242;
 let monteCarloIterations = FREE_MONTE_CARLO_ITERATIONS;
 let monteCarloPlusEnabled = false;
 let dashboardAccountContext = null;
+let sharedPlanView = null;
+
+function readSharedPlanTokenFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        return String(url.searchParams.get("sharedPlanToken") || "").trim();
+    } catch (error) {
+        return "";
+    }
+}
+
+function isSharedPlanView() {
+    return Boolean(sharedPlanView?.token);
+}
+
+function buildPremiumLockedMessage({
+    signedInMessage,
+    signedOutMessage,
+    sharedMessage
+}) {
+    if (isSharedPlanView()) {
+        return sharedMessage;
+    }
+
+    if (dashboardAccountContext?.user?.email) {
+        return signedInMessage;
+    }
+
+    return signedOutMessage;
+}
+
+function renderSharedPlanBanner(sharedPlan = null) {
+    const banner = document.getElementById("sharedPlanBanner");
+    const title = document.getElementById("sharedPlanBannerTitle");
+    const summary = document.getElementById("sharedPlanBannerSummary");
+    const editButton = document.getElementById("editInputsBtn");
+
+    if (!banner || !title || !summary) {
+        return;
+    }
+
+    if (!sharedPlan) {
+        banner.hidden = true;
+
+        if (editButton) {
+            editButton.hidden = false;
+        }
+
+        return;
+    }
+
+    banner.hidden = false;
+    title.textContent = sharedPlan.name
+        ? `Shared scenario: ${sharedPlan.name}`
+        : "Shared scenario";
+    summary.textContent =
+        "This dashboard was opened from a share link, so it is view-only and does not change the owner's saved scenario. You can review the report and print it without account access.";
+
+    if (editButton) {
+        editButton.hidden = true;
+    }
+}
+
+function buildReadinessTimelineEntries({
+    baseInputs,
+    baseSavedSources,
+    baseAssumptions,
+    minimumRetirementAge,
+    maximumRetirementAge
+}) {
+    const entries = [];
+
+    for (let retireAge = minimumRetirementAge; retireAge <= maximumRetirementAge; retireAge += 1) {
+        const {
+            currentInputs,
+            currentIncomeSources,
+            currentProjection
+        } = buildDashboardScenario({
+            baseInputs,
+            baseSources: baseSavedSources,
+            baseAssumptions,
+            retireAge
+        });
+        const analysis = analyzeRetirementPlan({
+            inputs: currentInputs,
+            incomeSources: currentIncomeSources,
+            projection: currentProjection
+        });
+        const summary = summarizeDashboardResults({
+            results: currentProjection?.results || [],
+            retireAge
+        });
+
+        entries.push({
+            retireAge,
+            readinessScore: analysis?.readinessScore || 0,
+            readinessBand: normalizeReadinessBand(analysis),
+            averageMargin: summary?.avgMargin || 0,
+            firstDeficitAge: analysis?.retirementFailureAge ?? null,
+            assetDepletionAge: analysis?.assetDepletionAge ?? null
+        });
+    }
+
+    return entries;
+}
 
 function updateRetirementAgeLabel(retireAge) {
     const label = document.getElementById("retirementAgeSliderLabel");
@@ -66,6 +177,21 @@ function buildReportDocumentTitle(retireAge) {
     ].join("-");
 
     return `LEOFF-Helper-Retirement-Report-Age-${retireAge}-${stamp}`;
+}
+
+function buildTextDownloadFileName(prefix, retireAge) {
+    const now = new Date();
+    const stamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0")
+    ].join("-");
+    const agePart =
+        Number.isFinite(retireAge)
+            ? `-Age-${retireAge}`
+            : "";
+
+    return `${prefix}${agePart}-${stamp}.txt`;
 }
 
 function toggleDetailSection(button) {
@@ -107,6 +233,98 @@ function setElementText(id, value) {
 
     if (el) {
         el.innerText = value;
+    }
+}
+
+async function copyTextToClipboard(value) {
+    const text = String(value || "").trim();
+
+    if (!text) {
+        throw new Error("Nothing to copy yet.");
+    }
+
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "readonly");
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+        document.execCommand("copy");
+    } finally {
+        document.body.removeChild(textArea);
+    }
+}
+
+function downloadTextFile(fileName, text) {
+    const content = String(text || "").trim();
+
+    if (!content) {
+        throw new Error("Nothing to download yet.");
+    }
+
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+    }, 0);
+}
+
+function flashActionButtonLabel(button, label, fallbackLabel) {
+    if (!button) {
+        return;
+    }
+
+    const nextFallback =
+        fallbackLabel ||
+        button.dataset.defaultLabel ||
+        button.textContent ||
+        "Copy Packet";
+
+    button.dataset.defaultLabel = nextFallback;
+    button.textContent = label;
+
+    if (button._labelTimeoutId) {
+        window.clearTimeout(button._labelTimeoutId);
+    }
+
+    button._labelTimeoutId = window.setTimeout(() => {
+        button.textContent = nextFallback;
+    }, 1800);
+}
+
+async function copyReportPacket(button, text) {
+    try {
+        await copyTextToClipboard(text);
+        flashActionButtonLabel(button, "Copied", button?.dataset?.defaultLabel);
+    } catch (error) {
+        console.error("Failed to copy report packet", error);
+        flashActionButtonLabel(button, "Copy failed", button?.dataset?.defaultLabel);
+    }
+}
+
+function downloadReportPacket(button, text, fileName) {
+    try {
+        downloadTextFile(fileName, text);
+        flashActionButtonLabel(button, "Downloaded", button?.dataset?.defaultLabel);
+    } catch (error) {
+        console.error("Failed to download report packet", error);
+        flashActionButtonLabel(button, "Download failed", button?.dataset?.defaultLabel);
     }
 }
 
@@ -201,7 +419,7 @@ function renderWithdrawalOptimizerSection({
     projection
 }) {
     const premiumEnabled =
-        hasPremiumAccess(dashboardAccountContext, "premium");
+        hasPremiumAccess(dashboardAccountContext, "withdrawalStrategyOptimizer");
     const headline = document.getElementById("withdrawalOptimizerHeadline");
     const summary = document.getElementById("withdrawalOptimizerSummary");
     const premiumNote =
@@ -230,10 +448,14 @@ function renderWithdrawalOptimizerSection({
         summary.textContent =
             optimization.summary;
         premiumNote.hidden = false;
-        premiumNote.textContent =
-            dashboardAccountContext?.user?.email
-                ? "This account is currently on the free tier. Premium unlocks the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance."
-                : "Sign in with a premium account to unlock the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance.";
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Premium unlocks the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so the step-by-step withdrawal order, bridge-year funding sequence, and deeper tax-order guidance are not included in this link."
+        });
         highlights.hidden = false;
         highlights.innerHTML = `
             <div class="report-highlight-card">
@@ -390,7 +612,7 @@ function renderSocialSecurityOptimizerSection({
     simulationState
 }) {
     const premiumEnabled =
-        hasPremiumAccess(dashboardAccountContext, "premium");
+        hasPremiumAccess(dashboardAccountContext, "socialSecurityOptimizer");
     const headline =
         document.getElementById("socialSecurityOptimizerHeadline");
     const summary =
@@ -413,10 +635,14 @@ function renderSocialSecurityOptimizerSection({
         summary.textContent =
             "Premium compares age 62, full retirement age, and age 70 against the current plan so you can see which claiming age best fits the bridge years, portfolio pressure, and late-life income tradeoff.";
         premiumNote.hidden = false;
-        premiumNote.textContent =
-            dashboardAccountContext?.user?.email
-                ? "This account is currently on the free tier. Upgrade to premium to unlock plan-aware Social Security claiming guidance."
-                : "Sign in with a premium account to unlock plan-aware Social Security claiming guidance.";
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock plan-aware Social Security claiming guidance.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock plan-aware Social Security claiming guidance.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so plan-aware Social Security claiming guidance is not included in this link."
+        });
         highlights.hidden = true;
         options.innerHTML = `
             <div class="optimizer-sequence-item">
@@ -543,13 +769,166 @@ function renderSocialSecurityOptimizerSection({
         `).join("");
 }
 
+function renderSurvivorOptionOptimizerSection({
+    simulationState
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "survivorOptionOptimizer");
+    const headline =
+        document.getElementById("survivorOptionOptimizerHeadline");
+    const summary =
+        document.getElementById("survivorOptionOptimizerSummary");
+    const premiumNote =
+        document.getElementById("survivorOptionOptimizerPremiumNote");
+    const highlights =
+        document.getElementById("survivorOptionOptimizerHighlights");
+    const options =
+        document.getElementById("survivorOptionOptimizerOptions");
+    const notes =
+        document.getElementById("survivorOptionOptimizerNotes");
+
+    if (!headline || !summary || !premiumNote || !highlights || !options || !notes) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium survivor-option guidance";
+        summary.textContent =
+            "Premium compares single life, 50%, 66.67%, and 100% survivor elections against the current household plan so you can see which tradeoff best balances spouse protection and current retirement income.";
+        premiumNote.hidden = false;
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock plan-aware survivor-option guidance.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock plan-aware survivor-option guidance.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so plan-aware survivor-option guidance is not included in this link."
+        });
+        highlights.hidden = true;
+        options.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Premium survivor optimizer preview</h3>
+                <p>See which survivor election best fits the current household setup, how much pension income it gives up while you are alive, and how much survivor income it leaves behind.</p>
+            </div>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    premiumNote.hidden = true;
+
+    const optimization =
+        buildSurvivorOptionOptimization({
+            simulationState
+        });
+
+    headline.textContent = optimization.headline;
+    summary.textContent = optimization.summary;
+
+    if (!optimization.available) {
+        highlights.hidden = true;
+        options.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <h3>Survivor inputs need one more pass</h3>
+                <p>${optimization.summary}</p>
+            </div>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    highlights.hidden = false;
+    setElementText(
+        "survivorOptionOptimizerRecommendedOption",
+        optimization.highlights?.recommendedOption || "--"
+    );
+    setElementText(
+        "survivorOptionOptimizerSurvivorIncome",
+        optimization.highlights?.survivorIncome || "--"
+    );
+    setElementText(
+        "survivorOptionOptimizerRetireeGiveUp",
+        optimization.highlights?.retireeGiveUp || "--"
+    );
+    setElementText(
+        "survivorOptionOptimizerFitScore",
+        optimization.highlights?.fitScore || "--"
+    );
+
+    options.innerHTML =
+        optimization.options.length
+            ? optimization.options.map(option => `
+                <div class="optimizer-sequence-item">
+                    ${option.badge ? `<div class="social-security-option-badge">${option.badge}</div>` : ""}
+                    <h3>${option.title}</h3>
+                    <p>${option.narrative}</p>
+                    <div class="social-security-option-metrics">
+                        <div>
+                            <span>Best For</span>
+                            <strong>${option.bestFor}</strong>
+                        </div>
+                        <div>
+                            <span>Current Pension</span>
+                            <strong>${option.currentMonthlyBenefit}</strong>
+                        </div>
+                        <div>
+                            <span>Survivor Pension</span>
+                            <strong>${option.survivorMonthlyBenefit}</strong>
+                        </div>
+                        <div>
+                            <span>Give-Up vs Single</span>
+                            <strong>${option.giveUpVsSingle}</strong>
+                        </div>
+                        <div>
+                            <span>Survivor Coverage</span>
+                            <strong>${option.survivorCoverage}</strong>
+                        </div>
+                        <div>
+                            <span>Readiness</span>
+                            <strong>${option.readiness}</strong>
+                        </div>
+                        <div>
+                            <span>Retirement Margin</span>
+                            <strong>${option.retirementMargin}</strong>
+                        </div>
+                        <div>
+                            <span>First Deficit Age</span>
+                            <strong>${option.firstDeficitAge}</strong>
+                        </div>
+                        <div>
+                            <span>Asset Depletion</span>
+                            <strong>${option.assetDepletionAge}</strong>
+                        </div>
+                        <div>
+                            <span>Fit Score</span>
+                            <strong>${option.fitScore} / 100</strong>
+                        </div>
+                    </div>
+                </div>
+            `).join("")
+            : `
+                <div class="optimizer-sequence-item">
+                    <h3>No survivor comparison available yet</h3>
+                    <p>Add spouse age and complete pension assumptions to compare survivor elections.</p>
+                </div>
+            `;
+
+    notes.innerHTML =
+        optimization.notes.map(note => `
+            <div class="optimizer-note-card">
+                <span>${note.label}</span>
+                <strong>${note.value}</strong>
+            </div>
+        `).join("");
+}
+
 function renderEstateProjectionSection({
     currentInputs,
     simulationState,
     projection
 }) {
     const premiumEnabled =
-        hasPremiumAccess(dashboardAccountContext, "premium");
+        hasPremiumAccess(dashboardAccountContext, "estateProjection");
     const headline = document.getElementById("estateProjectionHeadline");
     const summary = document.getElementById("estateProjectionSummary");
     const premiumNote =
@@ -570,10 +949,14 @@ function renderEstateProjectionSection({
         summary.textContent =
             "Premium shows the expected net-worth path at every projected age and adds estate-planning prompts based on the assets in the plan.";
         premiumNote.hidden = false;
-        premiumNote.textContent =
-            dashboardAccountContext?.user?.email
-                ? "This account is currently on the free tier. Upgrade to premium to unlock year-by-year estate projection and estate-planning guidance."
-                : "Sign in with a premium account to unlock year-by-year estate projection and estate-planning guidance.";
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock year-by-year estate projection and estate-planning guidance.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock year-by-year estate projection and estate-planning guidance.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so year-by-year estate projection and estate-planning guidance are not included in this link."
+        });
         highlights.hidden = true;
         tableBody.innerHTML = `
             <tr>
@@ -633,6 +1016,125 @@ function renderEstateProjectionSection({
             <div class="estate-help-card">
                 <h3>${card.title}</h3>
                 <p>${card.body}</p>
+            </div>
+        `).join("");
+}
+
+function renderTaxDetailViewSection({
+    simulationState,
+    projection
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "taxDetailViews");
+    const headline = document.getElementById("taxDetailHeadline");
+    const summary = document.getElementById("taxDetailSummary");
+    const premiumNote = document.getElementById("taxDetailPremiumNote");
+    const highlights = document.getElementById("taxDetailHighlights");
+    const tableBody = document.getElementById("taxDetailTableBody");
+    const notes = document.getElementById("taxDetailNotes");
+
+    if (!headline || !summary || !premiumNote || !highlights || !tableBody || !notes) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium year-by-year tax detail";
+        summary.textContent =
+            "Premium expands the retirement-year tax snapshot into a year-by-year table so you can see income, portfolio draws, taxable income, taxes, and tax drag across the full projection.";
+        premiumNote.hidden = false;
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock year-by-year tax detail views.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock year-by-year tax detail views.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so year-by-year tax detail views are not included in this link."
+        });
+        highlights.hidden = true;
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8">Premium tax detail rows will appear here once a premium account is active.</td>
+            </tr>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    premiumNote.hidden = true;
+
+    const taxDetail = buildTaxDetailView({
+        simulationState,
+        projection
+    });
+
+    headline.textContent = taxDetail.headline;
+    summary.textContent = taxDetail.summary;
+
+    if (!taxDetail.available) {
+        highlights.hidden = true;
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="8">${taxDetail.summary}</td>
+            </tr>
+        `;
+        notes.innerHTML = "";
+        return;
+    }
+
+    highlights.hidden = false;
+    setElementText(
+        "taxDetailRetirementYearTaxes",
+        taxDetail.highlights?.retirementYearTaxes || "--"
+    );
+    setElementText(
+        "taxDetailLifetimeTaxes",
+        taxDetail.highlights?.lifetimeTaxes || "--"
+    );
+    setElementText(
+        "taxDetailPeakTaxYear",
+        taxDetail.highlights?.peakTaxYear || "--"
+    );
+    setElementText(
+        "taxDetailPeakTaxDrag",
+        taxDetail.highlights?.peakTaxDrag || "--"
+    );
+
+    tableBody.innerHTML =
+        taxDetail.rows.length
+            ? taxDetail.rows.map(row => {
+                const classes = [
+                    row.isRetirementYear ? "is-retirement-year" : "",
+                    row.isPeakTaxYear ? "is-peak-tax" : "",
+                    row.isPeakTaxDragYear ? "is-peak-drag" : ""
+                ].filter(Boolean).join(" ");
+
+                return `
+                    <tr class="${classes}">
+                        <td>
+                            <span class="readiness-timeline-age">${row.age}</span>
+                            ${row.status ? `<div class="readiness-timeline-status">${row.status}</div>` : ""}
+                        </td>
+                        <td>${row.totalIncome}</td>
+                        <td>${row.portfolioDraws}</td>
+                        <td>${row.taxes}</td>
+                        <td>${row.afterTaxIncome}</td>
+                        <td>${row.taxableIncome}</td>
+                        <td>${row.taxDrag}</td>
+                        <td>${row.netMargin}</td>
+                    </tr>
+                `;
+            }).join("")
+            : `
+                <tr>
+                    <td colspan="8">Tax detail rows are not available yet.</td>
+                </tr>
+            `;
+
+    notes.innerHTML =
+        taxDetail.notes.map(note => `
+            <div class="optimizer-note-card">
+                <span>${note.label}</span>
+                <strong>${note.value}</strong>
             </div>
         `).join("");
 }
@@ -820,6 +1322,187 @@ function renderSpouseConversationSection({
             `;
 }
 
+function renderHouseholdDecisionBriefSection({
+    currentInputs,
+    analysis,
+    vulnerabilityAnalysis,
+    projection
+}) {
+    const headline = document.getElementById("householdDecisionBriefHeadline");
+    const summary = document.getElementById("householdDecisionBriefSummary");
+    const cards = document.getElementById("householdDecisionBriefCards");
+    const points = document.getElementById("householdDecisionBriefPoints");
+    const note = document.getElementById("householdDecisionBriefNote");
+    const copyButton = document.getElementById("householdDecisionBriefCopyBtn");
+    const downloadButton =
+        document.getElementById("householdDecisionBriefDownloadBtn");
+
+    if (
+        !headline ||
+        !summary ||
+        !cards ||
+        !points ||
+        !note ||
+        !copyButton ||
+        !downloadButton
+    ) {
+        return;
+    }
+
+    const content = buildHouseholdDecisionBrief({
+        currentInputs,
+        analysis,
+        vulnerabilityAnalysis,
+        projection
+    });
+
+    headline.textContent = content.headline;
+    summary.textContent = content.summary;
+    note.textContent = content.note;
+    cards.innerHTML = content.cards.map(card => `
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">${card.label}</div>
+            <div class="report-highlight-value">${card.value}</div>
+        </div>
+    `).join("");
+    points.innerHTML = content.talkingPoints.map((point, index) => `
+        <div class="optimizer-sequence-item">
+            <div class="optimizer-sequence-eyebrow">Brief Point ${index + 1}</div>
+            <p>${point}</p>
+        </div>
+    `).join("");
+    copyButton.disabled = false;
+    copyButton.dataset.defaultLabel = "Copy Brief";
+    copyButton.textContent = "Copy Brief";
+    copyButton.onclick = () => {
+        copyReportPacket(copyButton, content.exportText);
+    };
+    downloadButton.disabled = false;
+    downloadButton.dataset.defaultLabel = "Download Brief";
+    downloadButton.textContent = "Download Brief";
+    downloadButton.onclick = () => {
+        downloadReportPacket(
+            downloadButton,
+            content.exportText,
+            buildTextDownloadFileName(
+                "LEOFF-Helper-Household-Decision-Brief",
+                currentInputs?.retireAge
+            )
+        );
+    };
+}
+
+function renderProfessionalReviewSection({
+    currentInputs,
+    analysis,
+    vulnerabilityAnalysis,
+    projection
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "premium");
+    const headline = document.getElementById("professionalReviewHeadline");
+    const summary = document.getElementById("professionalReviewSummary");
+    const premiumNote =
+        document.getElementById("professionalReviewPremiumNote");
+    const cards = document.getElementById("professionalReviewCards");
+    const questions = document.getElementById("professionalReviewQuestions");
+    const note = document.getElementById("professionalReviewNote");
+    const copyButton = document.getElementById("professionalReviewCopyBtn");
+    const downloadButton =
+        document.getElementById("professionalReviewDownloadBtn");
+
+    if (
+        !headline ||
+        !summary ||
+        !premiumNote ||
+        !cards ||
+        !questions ||
+        !note ||
+        !copyButton ||
+        !downloadButton
+    ) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "Premium professional review packet";
+        summary.textContent =
+            "Premium turns the dashboard into a cleaner advisor handoff with tax drag, shortfall pressure, top review questions, and a copy-ready packet for CPA, fiduciary, or estate-planning conversations.";
+        premiumNote.hidden = false;
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock the professional review packet.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock the professional review packet.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so the professional review packet is not included in this link."
+        });
+        cards.hidden = true;
+        questions.innerHTML = `
+            <div class="optimizer-sequence-item">
+                <div class="optimizer-sequence-eyebrow">Premium Packet Preview</div>
+                <h3>Advisor-ready summary</h3>
+                <p>Premium summarizes the current retirement timing, tax drag, shortfall pressure, and the highest-value questions to carry into a professional review.</p>
+            </div>
+        `;
+        note.textContent =
+            "Use this section when you want a cleaner handoff into a CPA, fiduciary, or estate-planning conversation instead of sharing the full dashboard first.";
+        copyButton.disabled = true;
+        copyButton.dataset.defaultLabel = "Premium Only";
+        copyButton.textContent = "Premium Only";
+        copyButton.onclick = null;
+        downloadButton.disabled = true;
+        downloadButton.dataset.defaultLabel = "Premium Only";
+        downloadButton.textContent = "Premium Only";
+        downloadButton.onclick = null;
+        return;
+    }
+
+    const content = buildProfessionalReviewSummary({
+        currentInputs,
+        analysis,
+        vulnerabilityAnalysis,
+        projection
+    });
+
+    headline.textContent = content.headline;
+    summary.textContent = content.summary;
+    premiumNote.hidden = true;
+    cards.hidden = false;
+    cards.innerHTML = content.cards.map(card => `
+        <div class="report-highlight-card">
+            <div class="report-highlight-label">${card.label}</div>
+            <div class="report-highlight-value">${card.value}</div>
+        </div>
+    `).join("");
+    questions.innerHTML = content.questions.map((question, index) => `
+        <div class="optimizer-sequence-item">
+            <div class="optimizer-sequence-eyebrow">Review Question ${index + 1}</div>
+            <p>${question}</p>
+        </div>
+    `).join("");
+    note.textContent = content.note;
+    copyButton.disabled = false;
+    copyButton.dataset.defaultLabel = "Copy Packet";
+    copyButton.textContent = "Copy Packet";
+    copyButton.onclick = () => {
+        copyReportPacket(copyButton, content.exportText);
+    };
+    downloadButton.disabled = false;
+    downloadButton.dataset.defaultLabel = "Download Packet";
+    downloadButton.textContent = "Download Packet";
+    downloadButton.onclick = () => {
+        downloadReportPacket(
+            downloadButton,
+            content.exportText,
+            buildTextDownloadFileName(
+                "LEOFF-Helper-Professional-Review-Packet",
+                currentInputs?.retireAge
+            )
+        );
+    };
+}
+
 function renderRiskList(vulnerabilityAnalysis) {
     const riskList = document.getElementById("riskList");
     if (!riskList) return;
@@ -834,6 +1517,118 @@ function renderRiskList(vulnerabilityAnalysis) {
         li.textContent = text;
         riskList.appendChild(li);
     });
+}
+
+function renderReadinessTimelineSection({
+    entries,
+    currentRetireAge,
+    recommendedRetirementAge
+}) {
+    const premiumEnabled =
+        hasPremiumAccess(dashboardAccountContext, "readinessTimeline");
+    const headline = document.getElementById("readinessTimelineHeadline");
+    const summary = document.getElementById("readinessTimelineSummary");
+    const premiumNote =
+        document.getElementById("readinessTimelinePremiumNote");
+    const body = document.getElementById("readinessTimelineBody");
+    const footnote = document.getElementById("readinessTimelineFootnote");
+
+    if (!headline || !summary || !premiumNote || !body || !footnote) {
+        return;
+    }
+
+    if (!premiumEnabled) {
+        headline.textContent = "How readiness changes by retirement age";
+        summary.textContent =
+            "Premium compares the readiness score, annual margin, first deficit age, and depletion timing across the full retirement-age range instead of only the currently selected age.";
+        premiumNote.hidden = false;
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "This account is currently on the free tier. Upgrade to premium to unlock the age-by-age readiness table.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock the age-by-age readiness table.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so the age-by-age readiness table is not included in this link."
+        });
+        body.innerHTML = `
+            <tr>
+                <td colspan="6">Premium readiness timeline rows will appear here once a premium account is active.</td>
+            </tr>
+        `;
+        footnote.textContent =
+            "Premium turns this section into a retirement-age comparison table so you can see where the plan first becomes Workable, Strong, or Durable before relying on a single selected age.";
+        return;
+    }
+
+    const content = buildReadinessTimelineContent({
+        entries,
+        currentRetireAge,
+        recommendedRetirementAge
+    });
+
+    headline.textContent = "How the score changes by retirement age";
+    summary.textContent = content.summary;
+    premiumNote.hidden = true;
+    body.innerHTML =
+        content.rows.length
+            ? content.rows.map(row => {
+                const classes = [
+                    row.isCurrent ? "is-current" : "",
+                    row.isRecommended ? "is-recommended" : ""
+                ].filter(Boolean).join(" ");
+
+                return `
+                    <tr class="${classes}">
+                        <td>
+                            <span class="readiness-timeline-age">${row.ageLabel}</span>
+                            ${row.status ? `<div class="readiness-timeline-status">${row.status}</div>` : ""}
+                        </td>
+                        <td>${row.scoreLabel}</td>
+                        <td><span class="readiness-timeline-band ${row.bandClass}">${row.band}</span></td>
+                        <td>${row.marginLabel}</td>
+                        <td>${row.firstDeficitAgeLabel}</td>
+                        <td>${row.assetDepletionAgeLabel}</td>
+                    </tr>
+                `;
+            }).join("")
+            : `
+                <tr>
+                    <td colspan="6">Readiness timeline data is not available yet.</td>
+                </tr>
+            `;
+    footnote.textContent =
+        "This table shows the age-by-age score trend using the current plan inputs. Use the selected age together with the Monte Carlo section below before treating any one score as a final decision.";
+}
+
+function renderMonteCarloTrustSection({
+    monteCarlo = null,
+    premiumStressTesting = null
+} = {}) {
+    const summary = document.getElementById("monteCarloTrustSummary");
+    const cards = document.getElementById("monteCarloTrustCards");
+    const footnote = document.getElementById("monteCarloTrustFootnote");
+
+    if (!summary || !cards || !footnote) {
+        return;
+    }
+
+    const content = buildMonteCarloTrustContent({
+        monteCarlo,
+        premiumEnabled: monteCarloPlusEnabled,
+        stressTestingActive:
+            Boolean(monteCarloPlusEnabled) &&
+            Boolean(premiumStressTesting?.enabled)
+    });
+
+    summary.textContent = content.summary;
+    cards.innerHTML = content.cards.map(card => `
+        <div class="estate-help-card">
+            <h3>${card.title}</h3>
+            <p>${card.body}</p>
+        </div>
+    `).join("");
+    footnote.innerHTML =
+        `${content.footnote} Review the <a href="/ui/trusted-assumptions.html">trusted assumptions library</a> and the <a href="/ui/articles/article-monte-carlo-retirement-modeling.html">Monte Carlo modeling guide</a> for the current methodology.`;
 }
 
 function setMonteCarloLoadingState() {
@@ -894,10 +1689,14 @@ function applyMonteCarloEntitlementState(accountContext = null) {
 
     if (premiumNote) {
         premiumNote.hidden = monteCarloPlusEnabled;
-        premiumNote.textContent =
-            accountContext?.user?.email
-                ? "Monte Carlo Plus path ranges and deeper trial runs are reserved for premium accounts. This account is currently on the free tier."
-                : "Sign in with a premium account to unlock Monte Carlo Plus path ranges and deeper trial runs.";
+        premiumNote.textContent = buildPremiumLockedMessage({
+            signedInMessage:
+                "Monte Carlo Plus path ranges and deeper trial runs are reserved for premium accounts. This account is currently on the free tier.",
+            signedOutMessage:
+                "Sign in with a premium account to unlock Monte Carlo Plus path ranges and deeper trial runs.",
+            sharedMessage:
+                "This shared scenario was created from a free-tier plan, so Monte Carlo Plus path ranges and deeper trial runs are not included in this link."
+        });
     }
 
     if (rangePanel) {
@@ -987,6 +1786,9 @@ function renderMonteCarloSection({
         premiumStressTesting,
         customStressConfig
     });
+    renderMonteCarloTrustSection({
+        premiumStressTesting
+    });
 
     monteCarloTimeoutId = window.setTimeout(() => {
         const monteCarlo = runMonteCarloSimulation({
@@ -1027,6 +1829,10 @@ function renderMonteCarloSection({
         setElementText("monteCarloMedianNetWorth", content.medianEndingNetWorth);
         setElementText("monteCarloP90NetWorth", content.percentile90EndingNetWorth);
         setElementText("monteCarloIterations", content.iterations);
+        renderMonteCarloTrustSection({
+            monteCarlo,
+            premiumStressTesting
+        });
 
         if (monteCarloPlusEnabled) {
             const probabilityAdjustedAnalysis =
@@ -1092,31 +1898,88 @@ function renderMonteCarloSection({
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+    const sharedPlanToken = readSharedPlanTokenFromUrl();
+    let stored = null;
+    let workspaceState = null;
+    let savedSimulationState = null;
+    let projection = null;
+    let incomeSources = [];
+    let inputs = null;
 
-    await loadDashboardAccountContext();
-    applyMonteCarloEntitlementState(dashboardAccountContext);
+    if (sharedPlanToken) {
+        try {
+            const sharedPlan = await getSharedPlan(sharedPlanToken);
 
-    const stored = sessionStorage.getItem("retirementProjection");
-    const workspaceState = StateManager.loadAll();
-    const savedSimulationState = workspaceState?.simulationState;
+            sharedPlanView = {
+                token: sharedPlanToken,
+                planId: sharedPlan?.id || null,
+                name: sharedPlan?.name || "",
+                sharedAt: sharedPlan?.sharedAt || null
+            };
+            dashboardAccountContext = {
+                user: null,
+                entitlements: sharedPlan?.entitlements || {}
+            };
+            applyMonteCarloEntitlementState(dashboardAccountContext);
+            renderSharedPlanBanner(sharedPlanView);
 
-    if (!stored && !savedSimulationState) {
-        alert("No retirement analysis found.");
-        window.location.href = "simulator.html";
-        return;
+            savedSimulationState =
+                sharedPlan?.workspaceState?.simulationState ||
+                sharedPlan?.simulationState ||
+                null;
+            workspaceState =
+                sharedPlan?.workspaceState ||
+                {
+                    simulationState: savedSimulationState,
+                    moduleState: {}
+                };
+
+            if (!savedSimulationState) {
+                throw new Error("Shared scenario is missing its simulation state.");
+            }
+
+            projection = runProjection(savedSimulationState);
+            incomeSources = savedSimulationState.incomeSources || [];
+            inputs = simulationStateToInputs(savedSimulationState);
+        } catch (error) {
+            sessionStorage.setItem("plannerStatusMessage", JSON.stringify({
+                message:
+                    error.message || "That shared scenario could not be opened.",
+                tone: "error"
+            }));
+            window.location.href = "simulator.html";
+            return;
+        }
+    } else {
+        await loadDashboardAccountContext();
+        applyMonteCarloEntitlementState(dashboardAccountContext);
+        renderSharedPlanBanner(null);
+
+        stored = sessionStorage.getItem("retirementProjection");
+        workspaceState = StateManager.loadAll();
+        savedSimulationState = workspaceState?.simulationState;
+
+        if (!stored && !savedSimulationState) {
+            sessionStorage.setItem("plannerStatusMessage", JSON.stringify({
+                message: "No saved retirement analysis was found. Build a plan first, then reopen the dashboard.",
+                tone: "error"
+            }));
+            window.location.href = "simulator.html";
+            return;
+        }
+
+        const fallbackPayload = savedSimulationState ? {
+            projection: runProjection(savedSimulationState),
+            incomeSources: savedSimulationState.incomeSources || [],
+            inputs: simulationStateToInputs(savedSimulationState)
+        } : null;
+
+        ({
+            projection,
+            incomeSources,
+            inputs
+        } = stored ? JSON.parse(stored) : fallbackPayload);
     }
-
-    const fallbackPayload = savedSimulationState ? {
-        projection: runProjection(savedSimulationState),
-        incomeSources: savedSimulationState.incomeSources || [],
-        inputs: simulationStateToInputs(savedSimulationState)
-    } : null;
-
-    const {
-        projection,
-        incomeSources,
-        inputs
-    } = stored ? JSON.parse(stored) : fallbackPayload;
 
     const baseInputs = structuredClone(inputs);
     const baseSavedSources = incomeSources || [];
@@ -1317,9 +2180,26 @@ document.addEventListener("DOMContentLoaded", async () => {
             vulnerabilityAnalysis,
             projection: currentProjection
         });
+        renderHouseholdDecisionBriefSection({
+            currentInputs,
+            analysis,
+            vulnerabilityAnalysis,
+            projection: currentProjection
+        });
+        renderProfessionalReviewSection({
+            currentInputs,
+            analysis,
+            vulnerabilityAnalysis,
+            projection: currentProjection
+        });
         renderReadinessBreakdown({
             breakdown: analysis.readinessBreakdown,
             maxScores: analysis.readinessMaxScores
+        });
+        renderReadinessTimelineSection({
+            entries: readinessTimelineEntries,
+            currentRetireAge: retireAge,
+            recommendedRetirementAge: displayedRecommendedAge
         });
         renderExpenseBreakdown(retirementYear);
         renderTaxSnapshot(retirementYear);
@@ -1340,16 +2220,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderSocialSecurityOptimizerSection({
             simulationState: currentSimulationState
         });
+        renderSurvivorOptionOptimizerSection({
+            simulationState: currentSimulationState
+        });
         renderEstateProjectionSection({
             currentInputs,
             simulationState: currentSimulationState,
             projection: currentProjection
         });
+        renderTaxDetailViewSection({
+            simulationState: currentSimulationState,
+            projection: currentProjection
+        });
     }
 
-    document.getElementById("editInputsBtn").onclick = () => {
-        window.location.href = "simulator.html";
-    };
+    const editInputsBtn = document.getElementById("editInputsBtn");
+    if (editInputsBtn) {
+        editInputsBtn.onclick = () => {
+            window.location.href = "simulator.html";
+        };
+    }
 
     const printButton = document.getElementById("printReportBtn");
     if (printButton) {
@@ -1387,6 +2277,23 @@ document.addEventListener("DOMContentLoaded", async () => {
         Math.min(
             Math.max(initialRecommendedAge, minimumRetirementAge),
             maximumRetirementAge
+        );
+    const readinessTimelineEnabled =
+        hasPremiumAccess(dashboardAccountContext, "readinessTimeline");
+    const readinessTimelineEntries =
+        readinessTimelineEnabled
+            ? buildReadinessTimelineEntries({
+                baseInputs,
+                baseSavedSources,
+                baseAssumptions,
+                minimumRetirementAge,
+                maximumRetirementAge
+            })
+            : [];
+    const displayedRecommendedAge =
+        getDisplayedRecommendationAge(
+            baselineAnalysis,
+            initialSliderAge
         );
 
     if (slider) {

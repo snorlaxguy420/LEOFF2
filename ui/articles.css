@@ -15,7 +15,7 @@ body {
 }
 
 .site-header {
-    padding-bottom: 28px;
+    padding: 18px 40px 28px;
     overflow: visible;
 }
 
@@ -23,12 +23,12 @@ body {
     position: absolute;
     left: 40px;
     top: 100%;
-    transform: translateY(-50%);
+    transform: translateY(-52%);
     z-index: 20;
 }
 
 .logo-wrap img {
-    height: 106px;
+    height: 120px;
 }
 
 .nav {
@@ -38,7 +38,7 @@ body {
 .articles-shell {
     max-width: 1320px;
     margin: 0 auto;
-    padding: 72px 40px 80px;
+    padding: 88px 40px 80px;
 }
 
 .articles-kicker {
@@ -214,7 +214,10 @@ body {
 
 @media (max-width: 1080px) {
     .site-header {
-        padding-bottom: 18px;
+        padding: 16px 20px;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 14px;
     }
 
     .logo-wrap {
@@ -222,6 +225,7 @@ body {
         left: auto;
         top: auto;
         transform: none;
+        gap: 12px;
     }
 
     .logo-wrap img {
@@ -229,7 +233,31 @@ body {
     }
 
     .nav {
+        margin-left: 0;
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
         padding-left: 0;
+    }
+
+    .nav a,
+    .nav-auth-status {
+        width: 100%;
+        box-sizing: border-box;
+        justify-content: center;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        text-align: center;
+        background: rgba(255,255,255,.12);
+        border: 1px solid rgba(255,255,255,.16);
+        margin-left: 0;
+    }
+
+    .nav a.nav-login,
+    .nav-auth-status {
+        grid-column: 1 / -1;
     }
 
     .articles-hero {
@@ -253,8 +281,31 @@ body {
 }
 
 @media (max-width: 720px) {
+    .site-header {
+        padding: 14px 12px;
+    }
+
+    .logo-wrap {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .logo-wrap img {
+        height: 56px;
+    }
+
+    .logo-wrap::after {
+        padding: 4px 8px;
+        font-size: 9px;
+    }
+
+    .nav {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
     .articles-shell {
-        padding: 24px 16px 48px;
+        padding: 72px 12px 48px;
     }
 
     .articles-hero p {

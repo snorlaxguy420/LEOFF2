@@ -737,6 +737,7 @@ orderedIncomeSources.forEach(source => {
         let totalIncome = 0;
         let totalTaxes = 0;
         let yearlyTaxableIncome = 0;
+        let yearlySocialSecurityIncome = 0;
         let yearlyBreakdown = {};
         let supplementalExpenses = 0;
         const employmentIncome = getEmploymentIncome(currentAge);
@@ -962,13 +963,42 @@ if (source.type === "real_estate") {
                 (yearlyBreakdown[source.name] || 0) + income;
 
             if (source.type === "fixed") {
-                yearlyTaxableIncome += getFixedIncomeTaxableAmount({
-                    source,
-                    income,
-                    currentTaxableIncome: yearlyTaxableIncome
-                });
+                if (source?.taxCategory === "social_security") {
+                    yearlySocialSecurityIncome += income;
+                } else {
+                    const taxableAmount =
+                        getFixedIncomeTaxableAmount({
+                            source,
+                            income,
+                            currentTaxableIncome: yearlyTaxableIncome
+                        });
+
+                    if (taxableAmount > 0) {
+                        totalTaxes +=
+                            calculateFederalIncomeTax(
+                                yearlyTaxableIncome + taxableAmount
+                            ) - calculateFederalIncomeTax(yearlyTaxableIncome);
+                        yearlyTaxableIncome += taxableAmount;
+                    }
+                }
             }
         });
+
+        if (yearlySocialSecurityIncome > 0) {
+            const socialSecurityTaxableAmount =
+                calculateSocialSecurityTaxableAmount({
+                    socialSecurityIncome: yearlySocialSecurityIncome,
+                    otherTaxableIncome: yearlyTaxableIncome
+                });
+
+            if (socialSecurityTaxableAmount > 0) {
+                totalTaxes +=
+                    calculateFederalIncomeTax(
+                        yearlyTaxableIncome + socialSecurityTaxableAmount
+                    ) - calculateFederalIncomeTax(yearlyTaxableIncome);
+                yearlyTaxableIncome += socialSecurityTaxableAmount;
+            }
+        }
 
     
         let adjustedExpenses =

@@ -112,6 +112,19 @@ function buildNote(label, value) {
     return { label, value };
 }
 
+function getHouseholdSocialSecurityStartAge(simulationState = {}) {
+    const claimAges = [
+        simulationState?.socialSecurity?.claimAge,
+        simulationState?.socialSecurity?.spouse?.claimAge
+    ].filter(age => Number.isFinite(age));
+
+    if (!claimAges.length) {
+        return null;
+    }
+
+    return Math.min(...claimAges);
+}
+
 function findBridgeResults(results = [], retireAge = null, socialSecurityClaimAge = null) {
     if (!Number.isFinite(retireAge) || !Number.isFinite(socialSecurityClaimAge)) {
         return [];
@@ -206,7 +219,7 @@ export function buildWithdrawalStrategyOptimization({
         simulationState?.pension?.retirementAge ??
         null;
     const socialSecurityClaimAge =
-        simulationState?.socialSecurity?.claimAge ?? null;
+        getHouseholdSocialSecurityStartAge(simulationState);
     const retirementYearResult =
         findRetirementYearResult(results, retireAge);
     const annualGap =

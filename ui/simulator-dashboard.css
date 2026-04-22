@@ -233,6 +233,31 @@ border-radius:16px;
 padding:34px;
 }
 
+.planner-status-message{
+margin:0 0 20px;
+padding:14px 16px;
+border-radius:14px;
+background:rgba(31,77,58,.08);
+border:1px solid rgba(31,77,58,.14);
+color:var(--pnw-navy);
+font-size:14px;
+font-weight:600;
+line-height:1.55;
+box-shadow:0 10px 24px rgba(30,47,68,.06);
+}
+
+.planner-status-message[data-tone="error"]{
+background:rgba(164,52,52,.10);
+border-color:rgba(164,52,52,.18);
+color:#6f1d1b;
+}
+
+.planner-status-message[data-tone="success"]{
+background:rgba(31,77,58,.08);
+border-color:rgba(31,77,58,.14);
+color:var(--pnw-evergreen);
+}
+
 .module{
 display:none;
 }
@@ -919,10 +944,34 @@ background:rgba(30,47,68,.08);
 color:var(--pnw-navy);
 }
 
+.account-plan-badge.is-share-live{
+background:rgba(63,124,133,.14);
+color:var(--pnw-navy);
+}
+
 .account-plan-meta{
 margin:0 0 12px;
 font-size:13px;
 line-height:1.5;
+color:rgba(42,42,42,.72);
+}
+
+.account-plan-share-row{
+display:flex;
+flex-wrap:wrap;
+gap:8px 12px;
+align-items:center;
+margin:-2px 0 12px;
+font-size:13px;
+line-height:1.5;
+}
+
+.account-plan-share-label{
+font-weight:700;
+color:var(--pnw-evergreen);
+}
+
+.account-plan-share-meta{
 color:rgba(42,42,42,.72);
 }
 
@@ -957,6 +1006,16 @@ border-color:rgba(150,42,42,.12);
 background:rgba(63,124,133,.12);
 border-color:rgba(63,124,133,.24);
 color:var(--pnw-navy);
+}
+
+.account-plan-actions button.account-plan-share-active{
+background:rgba(31,77,58,.1);
+border-color:rgba(31,77,58,.24);
+}
+
+.account-plan-actions button.account-plan-share-revoke{
+color:#7C2A2A;
+border-color:rgba(150,42,42,.12);
 }
 
 .account-plan-empty{
@@ -2150,14 +2209,12 @@ line-height:1.65;
 color:rgba(30,47,68,.82);
 }
 
-.planner-step-checklist,
-.planner-next-step-checklist{
+.planner-step-checklist{
 display:grid;
 gap:10px;
 }
 
-.planner-step-check,
-.planner-next-step-check{
+.planner-step-check{
 display:grid;
 grid-template-columns:auto 1fr;
 gap:10px;
@@ -2171,8 +2228,7 @@ line-height:1.5;
 color:rgba(42,42,42,.82);
 }
 
-.planner-step-check span:first-child,
-.planner-next-step-check span:first-child{
+.planner-step-check span:first-child{
 display:inline-flex;
 align-items:center;
 justify-content:center;
@@ -2186,48 +2242,45 @@ font-weight:800;
 line-height:1;
 }
 
-.planner-next-step-card{
+.planner-report-card{
 display:grid;
 gap:12px;
 padding:18px 16px;
 border-radius:16px;
-background:linear-gradient(160deg, rgba(30,47,68,.96), rgba(34,63,87,.92));
-border:1px solid rgba(255,255,255,.12);
-box-shadow:0 16px 30px rgba(30,47,68,.18);
-color:white;
+background:rgba(255,255,255,.84);
+border:1px solid rgba(255,255,255,.48);
+box-shadow:0 10px 24px rgba(0,0,0,.06);
 }
 
-.planner-next-step-kicker{
+.planner-report-kicker{
 font-size:11px;
 font-weight:800;
 letter-spacing:.14em;
 text-transform:uppercase;
-color:rgba(246,239,216,.74);
+color:rgba(30,47,68,.62);
 }
 
-.planner-next-step-card h3{
+.planner-report-card h3{
 margin:0;
-font-size:24px;
-line-height:1.08;
-color:white;
+font-size:22px;
+line-height:1.12;
+color:var(--pnw-navy);
 }
 
-.planner-next-step-card p{
+.planner-report-card p{
 margin:0;
 font-size:14px;
-line-height:1.6;
-color:rgba(255,255,255,.82);
+line-height:1.58;
+color:rgba(42,42,42,.76);
 }
 
-.planner-next-step-card .planner-next-step-check{
-background:rgba(255,255,255,.08);
-border-color:rgba(255,255,255,.12);
-color:rgba(255,255,255,.88);
+.planner-report-link{
+display:block;
 }
 
-.planner-next-step-card .planner-next-step-check span:first-child{
-background:rgba(246,239,216,.16);
-color:#F6EFD8;
+.planner-report-btn{
+width:100%;
+margin-top:0 !important;
 }
 
 @media (max-width: 1100px){
@@ -2259,14 +2312,8 @@ font-size:24px;
 }
 
 .planner-step-summary,
-.planner-step-check,
-.planner-next-step-card p,
-.planner-next-step-check{
+.planner-step-check{
 font-size:13px;
-}
-
-.planner-next-step-card h3{
-font-size:20px;
 }
 }
 

@@ -1,5 +1,20 @@
 import { projectTotalRetirement } from "./incomeEngine.js";
 
+function deriveCurrentAgeFromBirthYear(birthYear) {
+    const parsedBirthYear = Number(birthYear);
+    const currentYear = new Date().getFullYear();
+
+    if (
+        !Number.isFinite(parsedBirthYear) ||
+        parsedBirthYear < 1900 ||
+        parsedBirthYear > currentYear
+    ) {
+        return null;
+    }
+
+    return currentYear - parsedBirthYear;
+}
+
 /*
 Thin projection wrapper that lets the UI pass a single simulation object
 without changing the underlying projection math.
@@ -35,6 +50,7 @@ export function runProjection(simulationState) {
         spouseCurrentAge:
             spouse.currentAge ??
             spouse.age ??
+            deriveCurrentAgeFromBirthYear(spouse.birthYear) ??
             null,
         spouseRetirementAge:
             spouse.retirementAge ?? null,

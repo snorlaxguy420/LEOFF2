@@ -1,5 +1,5 @@
 import { getPensionCalculator } from "../pensions/pensionRegistry.js";
-import { calculateSocialSecurityIncomeSource } from "../core/socialSecurityEngine.js";
+import { calculateHouseholdSocialSecurityIncomeSources } from "../core/socialSecurityEngine.js";
 
 export function normalizeLeoffSurvivorOption(option) {
     const survivorMap = {
@@ -31,16 +31,16 @@ export function buildSimulationIncomeSources({
         retireAge: inputs.retireAge
     }).forEach(source => incomeSources.push(source));
 
-    const socialSecuritySource =
-        calculateSocialSecurityIncomeSource(
-            inputs.socialSecurity
-        );
-
-    if (socialSecuritySource) {
-        incomeSources.push(socialSecuritySource);
-    }
+    calculateHouseholdSocialSecurityIncomeSources(
+        inputs.socialSecurity,
+        inputs.profile
+    ).forEach(source => incomeSources.push(source));
 
     assetRegistry.getAll().forEach(asset => {
+        if (asset?.id === "socialSecurity") {
+            return;
+        }
+
         if (!asset.getSimulationPayloads) return;
 
         const payloads = asset.getSimulationPayloads(inputs);

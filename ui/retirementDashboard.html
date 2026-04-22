@@ -64,6 +64,13 @@
 Review pension sustainability, retirement timing, income coverage, and asset
 depletion in the same planning flow as the simulator.
 </p>
+<div id="sharedPlanBanner" class="shared-plan-banner" hidden>
+<div class="shared-plan-banner-kicker">Read-Only Shared Scenario</div>
+<h2 id="sharedPlanBannerTitle">Shared plan loaded</h2>
+<p id="sharedPlanBannerSummary">
+This dashboard was opened from a share link, so it is view-only and does not change the owner&apos;s saved scenario.
+</p>
+</div>
 <div class="report-actions">
 <button id="printReportBtn" class="report-action-primary">Print Report</button>
 <button id="downloadPdfBtn" class="report-action-secondary">Download PDF</button>
@@ -287,6 +294,136 @@ depletion in the same planning flow as the simulator.
       </p>
   </section>
 
+  <section class="dashboard-recommendation-panel household-decision-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Household Decision Brief</div>
+              <h2 id="householdDecisionBriefHeadline">Household decision brief</h2>
+          </div>
+          <div class="report-card-actions">
+              <button
+                  id="householdDecisionBriefCopyBtn"
+                  class="report-action-secondary"
+                  type="button"
+              >
+                  Copy Brief
+              </button>
+              <button
+                  id="householdDecisionBriefDownloadBtn"
+                  class="report-action-secondary"
+                  type="button"
+              >
+                  Download Brief
+              </button>
+          </div>
+      </div>
+      <p id="householdDecisionBriefSummary" class="dashboard-card-summary">
+          A plain-English household brief will appear here once the dashboard finishes loading.
+      </p>
+      <div id="householdDecisionBriefCards" class="report-highlight-grid">
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Loading</div>
+              <div class="report-highlight-value report-highlight-value-note">Household brief highlights will appear here once the dashboard finishes loading.</div>
+          </div>
+      </div>
+      <div id="householdDecisionBriefPoints" class="optimizer-sequence-list">
+          <div class="optimizer-sequence-item">
+              <h3>Preparing brief points</h3>
+              <p>The dashboard will condense the current retirement decision into a shorter household-facing brief.</p>
+          </div>
+      </div>
+      <p id="householdDecisionBriefNote" class="report-inline-note">
+          Use this section when you want one plain-English summary of retirement timing, household protection, and fallback decisions.
+      </p>
+  </section>
+
+  <section class="dashboard-recommendation-panel professional-review-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Premium Professional Review</div>
+              <h2 id="professionalReviewHeadline">Premium professional review packet</h2>
+          </div>
+          <div class="report-card-actions">
+              <button
+                  id="professionalReviewCopyBtn"
+                  class="report-action-secondary"
+                  type="button"
+              >
+                  Copy Packet
+              </button>
+              <button
+                  id="professionalReviewDownloadBtn"
+                  class="report-action-secondary"
+                  type="button"
+              >
+                  Download Packet
+              </button>
+          </div>
+      </div>
+      <p id="professionalReviewSummary" class="dashboard-card-summary">
+          A cleaner professional handoff packet will appear here for premium accounts.
+      </p>
+      <div id="professionalReviewPremiumNote" class="monte-carlo-premium-note" hidden>
+          Premium accounts unlock the advisor-ready review packet.
+      </div>
+      <div id="professionalReviewCards" class="report-highlight-grid">
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Loading</div>
+              <div class="report-highlight-value report-highlight-value-note">Professional review highlights will appear here once the dashboard finishes loading.</div>
+          </div>
+      </div>
+      <div id="professionalReviewQuestions" class="optimizer-sequence-list">
+          <div class="optimizer-sequence-item">
+              <h3>Preparing review questions</h3>
+              <p>The dashboard will assemble tax, shortfall, and risk review questions once the report finishes loading.</p>
+          </div>
+      </div>
+      <p id="professionalReviewNote" class="report-inline-note">
+          Use this packet when you want a shorter handoff into CPA, fiduciary, or estate-planning conversations.
+      </p>
+      <p class="report-inline-note">
+          For context on when outside help makes sense, read
+          <a href="/ui/articles/article-when-to-get-professional-financial-help.html">When to Get Professional Financial Help</a>.
+      </p>
+  </section>
+
+  <section class="dashboard-recommendation-panel readiness-timeline-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Premium Readiness Timeline</div>
+              <h2 id="readinessTimelineHeadline">How the score changes by retirement age</h2>
+          </div>
+      </div>
+      <p id="readinessTimelineSummary" class="dashboard-card-summary">
+          Readiness-by-age trend data will appear here once the dashboard finishes loading.
+      </p>
+      <div id="readinessTimelinePremiumNote" class="monte-carlo-premium-note" hidden>
+          Premium accounts unlock the full readiness-by-age comparison table.
+      </div>
+      <div class="chart-scroll-shell readiness-timeline-shell">
+          <table class="readiness-timeline-table">
+              <thead>
+                  <tr>
+                      <th>Retirement Age</th>
+                      <th>Readiness</th>
+                      <th>Band</th>
+                      <th>Avg Annual Margin</th>
+                      <th>First Deficit</th>
+                      <th>Asset Depletion</th>
+                  </tr>
+              </thead>
+              <tbody id="readinessTimelineBody">
+                  <tr>
+                      <td colspan="6">Readiness timeline rows will appear here once the dashboard finishes loading.</td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+      <p id="readinessTimelineFootnote" class="report-inline-note">
+          This table shows the age-by-age score trend using the current plan inputs. Use the selected age together with the Monte Carlo section below before treating any one score as a final decision.
+      </p>
+  </section>
+
   <section class="dashboard-recommendation-panel monte-carlo-panel">
       <div class="dashboard-card-header">
           <div>
@@ -384,6 +521,27 @@ depletion in the same planning flow as the simulator.
       </div>
   </section>
 
+  <section class="dashboard-recommendation-panel monte-carlo-trust-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Monte Carlo Trust Notes</div>
+              <h2>What this stress test does and does not mean</h2>
+          </div>
+      </div>
+      <p id="monteCarloTrustSummary" class="dashboard-card-summary">
+          Monte Carlo interpretation guidance will appear here once the dashboard finishes loading.
+      </p>
+      <div id="monteCarloTrustCards" class="estate-help-grid monte-carlo-trust-grid">
+          <div class="estate-help-card">
+              <h3>Loading trust notes</h3>
+              <p>The dashboard will explain how to interpret the Monte Carlo stress test once the report finishes loading.</p>
+          </div>
+      </div>
+      <p id="monteCarloTrustFootnote" class="report-inline-note">
+          Review the trusted assumptions library for the current methodology, default planning assumptions, and known modeling boundaries.
+      </p>
+  </section>
+
   <section class="dashboard-recommendation-panel withdrawal-optimizer-panel">
       <div class="dashboard-card-header">
           <div>
@@ -430,6 +588,10 @@ depletion in the same planning flow as the simulator.
           <div class="account-plan-empty">Premium withdrawal strategy guidance will appear here once the dashboard finishes loading.</div>
       </div>
       <div id="withdrawalOptimizerNotes" class="optimizer-note-list"></div>
+      <p class="report-inline-note">
+          Want the logic behind this sequence? Read
+          <a href="/ui/articles/article-retirement-withdrawal-order.html">Retirement Withdrawal Order: What to Tap First and Why It Matters</a>.
+      </p>
   </section>
 
   <section class="dashboard-recommendation-panel social-security-optimizer-panel">
@@ -468,7 +630,48 @@ depletion in the same planning flow as the simulator.
       </div>
       <div id="socialSecurityOptimizerNotes" class="optimizer-note-list"></div>
       <p class="report-inline-note">
-          V1 compares age 62, full retirement age, and age 70 against the current retirement plan. Later versions can add spouse, survivor, and tax-aware claiming guidance.
+          V1 compares age 62, full retirement age, and age 70 against the current retirement plan. Later versions can add spouse, survivor, and tax-aware claiming guidance. For a planning framework, read
+          <a href="/ui/articles/article-retirement-scenario-comparison.html">How to Compare Retirement Scenarios Without Getting Lost</a>.
+      </p>
+  </section>
+
+  <section class="dashboard-recommendation-panel survivor-optimizer-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Survivor Option Optimizer</div>
+              <h2 id="survivorOptionOptimizerHeadline">Premium survivor-option guidance</h2>
+          </div>
+      </div>
+      <p id="survivorOptionOptimizerSummary" class="dashboard-card-summary">
+          Premium compares single life, 50%, 66.67%, and 100% survivor elections against the current household plan.
+      </p>
+      <div id="survivorOptionOptimizerPremiumNote" class="monte-carlo-premium-note" hidden>
+          Premium accounts unlock plan-aware survivor-option guidance.
+      </div>
+      <div id="survivorOptionOptimizerHighlights" class="report-highlight-grid optimizer-highlight-grid" hidden>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Best-Fit Election</div>
+              <div id="survivorOptionOptimizerRecommendedOption" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Survivor Monthly Income</div>
+              <div id="survivorOptionOptimizerSurvivorIncome" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Give-Up vs Single Life</div>
+              <div id="survivorOptionOptimizerRetireeGiveUp" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Fit Score</div>
+              <div id="survivorOptionOptimizerFitScore" class="report-highlight-value">--</div>
+          </div>
+      </div>
+      <div id="survivorOptionOptimizerOptions" class="optimizer-sequence-list">
+          <div class="account-plan-empty">Premium survivor-option guidance will appear here once the dashboard finishes loading.</div>
+      </div>
+      <div id="survivorOptionOptimizerNotes" class="optimizer-note-list"></div>
+      <p class="report-inline-note">
+          This optimizer is household guidance, not an irrevocable election recommendation. Use it to frame the tradeoff between current pension income and the spouse income floor left behind.
       </p>
   </section>
 
@@ -524,6 +727,64 @@ depletion in the same planning flow as the simulator.
           <a href="/ui/articles/article-when-to-get-professional-financial-help.html">When to Get Professional Financial Help</a>
           or
           <a href="/ui/contact.html">contact LEOFF Helper</a>.
+      </p>
+  </section>
+
+  <section class="dashboard-recommendation-panel tax-detail-panel">
+      <div class="dashboard-card-header">
+          <div>
+              <div class="dashboard-card-kicker">Tax Detail Views</div>
+              <h2 id="taxDetailHeadline">Premium year-by-year tax detail</h2>
+          </div>
+      </div>
+      <p id="taxDetailSummary" class="dashboard-card-summary">
+          Premium expands the tax snapshot into a year-by-year table across the full retirement projection.
+      </p>
+      <div id="taxDetailPremiumNote" class="monte-carlo-premium-note" hidden>
+          Premium accounts unlock year-by-year tax detail views.
+      </div>
+      <div id="taxDetailHighlights" class="report-highlight-grid optimizer-highlight-grid" hidden>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Retirement-Year Taxes</div>
+              <div id="taxDetailRetirementYearTaxes" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Lifetime Projected Taxes</div>
+              <div id="taxDetailLifetimeTaxes" class="report-highlight-value">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Peak Tax Year</div>
+              <div id="taxDetailPeakTaxYear" class="report-highlight-value report-highlight-value-note">--</div>
+          </div>
+          <div class="report-highlight-card">
+              <div class="report-highlight-label">Peak Tax Drag</div>
+              <div id="taxDetailPeakTaxDrag" class="report-highlight-value report-highlight-value-note">--</div>
+          </div>
+      </div>
+      <div class="chart-scroll-shell tax-detail-table-shell">
+          <table class="tax-detail-table">
+              <thead>
+                  <tr>
+                      <th>Age</th>
+                      <th>Total Income</th>
+                      <th>Portfolio Draws</th>
+                      <th>Taxes</th>
+                      <th>After-Tax Income</th>
+                      <th>Taxable Income</th>
+                      <th>Tax Drag</th>
+                      <th>Net Margin</th>
+                  </tr>
+              </thead>
+              <tbody id="taxDetailTableBody">
+                  <tr>
+                      <td colspan="8">Premium tax detail rows will appear here once the dashboard finishes loading.</td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
+      <div id="taxDetailNotes" class="optimizer-note-list"></div>
+      <p class="report-inline-note">
+          Use this section to spot bridge-year tax pressure, age 73 RMD watch years, and late-life tax drag before you lock in withdrawals or claiming assumptions.
       </p>
   </section>
 

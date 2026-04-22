@@ -24,7 +24,9 @@ import {
 } from "./simulatorBootstrap.js";
 import {
     createPlan as createAccountPlan,
+    createPlanShare,
     deletePlan as deleteAccountPlan,
+    deletePlanShare,
     getAccountContext,
     getPlan as fetchAccountPlan,
     listPlans as listAccountPlans,
@@ -240,100 +242,6 @@ function renderPlannerStepGuide(activeTabId) {
     renderChecklist(checklist, meta.checklist, "planner-step-check");
 }
 
-function getPlannerNextStepState(inputs) {
-    const profile = inputs?.profile || {};
-    const pension = inputs?.pension || {};
-    const socialSecurity = inputs?.socialSecurity || {};
-
-    if (!profile?.birthYear) {
-        return {
-            title: "Finish the household profile first",
-            summary:
-                "Your birth year anchors retirement timing, Social Security timing, and the overall planning horizon.",
-            checklist: [
-                "Add birth month and birth year.",
-                "Set marital status if spouse planning matters.",
-                "Then move into the pension section."
-            ]
-        };
-    }
-
-    if ((pension?.serviceYears || 0) <= 0 || (pension?.finalAverageSalary || 0) <= 0) {
-        return {
-            title: "Add the pension assumptions that anchor the plan",
-            summary:
-                "The planner gets much more useful once service years and final average salary reflect a realistic retirement path.",
-            checklist: [
-                "Set retirement age, service years, and final average salary.",
-                "Choose a survivor option if you are comparing one.",
-                "Then keep building with accounts and expenses."
-            ]
-        };
-    }
-
-    if (!hasRequiredCurrentExpenses(inputs)) {
-        return {
-            title: "Add current monthly expenses to unlock the live projection",
-            summary:
-                "The preview cards and chart stay conservative until the planner knows what your household spends each month.",
-            checklist: [
-                "Enter housing, groceries, bills, healthcare, and other monthly costs.",
-                "Use rounded numbers if you are still estimating.",
-                "Once expenses are in, the projection preview updates automatically."
-            ]
-        };
-    }
-
-    if (!socialSecurity?.birthYear || !(socialSecurity?.claimAge > 0)) {
-        return {
-            title: "Refine Social Security timing when you are ready",
-            summary:
-                "Your plan is live now, and Social Security is one of the best next refinements for improving the retirement picture.",
-            checklist: [
-                "Add a claim age and whichever benefit number you know.",
-                "Compare timing options if you expect flexibility.",
-                "Then generate the retirement report or save the scenario."
-            ]
-        };
-    }
-
-    return {
-        title: "Your live plan is running",
-        summary:
-            "Keep refining accounts, assets, debts, and stress assumptions, then save the scenario or open the full report when the picture feels right.",
-        checklist: [
-            "Use My Scenarios to save important what-ifs.",
-            "Open the retirement report for the full dashboard.",
-            "Use focused tools when you want to compare a narrower decision."
-        ]
-    };
-}
-
-function renderPlannerNextStepCard(
-    inputs = collectInputs(),
-    activeTabId = getActiveSimulatorTabId()
-) {
-    const title = document.getElementById("plannerNextStepTitle");
-    const summary = document.getElementById("plannerNextStepSummary");
-    const checklist = document.getElementById("plannerNextStepChecklist");
-    const nextStepState = getPlannerNextStepState(inputs);
-    const activeMeta = getSimulatorTabMeta(activeTabId);
-
-    if (title) {
-        title.textContent = nextStepState.title;
-    }
-
-    if (summary) {
-        summary.textContent = `${nextStepState.summary} You are currently in ${activeMeta.label}.`;
-    }
-
-    renderChecklist(
-        checklist,
-        nextStepState.checklist,
-        "planner-next-step-check"
-    );
-}
-
 function buildDefaultAccountScenarioName() {
     const now = new Date();
     const year = now.getFullYear();
@@ -425,6 +333,33 @@ function getWorkspacePremiumStressTesting() {
         StateManager.state?.premiumStressTesting ||
         {}
     );
+}
+
+async function copyTextToClipboard(value) {
+    const text = String(value || "").trim();
+
+    if (!text) {
+        throw new Error("Nothing to copy yet.");
+    }
+
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return;
+    }
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.setAttribute("readonly", "readonly");
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+        document.execCommand("copy");
+    } finally {
+        document.body.removeChild(textArea);
+    }
 }
 
 function readPremiumStressTestingFromInputs() {
@@ -1004,10 +939,6 @@ function renderAccountPlansList() {
     const clearComparisonBtn =
         document.getElementById("clearScenarioComparisonBtn");
     const currentPlanMeta = getStoredAccountPlanMeta();
-    const selectedComparisonPlanIds =
-        getScenarioComparisonState().planIds;
-    const selectedComparisonSet =
-        new Set(selectedComparisonPlanIds);
 
     if (saveBtn) {
         saveBtn.disabled = !currentAccountUser;
@@ -1026,9 +957,7 @@ function renderAccountPlansList() {
     }
 
     if (clearComparisonBtn) {
-        clearComparisonBtn.disabled =
-            !currentAccountUser ||
-            selectedComparisonPlanIds.length === 0;
+        clearComparisonBtn.disabled = true;
     }
 
     if (!listEl) {
@@ -1070,22 +999,28 @@ function renderAccountPlansList() {
                         ? '<span class="account-plan-badge">Current Save Target</span>'
                         : ""}
                     <span class="account-plan-badge is-secondary">Synced</span>
+                    ${plan.share?.enabled
+                        ? '<span class="account-plan-badge is-share-live">Share Link Live</span>'
+                        : ""}
                 </div>
             </div>
+            ${plan.share?.enabled
+                ? `
+                    <div class="account-plan-share-row">
+                        <span class="account-plan-share-label">Read-only link live</span>
+                        <span class="account-plan-share-meta">Created ${escapeHtml(formatAccountPlanTimestamp(plan.share.createdAt || plan.updatedAt))}</span>
+                    </div>
+                `
+                : ""}
             <div class="account-plan-actions">
                 <button type="button" data-account-action="open" data-plan-id="${escapeHtml(plan.id)}">Open</button>
                 <button type="button" data-account-action="set-current-target" data-plan-id="${escapeHtml(plan.id)}" ${plan.id === currentPlanId ? "disabled" : ""}>Set Save Target</button>
                 <button type="button" data-account-action="rename" data-plan-id="${escapeHtml(plan.id)}">Rename</button>
                 <button type="button" data-account-action="duplicate" data-plan-id="${escapeHtml(plan.id)}">Duplicate</button>
-                <button
-                    type="button"
-                    class="${selectedComparisonSet.has(plan.id) ? "account-plan-compare-active" : ""}"
-                    data-account-action="toggle-compare"
-                    data-plan-id="${escapeHtml(plan.id)}"
-                    ${(selectedComparisonPlanIds.length >= SCENARIO_COMPARISON_MAX_SELECTION && !selectedComparisonSet.has(plan.id)) ? "disabled" : ""}
-                >
-                    ${selectedComparisonSet.has(plan.id) ? "Remove From Compare" : "Compare"}
-                </button>
+                <button type="button" class="${plan.share?.enabled ? "account-plan-share-active" : ""}" data-account-action="${plan.share?.enabled ? "copy-share-link" : "create-share-link"}" data-plan-id="${escapeHtml(plan.id)}">${plan.share?.enabled ? "Copy Share Link" : "Create Share Link"}</button>
+                ${plan.share?.enabled
+                    ? `<button type="button" class="account-plan-share-revoke" data-account-action="revoke-share-link" data-plan-id="${escapeHtml(plan.id)}">Revoke Share Link</button>`
+                    : ""}
                 <button type="button" class="account-plan-delete" data-account-action="delete" data-plan-id="${escapeHtml(plan.id)}">Delete</button>
             </div>
         </div>
@@ -1141,7 +1076,6 @@ function applyWorkspaceStateToSimulator(workspaceState, accountPlanMeta = null) 
     }
 
     runProjection(importedState.simulationState);
-    void loadScenarioComparisonPlans();
 }
 
 async function refreshAccountPlans({ keepStatus = false } = {}) {
@@ -1165,7 +1099,7 @@ async function refreshAccountPlans({ keepStatus = false } = {}) {
     }
 
     renderAccountPlansList();
-    await loadScenarioComparisonPlans();
+    currentScenarioComparisonPlans = [];
     syncPremiumStressTestingUi();
 
     if (!keepStatus) {
@@ -1411,6 +1345,79 @@ async function deleteAccountPlanById(planId) {
     }
 }
 
+async function createOrCopyPlanShareById(planId) {
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+
+    if (!plan) {
+        return;
+    }
+
+    try {
+        const share =
+            plan.share?.enabled
+                ? plan.share
+                : await createPlanShare(planId);
+
+        if (!share?.url) {
+            throw new Error("The share link could not be created.");
+        }
+
+        await copyTextToClipboard(share.url);
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            plan.share?.enabled
+                ? `Copied the read-only link for "${getAccountPlanDisplayName(plan)}".`
+                : `Created and copied a read-only link for "${getAccountPlanDisplayName(plan)}".`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account plan share failed", error);
+        setAccountPlansStatus(
+            error.message || "That share link could not be created right now.",
+            "error"
+        );
+    }
+}
+
+async function revokePlanShareById(planId) {
+    const plan =
+        currentAccountPlans.find(entry => entry.id === planId) ||
+        null;
+
+    if (!plan?.share?.enabled) {
+        setAccountPlansStatus(
+            "This scenario does not have an active share link.",
+            "neutral"
+        );
+        return;
+    }
+
+    const confirmed = window.confirm(
+        `Revoke the read-only link for "${getAccountPlanDisplayName(plan)}"? Anyone with the current link will lose access.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        await deletePlanShare(planId);
+        await refreshAccountPlans({ keepStatus: true });
+        setAccountPlansStatus(
+            `Revoked the read-only link for "${getAccountPlanDisplayName(plan)}".`,
+            "success"
+        );
+    } catch (error) {
+        console.error("Account plan share revoke failed", error);
+        setAccountPlansStatus(
+            error.message || "That share link could not be revoked right now.",
+            "error"
+        );
+    }
+}
+
 async function toggleScenarioComparisonById(planId) {
     if (!currentAccountUser) {
         setAccountPlansStatus(
@@ -1609,7 +1616,6 @@ function setActiveSimulatorTab(targetTabId, { scrollOnMobile = false } = {}) {
 
     updateMobileSectionUi(targetTabId);
     renderPlannerStepGuide(targetTabId);
-    renderPlannerNextStepCard(collectInputs(), targetTabId);
 
     if (scrollOnMobile) {
         scrollActiveModuleIntoView();
@@ -1846,6 +1852,16 @@ function setupAccountPlansUi() {
             return;
         }
 
+        if (action === "create-share-link" || action === "copy-share-link") {
+            await createOrCopyPlanShareById(planId);
+            return;
+        }
+
+        if (action === "revoke-share-link") {
+            await revokePlanShareById(planId);
+            return;
+        }
+
         if (action === "toggle-compare") {
             await toggleScenarioComparisonById(planId);
             return;
@@ -2062,7 +2078,6 @@ function runProjection(existingSimulationState = null){
         clearTimeline();
         setReportButtonDisabled(true);
         sessionStorage.removeItem("retirementProjection");
-        renderPlannerNextStepCard(inputs, getActiveSimulatorTabId());
         renderScenarioComparisonList();
         return;
     }
@@ -2089,7 +2104,6 @@ function runProjection(existingSimulationState = null){
     });
 
     renderPreview(projection);
-    renderPlannerNextStepCard(inputs, getActiveSimulatorTabId());
     renderScenarioComparisonList();
 
 }
@@ -2122,17 +2136,31 @@ function setupAdditionalPensionUi() {
 
 function setupSocialSecurityUi() {
 
-    const modeSelect = document.getElementById("ssMode");
+    const primaryModeSelect = document.getElementById("ssMode");
+    const spouseModeSelect = document.getElementById("spouseSsMode");
+    const spouseToggle = document.getElementById("includeSpouseSocialSecurity");
+    const spouseSection = document.getElementById("spouseSocialSecuritySection");
+    const spouseToggleWrap = document.getElementById("spouseSocialSecurityToggleWrap");
+    const maritalStatus = document.getElementById("maritalStatus");
 
-    if (!modeSelect) return;
+    if (!primaryModeSelect) return;
 
-    const fieldMap = {
+    const primaryFieldMap = {
         fraBenefit: "ssFraBenefitField",
         benefit62: "ssBenefit62Field",
         benefit70: "ssBenefit70Field"
     };
+    const spouseFieldMap = {
+        fraBenefit: "spouseSsFraBenefitField",
+        benefit62: "spouseSsBenefit62Field",
+        benefit70: "spouseSsBenefit70Field"
+    };
 
-    const toggleFields = () => {
+    const toggleFieldsForMode = (modeSelect, fieldMap) => {
+        if (!modeSelect) {
+            return;
+        }
+
         Object.entries(fieldMap).forEach(([mode, fieldId]) => {
             const field = document.getElementById(fieldId);
 
@@ -2143,9 +2171,31 @@ function setupSocialSecurityUi() {
         });
     };
 
-    modeSelect.addEventListener("change", toggleFields);
-    document.addEventListener("socialSecurity:mode-sync", toggleFields);
-    toggleFields();
+    const syncSpouseSection = () => {
+        const married = maritalStatus?.value === "married";
+
+        if (spouseToggleWrap) {
+            spouseToggleWrap.style.display = married ? "" : "none";
+        }
+
+        if (spouseSection) {
+            spouseSection.style.display =
+                married && spouseToggle?.checked ? "" : "none";
+        }
+    };
+
+    const syncAllFields = () => {
+        toggleFieldsForMode(primaryModeSelect, primaryFieldMap);
+        toggleFieldsForMode(spouseModeSelect, spouseFieldMap);
+        syncSpouseSection();
+    };
+
+    primaryModeSelect.addEventListener("change", syncAllFields);
+    spouseModeSelect?.addEventListener("change", syncAllFields);
+    spouseToggle?.addEventListener("change", syncAllFields);
+    maritalStatus?.addEventListener("change", syncAllFields);
+    document.addEventListener("socialSecurity:mode-sync", syncAllFields);
+    syncAllFields();
 }
 
 function setupInflationDefaultsUi() {

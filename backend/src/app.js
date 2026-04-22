@@ -142,6 +142,22 @@ function normalizeRetirementCheckInFrequency(value) {
     return "never";
 }
 
+function resolvePremiumFeatureFlag(rawFeatures, key, premiumActive) {
+    if (!premiumActive) {
+        return false;
+    }
+
+    if (
+        rawFeatures &&
+        typeof rawFeatures === "object" &&
+        Object.prototype.hasOwnProperty.call(rawFeatures, key)
+    ) {
+        return Boolean(rawFeatures[key]);
+    }
+
+    return true;
+}
+
 function buildUserEntitlements(user = {}) {
     const requestedPlanTier = normalizePlanTier(user.planTier);
     const premiumExpiresAt = normalizeIsoDate(user.premiumExpiresAt);
@@ -156,6 +172,10 @@ function buildUserEntitlements(user = {}) {
         premiumActive
             ? "premium"
             : "free";
+    const rawFeatures =
+        user?.features && typeof user.features === "object"
+            ? user.features
+            : {};
 
     return {
         planTier: effectivePlanTier,
@@ -169,7 +189,24 @@ function buildUserEntitlements(user = {}) {
                 ? premiumExpiresAt
                 : null,
         features: {
-            monteCarloPlus: premiumActive
+            monteCarloPlus:
+                resolvePremiumFeatureFlag(rawFeatures, "monteCarloPlus", premiumActive),
+            readinessTimeline:
+                resolvePremiumFeatureFlag(rawFeatures, "readinessTimeline", premiumActive),
+            withdrawalStrategyOptimizer:
+                resolvePremiumFeatureFlag(rawFeatures, "withdrawalStrategyOptimizer", premiumActive),
+            socialSecurityOptimizer:
+                resolvePremiumFeatureFlag(rawFeatures, "socialSecurityOptimizer", premiumActive),
+            survivorOptionOptimizer:
+                resolvePremiumFeatureFlag(rawFeatures, "survivorOptionOptimizer", premiumActive),
+            estateProjection:
+                resolvePremiumFeatureFlag(rawFeatures, "estateProjection", premiumActive),
+            taxDetailViews:
+                resolvePremiumFeatureFlag(rawFeatures, "taxDetailViews", premiumActive),
+            premiumScenarioComparison:
+                resolvePremiumFeatureFlag(rawFeatures, "premiumScenarioComparison", premiumActive),
+            premiumStressTesting:
+                resolvePremiumFeatureFlag(rawFeatures, "premiumStressTesting", premiumActive)
         }
     };
 }
@@ -196,6 +233,7 @@ function sanitizePlanSummary(plan) {
     return {
         id: plan.id,
         name: plan.name,
+        share: sanitizePlanShare(plan),
         createdAt: plan.createdAt,
         updatedAt: plan.updatedAt
     };
@@ -222,6 +260,64 @@ function sanitizePlan(plan) {
         ...sanitizePlanSummary(plan),
         simulationState: plan.simulationState,
         workspaceState
+    };
+}
+
+function buildPlanShareUrl(shareToken) {
+    if (!shareToken) {
+        return null;
+    }
+
+    const publicSiteUrl =
+        String(config.publicSiteUrl || "https://leoffhelper.com")
+            .replace(/\/+$/, "");
+
+    return `${publicSiteUrl}/ui/retirementDashboard.html?sharedPlanToken=${encodeURIComponent(shareToken)}`;
+}
+
+function sanitizePlanShare(plan) {
+    const shareToken = String(plan?.shareToken || "").trim();
+
+    if (!shareToken) {
+        return {
+            enabled: false,
+            url: null,
+            createdAt: null
+        };
+    }
+
+    return {
+        enabled: true,
+        url: buildPlanShareUrl(shareToken),
+        createdAt: normalizeIsoDate(plan?.shareCreatedAt)
+    };
+}
+
+function sanitizeSharedPlan(plan, owner = {}) {
+    const workspaceState =
+        plan.workspaceState && typeof plan.workspaceState === "object"
+            ? {
+                ...plan.workspaceState,
+                simulationState: plan.simulationState,
+                moduleState:
+                    plan.workspaceState.moduleState &&
+                    typeof plan.workspaceState.moduleState === "object"
+                        ? plan.workspaceState.moduleState
+                        : {}
+            }
+            : {
+                simulationState: plan.simulationState,
+                moduleState: {}
+            };
+
+    return {
+        id: plan.id,
+        name: plan.name,
+        sharedAt: normalizeIsoDate(plan.shareCreatedAt),
+        updatedAt: plan.updatedAt,
+        simulationState: plan.simulationState,
+        workspaceState,
+        entitlements: buildUserEntitlements(owner)
     };
 }
 
@@ -994,6 +1090,119 @@ async function handleDeletePlan(req, res, planId) {
     sendNoContent(res);
 }
 
+async function handleCreatePlanShare(req, res, planId) {
+    const sessionContext = await requireAuth(req, res);
+
+    if (!sessionContext) {
+        return;
+    }
+
+    let sharedPlan = null;
+
+    await withStore(store => ({
+        ...store,
+        plans: store.plans.map(plan => {
+            if (
+                plan.id !== planId ||
+                plan.userId !== sessionContext.user.id
+            ) {
+                return plan;
+            }
+
+            sharedPlan = {
+                ...plan,
+                shareToken:
+                    String(plan.shareToken || "").trim() ||
+                    createSessionToken(),
+                shareCreatedAt:
+                    plan.shareCreatedAt ||
+                    new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            return sharedPlan;
+        })
+    }));
+
+    if (!sharedPlan) {
+        sendError(res, 404, "Plan not found.");
+        return;
+    }
+
+    sendJson(res, 200, {
+        share: sanitizePlanShare(sharedPlan),
+        plan: sanitizePlan(sharedPlan)
+    });
+}
+
+async function handleDeletePlanShare(req, res, planId) {
+    const sessionContext = await requireAuth(req, res);
+
+    if (!sessionContext) {
+        return;
+    }
+
+    let updatedPlan = null;
+
+    await withStore(store => ({
+        ...store,
+        plans: store.plans.map(plan => {
+            if (
+                plan.id !== planId ||
+                plan.userId !== sessionContext.user.id
+            ) {
+                return plan;
+            }
+
+            updatedPlan = {
+                ...plan,
+                shareToken: null,
+                shareCreatedAt: null,
+                updatedAt: new Date().toISOString()
+            };
+
+            return updatedPlan;
+        })
+    }));
+
+    if (!updatedPlan) {
+        sendError(res, 404, "Plan not found.");
+        return;
+    }
+
+    sendJson(res, 200, {
+        share: sanitizePlanShare(updatedPlan),
+        plan: sanitizePlan(updatedPlan)
+    });
+}
+
+async function handleGetSharedPlan(req, res, shareToken) {
+    const normalizedShareToken = String(shareToken || "").trim();
+
+    if (!normalizedShareToken) {
+        sendError(res, 404, "Shared plan not found.");
+        return;
+    }
+
+    const store = await readStore();
+    const plan = store.plans.find(entry =>
+        String(entry.shareToken || "").trim() === normalizedShareToken
+    );
+
+    if (!plan) {
+        sendError(res, 404, "Shared plan not found.");
+        return;
+    }
+
+    const owner =
+        store.users.find(entry => entry.id === plan.userId) ||
+        {};
+
+    sendJson(res, 200, {
+        plan: sanitizeSharedPlan(plan, owner)
+    });
+}
+
 export async function handleRequest(req, res) {
     applyCors(req, res, config.corsOrigins);
 
@@ -1096,7 +1305,33 @@ export async function handleRequest(req, res) {
             return;
         }
 
+        const sharedPlanToken =
+            getRouteParams(pathname, "/shared-plans/");
+
+        if (req.method === "GET" && sharedPlanToken) {
+            await handleGetSharedPlan(req, res, sharedPlanToken);
+            return;
+        }
+
         const planId = getRouteParams(pathname, "/plans/");
+
+        if (req.method === "POST" && planId?.endsWith("/share")) {
+            await handleCreatePlanShare(
+                req,
+                res,
+                planId.slice(0, -"/share".length)
+            );
+            return;
+        }
+
+        if (req.method === "DELETE" && planId?.endsWith("/share")) {
+            await handleDeletePlanShare(
+                req,
+                res,
+                planId.slice(0, -"/share".length)
+            );
+            return;
+        }
 
         if (req.method === "GET" && planId) {
             await handleGetPlan(req, res, planId);

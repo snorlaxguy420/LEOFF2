@@ -87,7 +87,13 @@ function normalizeStoreShape(store = {}) {
             ? store.users.map(normalizeUserRecord)
             : [],
         sessions: Array.isArray(store?.sessions) ? store.sessions : [],
-        plans: Array.isArray(store?.plans) ? store.plans : [],
+        plans: Array.isArray(store?.plans)
+            ? store.plans.map(plan => ({
+                ...plan,
+                shareToken: String(plan?.shareToken || "").trim() || null,
+                shareCreatedAt: normalizeIsoDate(plan?.shareCreatedAt)
+            }))
+            : [],
         passwordResetTokens: Array.isArray(store?.passwordResetTokens)
             ? store.passwordResetTokens
             : []
@@ -190,6 +196,8 @@ function mapPlanRow(row) {
         name: row.name,
         simulationState: row.simulation_state,
         workspaceState: row.workspace_state,
+        shareToken: row.share_token || null,
+        shareCreatedAt: normalizeIsoDate(row.share_created_at),
         createdAt: normalizeIsoDate(row.created_at),
         updatedAt: normalizeIsoDate(row.updated_at)
     };
@@ -379,15 +387,19 @@ async function syncPlans(client, plans) {
                     name,
                     simulation_state,
                     workspace_state,
+                    share_token,
+                    share_created_at,
                     created_at,
                     updated_at
                 )
-                VALUES ($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7)
+                VALUES ($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,$8,$9)
                 ON CONFLICT (id) DO UPDATE SET
                     user_id = EXCLUDED.user_id,
                     name = EXCLUDED.name,
                     simulation_state = EXCLUDED.simulation_state,
                     workspace_state = EXCLUDED.workspace_state,
+                    share_token = EXCLUDED.share_token,
+                    share_created_at = EXCLUDED.share_created_at,
                     created_at = EXCLUDED.created_at,
                     updated_at = EXCLUDED.updated_at
             `,
@@ -397,6 +409,8 @@ async function syncPlans(client, plans) {
                 plan.name,
                 JSON.stringify(plan.simulationState || {}),
                 JSON.stringify(plan.workspaceState || {}),
+                String(plan.shareToken || "").trim() || null,
+                normalizeIsoDate(plan.shareCreatedAt),
                 plan.createdAt,
                 plan.updatedAt
             ]

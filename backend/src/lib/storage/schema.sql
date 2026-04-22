@@ -55,12 +55,23 @@ CREATE TABLE IF NOT EXISTS plans (
     name TEXT NOT NULL,
     simulation_state JSONB NOT NULL,
     workspace_state JSONB NOT NULL,
+    share_token TEXT NULL UNIQUE,
+    share_created_at TIMESTAMPTZ NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL
 );
+
+ALTER TABLE plans
+    ADD COLUMN IF NOT EXISTS share_token TEXT NULL UNIQUE;
+
+ALTER TABLE plans
+    ADD COLUMN IF NOT EXISTS share_created_at TIMESTAMPTZ NULL;
 
 CREATE INDEX IF NOT EXISTS plans_user_id_idx
     ON plans (user_id);
 
 CREATE INDEX IF NOT EXISTS plans_user_id_updated_at_idx
     ON plans (user_id, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS plans_share_token_idx
+    ON plans (share_token);

@@ -2,8 +2,6 @@ import { assetRegistry } from "../../core/assetRegistry.js";
 import { generateRealEstatePayloads } from "../../core/realEstateEngine.js";
 import { createCollapsibleCard } from "../../core/createCollapsibleCard.js";
 
-console.log("Real estate asset module loaded");
-
 /* ------------------------------------------------
 Helpers
 ------------------------------------------------ */

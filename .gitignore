@@ -20,3 +20,9 @@ stripe_backup_code.txt
 
 # Backend runtime data
 backend/data/store.json
+backend/node_modules/
+
+# Local browser/debug dumps
+tmp-chrome-http/
+tmp-live-dom.html
+tmp-sim-dom.html

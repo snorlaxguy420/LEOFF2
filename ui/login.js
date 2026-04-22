@@ -89,6 +89,8 @@ const elements = {
     authenticatedCreatedAt: document.querySelector("[data-auth-created-at]"),
     authenticatedPlanTier: document.querySelector("[data-auth-plan-tier]"),
     authenticatedPremiumAccess: document.querySelector("[data-auth-premium-access]"),
+    authenticatedPremiumSource: document.querySelector("[data-auth-premium-source]"),
+    authenticatedPremiumExpires: document.querySelector("[data-auth-premium-expires]"),
     authenticatedCheckInFrequency: document.querySelector("[data-auth-checkin-frequency]"),
     authenticatedCheckInLastSent: document.querySelector("[data-auth-checkin-last-sent]"),
     sessionStatus: document.querySelector("[data-session-status]"),
@@ -186,6 +188,45 @@ function formatTimestamp(value) {
 
 function formatRetirementCheckInFrequency(value) {
     return RETIREMENT_CHECK_IN_LABELS[String(value || "").trim().toLowerCase()] || "Never";
+}
+
+function formatPremiumSource(accountContext) {
+    const entitlements = accountContext?.entitlements || {};
+
+    if (!entitlements?.premium) {
+        return "Not active";
+    }
+
+    const source = String(entitlements.premiumSource || "").trim().toLowerCase();
+
+    if (
+        source.includes("annual") ||
+        source.includes("year") ||
+        source.includes("subscription") ||
+        source.includes("stripe")
+    ) {
+        return "Annual subscription";
+    }
+
+    if (source === "manual") {
+        return "Manual / admin grant";
+    }
+
+    return "Premium access";
+}
+
+function formatPremiumExpiry(accountContext) {
+    const entitlements = accountContext?.entitlements || {};
+
+    if (!entitlements?.premium) {
+        return "Not active";
+    }
+
+    if (!entitlements.premiumExpiresAt) {
+        return "No renewal date set";
+    }
+
+    return formatTimestamp(entitlements.premiumExpiresAt);
 }
 
 function setStatus(message, tone = "neutral") {
@@ -496,10 +537,22 @@ function renderAuthenticatedState(accountContext = null) {
     if (elements.authenticatedPremiumAccess) {
         elements.authenticatedPremiumAccess.textContent = authenticated
             ? (
-                hasPremiumAccess(accountContext, "monteCarloPlus")
+                hasPremiumAccess(accountContext, "premium")
                     ? "Active"
                     : "Not active"
             )
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedPremiumSource) {
+        elements.authenticatedPremiumSource.textContent = authenticated
+            ? formatPremiumSource(accountContext)
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedPremiumExpires) {
+        elements.authenticatedPremiumExpires.textContent = authenticated
+            ? formatPremiumExpiry(accountContext)
             : "Unavailable";
     }
 

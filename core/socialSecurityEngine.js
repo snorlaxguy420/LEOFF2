@@ -66,11 +66,24 @@ export function normalizeSocialSecurityFraBenefit(socialSecurity = {}) {
     return directFraBenefit;
 }
 
-export function calculateSocialSecurityIncomeSource(socialSecurity = {}) {
+function resolveSocialSecuritySourceName(householdMember = "primary") {
+    return householdMember === "spouse"
+        ? "Spouse Social Security"
+        : "Social Security";
+}
+
+export function calculateSocialSecurityIncomeSource(
+    socialSecurity = {},
+    options = {}
+) {
 
     const birthYear = socialSecurity.birthYear || 1980;
     const claimAge = socialSecurity.claimAge || 67;
     const cola = socialSecurity.cola || 0.024;
+    const householdMember =
+        options.householdMember ||
+        socialSecurity.householdMember ||
+        "primary";
     const fraBenefit =
         normalizeSocialSecurityFraBenefit(socialSecurity);
 
@@ -83,16 +96,69 @@ export function calculateSocialSecurityIncomeSource(socialSecurity = {}) {
 
     return {
         type: "fixed",
-        name: "Social Security",
+        name:
+            options.name ||
+            resolveSocialSecuritySourceName(householdMember),
         startAge: claimAge,
         annualAmount: monthlyBenefit * 12,
         growthRate: cola,
         taxCategory: "social_security",
         metadata: {
+            householdMember,
             fra,
             normalizedFraBenefit: fraBenefit,
             ageFactor: factor,
             monthlyBenefit
         }
     };
+}
+
+export function calculateHouseholdSocialSecurityIncomeSources(
+    socialSecurity = {},
+    profile = {}
+) {
+    const sources = [];
+    const primarySource =
+        calculateSocialSecurityIncomeSource(
+            socialSecurity,
+            {
+                householdMember: "primary",
+                name: "Social Security"
+            }
+        );
+
+    if (primarySource) {
+        sources.push(primarySource);
+    }
+
+    const spouseSocialSecurity =
+        socialSecurity?.spouse || {};
+    const spouseConfigured =
+        spouseSocialSecurity.enabled ||
+        spouseSocialSecurity.birthYear ||
+        spouseSocialSecurity.claimAge ||
+        spouseSocialSecurity.fraBenefit ||
+        spouseSocialSecurity.benefit62 ||
+        spouseSocialSecurity.benefitFRA ||
+        spouseSocialSecurity.benefit70;
+    const spousePresent =
+        profile?.maritalStatus === "married" ||
+        Boolean(profile?.spouse);
+
+    if (spousePresent && spouseConfigured) {
+        const spouseSource =
+            calculateSocialSecurityIncomeSource(
+                spouseSocialSecurity,
+                {
+                    householdMember: "spouse",
+                    name: "Spouse Social Security"
+                }
+            );
+
+        if (spouseSource) {
+            sources.push(spouseSource);
+        }
+    }
+
+    return sources;
 }

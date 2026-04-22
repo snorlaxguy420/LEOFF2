@@ -160,6 +160,16 @@ body {
 
 }
 
+.report-action-primary:disabled,
+.report-action-secondary:disabled {
+
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+
+}
+
 #retirementDashboard {
 
     max-width: 1200px;
@@ -607,6 +617,24 @@ SCORE PANEL
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.survivor-optimizer-panel .report-highlight-card {
+    background: linear-gradient(180deg, rgba(247,249,246,0.92), rgba(234,239,232,0.88));
+    border-color: rgba(31, 77, 58, 0.14);
+}
+
+.survivor-optimizer-panel .optimizer-highlight-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.tax-detail-panel .report-highlight-card {
+    background: linear-gradient(180deg, rgba(248,249,251,0.92), rgba(235,239,245,0.88));
+    border-color: rgba(30, 47, 68, 0.12);
+}
+
+.tax-detail-panel .optimizer-highlight-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .report-highlight-value-note {
     font-size: 15px;
     line-height: 1.5;
@@ -748,7 +776,8 @@ SCORE PANEL
     margin-top: 18px;
 }
 
-.estate-projection-table {
+.estate-projection-table,
+.tax-detail-table {
     width: 100%;
     min-width: 760px;
     border-collapse: collapse;
@@ -759,14 +788,17 @@ SCORE PANEL
 }
 
 .estate-projection-table th,
-.estate-projection-table td {
+.estate-projection-table td,
+.tax-detail-table th,
+.tax-detail-table td {
     padding: 12px 14px;
     text-align: left;
     border-bottom: 1px solid rgba(30,47,68,0.08);
     font-size: 14px;
 }
 
-.estate-projection-table th {
+.estate-projection-table th,
+.tax-detail-table th {
     background: rgba(31,77,58,0.08);
     color: var(--pnw-navy);
     font-size: 12px;
@@ -774,8 +806,32 @@ SCORE PANEL
     text-transform: uppercase;
 }
 
-.estate-projection-table tbody tr:last-child td {
+.estate-projection-table tbody tr:last-child td,
+.tax-detail-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+.tax-detail-table-shell {
+    margin-top: 18px;
+}
+
+.tax-detail-table tbody tr.is-retirement-year td {
+    background: rgba(63,124,133,0.08);
+}
+
+.tax-detail-table tbody tr.is-peak-tax td {
+    background: rgba(211,47,47,0.08);
+}
+
+.tax-detail-table tbody tr.is-peak-drag td {
+    background: rgba(245,158,11,0.12);
+}
+
+.tax-detail-table tbody tr.is-retirement-year.is-peak-tax td,
+.tax-detail-table tbody tr.is-retirement-year.is-peak-drag td,
+.tax-detail-table tbody tr.is-peak-tax.is-peak-drag td,
+.tax-detail-table tbody tr.is-retirement-year.is-peak-tax.is-peak-drag td {
+    background: linear-gradient(180deg, rgba(63,124,133,0.12), rgba(211,47,47,0.10));
 }
 
 .estate-help-grid {
@@ -803,6 +859,99 @@ SCORE PANEL
     color: rgba(42,42,42,0.78);
     line-height: 1.6;
     font-size: 14px;
+}
+
+.readiness-timeline-shell {
+    margin-top: 18px;
+}
+
+.readiness-timeline-table {
+    width: 100%;
+    min-width: 760px;
+    border-collapse: collapse;
+    background: rgba(255,255,255,0.86);
+    border: 1px solid rgba(30,47,68,0.08);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.readiness-timeline-table th,
+.readiness-timeline-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(30,47,68,0.08);
+    font-size: 14px;
+}
+
+.readiness-timeline-table th {
+    background: rgba(31,77,58,0.08);
+    color: var(--pnw-navy);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.readiness-timeline-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.readiness-timeline-table tbody tr.is-current td {
+    background: rgba(63,124,133,0.08);
+}
+
+.readiness-timeline-table tbody tr.is-recommended td {
+    background: rgba(31,77,58,0.08);
+}
+
+.readiness-timeline-table tbody tr.is-current.is-recommended td {
+    background: linear-gradient(180deg, rgba(63,124,133,0.12), rgba(31,77,58,0.10));
+}
+
+.readiness-timeline-age {
+    display: block;
+    color: var(--pnw-navy);
+    font-weight: 700;
+}
+
+.readiness-timeline-status {
+    margin-top: 6px;
+    color: rgba(30,47,68,0.58);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.readiness-timeline-band {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(30,47,68,0.06);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.readiness-timeline-band.readiness-band-fragile {
+    background: rgba(211,47,47,0.10);
+}
+
+.readiness-timeline-band.readiness-band-workable {
+    background: rgba(245,158,11,0.12);
+}
+
+.readiness-timeline-band.readiness-band-strong {
+    background: rgba(76,175,80,0.12);
+}
+
+.readiness-timeline-band.readiness-band-durable {
+    background: rgba(31,77,58,0.14);
+}
+
+.monte-carlo-trust-grid {
+    margin-top: 18px;
 }
 
 .monte-carlo-range-header h3 {
@@ -837,6 +986,36 @@ SCORE PANEL
     color: var(--text-muted);
     font-size: 13px;
     line-height: 1.45;
+}
+
+.shared-plan-banner {
+    margin: 18px 0 0;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.78);
+    border: 1px solid rgba(63,124,133,0.18);
+    box-shadow: 0 18px 40px rgba(31,77,58,0.08);
+    backdrop-filter: blur(14px);
+}
+
+.shared-plan-banner-kicker {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--pnw-evergreen);
+}
+
+.shared-plan-banner h2 {
+    margin: 8px 0 0;
+    color: var(--pnw-navy);
+    font-size: clamp(24px, 3vw, 32px);
+}
+
+.shared-plan-banner p {
+    margin: 10px 0 0;
+    color: rgba(42,42,42,0.82);
+    line-height: 1.6;
 }
 
 .monte-carlo-path-label {
@@ -1197,6 +1376,21 @@ BOTTOM GRID
 
 }
 
+.household-decision-panel .dashboard-card-header,
+.professional-review-panel .dashboard-card-header {
+
+    gap: 16px;
+    align-items: flex-start;
+
+}
+
+.report-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
 .dashboard-bottom + .dashboard-bottom {
     margin-top: var(--space-lg);
 }
@@ -1341,8 +1535,18 @@ RESPONSIVE
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .survivor-optimizer-panel .optimizer-highlight-grid,
+    .tax-detail-panel .optimizer-highlight-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .spouse-conversation-panel .spouse-conversation-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .report-card-actions {
+        width: 100%;
+        justify-content: flex-start;
     }
 
 }
@@ -1860,20 +2064,30 @@ EDIT INPUT BUTTON
         padding: 12px;
     }
 
-    .estate-projection-table {
+    .estate-projection-table,
+    .tax-detail-table {
         min-width: 620px;
     }
 
     .estate-projection-table th,
-    .estate-projection-table td {
+    .estate-projection-table td,
+    .tax-detail-table th,
+    .tax-detail-table td,
+    .readiness-timeline-table th,
+    .readiness-timeline-table td {
         padding: 10px 8px;
         font-size: 12px;
+    }
+
+    .readiness-timeline-table {
+        min-width: 620px;
     }
 
     .monte-carlo-chart-shell canvas {
         min-width: 520px;
         height: 260px;
     }
+
 }
 
 @media print {
@@ -1890,6 +2104,7 @@ EDIT INPUT BUTTON
     .site-header,
     .site-footer,
     .report-actions,
+    .report-card-actions,
     #editInputsBtn,
     .retirement-slider,
     .tooltip-text,

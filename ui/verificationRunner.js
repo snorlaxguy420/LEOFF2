@@ -21,6 +21,7 @@ import {
 } from "../core/realEstateEngine.js";
 import {
     calculateSocialSecurityAgeFactor,
+    calculateHouseholdSocialSecurityIncomeSources,
     calculateSocialSecurityIncomeSource,
     normalizeSocialSecurityFraBenefit
 } from "../core/socialSecurityEngine.js";
@@ -39,8 +40,10 @@ import {
     buildDashboardAgeAdjustedIncomeSources,
     buildExpenseBreakdownSummary,
     buildMonteCarloContent,
+    buildMonteCarloTrustContent,
     buildMonteCarloProjectionChartContent,
     buildPlanningLeverContent,
+    buildReadinessTimelineContent,
     buildRecommendedAgeSummary,
     buildRecommendationContent,
     buildRiskListEntries,
@@ -85,6 +88,8 @@ import {
 } from "../analysis/scenarioComparisonSummary.js";
 import { buildEstateProjectionSummary } from "../analysis/estateProjectionSummary.js";
 import { buildSocialSecurityOptimization } from "../analysis/socialSecurityOptimizer.js";
+import { buildSurvivorOptionOptimization } from "../analysis/survivorOptionOptimizer.js";
+import { buildTaxDetailView } from "../analysis/taxDetailView.js";
 import { buildWithdrawalStrategyOptimization } from "../analysis/withdrawalStrategyOptimizer.js";
 
 function assert(condition, message) {
@@ -111,11 +116,29 @@ function logSmokeResult(message) {
     output.appendChild(item);
 }
 
+function logResponsiveResult(message) {
+    const output = document.getElementById("responsiveTestOutput");
+    if (!output) return;
+
+    const item = document.createElement("li");
+    item.textContent = message;
+    output.appendChild(item);
+}
+
+function logMetadataResult(message) {
+    const output = document.getElementById("metadataTestOutput");
+    if (!output) return;
+
+    const item = document.createElement("li");
+    item.textContent = message;
+    output.appendChild(item);
+}
+
 const SMOKE_TEST_PAGES = [
     {
         name: "Homepage",
         path: "./index.html",
-        selectors: [".site-header img", ".hero", ".about-section"]
+        selectors: [".site-header img", ".hero", ".homepage-paths", ".article-list"]
     },
     {
         name: "Simulator",
@@ -133,13 +156,24 @@ const SMOKE_TEST_PAGES = [
             "#recommendationHeadline",
             "#spouseConversationHeadline",
             "#monteCarloHeadline",
+            "#readinessTimelineBody",
+            "#monteCarloTrustCards",
             "#planningLeverHeadline",
             "#readinessCoverageScore",
             "#expenseEssential",
             "#taxesAtRetirement",
             "#topRisksList",
-            "#reportCumulativeShortfall"
+            "#reportCumulativeShortfall",
+            "#survivorOptionOptimizerHeadline",
+            "#taxDetailHeadline",
+            "#householdDecisionBriefDownloadBtn",
+            "#professionalReviewDownloadBtn"
         ]
+    },
+    {
+        name: "Trusted Assumptions Library",
+        path: "./trusted-assumptions.html",
+        selectors: [".article-shell", ".article-layout", ".article-content"]
     },
     {
         name: "Articles Hub",
@@ -178,6 +212,64 @@ const SMOKE_TEST_PAGES = [
     }
 ];
 
+const RESPONSIVE_VIEWPORTS = [
+    { name: "Phone 360", width: 360, height: 800 },
+    { name: "Phone 390", width: 390, height: 844 },
+    { name: "Phone 412", width: 412, height: 915 },
+    { name: "Phone 430", width: 430, height: 932 },
+    { name: "Tablet 768", width: 768, height: 1024 }
+];
+
+const RESPONSIVE_TEST_PAGES = [
+    {
+        name: "Homepage",
+        path: "./index.html",
+        selectors: [".hero", ".homepage-paths", ".site-footer"]
+    },
+    {
+        name: "Simulator",
+        path: "./simulator.html",
+        selectors: [".planner-grid", ".planner-input", ".planner-sidebar"]
+    },
+    {
+        name: "Dashboard",
+        path: "./retirementDashboard.html",
+        selectors: ["#retirementDashboard", ".timeline-panel", ".site-footer"]
+    },
+    {
+        name: "Retirement Age Comparison",
+        path: "./retirement-age-comparison.html",
+        selectors: [".comparison-shell", ".comparison-form-card", ".site-footer"]
+    },
+    {
+        name: "Survivor Benefit Estimator",
+        path: "./survivor-benefit-estimator.html",
+        selectors: [".survivor-shell", ".survivor-form-card", ".site-footer"]
+    },
+    {
+        name: "Contact Page",
+        path: "./contact.html",
+        selectors: [".contact-shell", ".contact-grid", ".site-footer"]
+    },
+    {
+        name: "Article Page",
+        path: "./articles/article-leoff-retirement.html",
+        selectors: [".article-shell", ".article-layout", ".site-footer"]
+    }
+];
+
+const METADATA_TEST_PAGES = [
+    { name: "Homepage", path: "./index.html" },
+    { name: "Simulator", path: "./simulator.html" },
+    { name: "Dashboard", path: "./retirementDashboard.html" },
+    { name: "Articles Hub", path: "./articles.html" },
+    { name: "About Page", path: "./about.html" },
+    { name: "Login Page", path: "./login.html" },
+    { name: "Contact Page", path: "./contact.html" },
+    { name: "Trusted Assumptions Library", path: "./trusted-assumptions.html" },
+    { name: "Article Page", path: "./articles/article-leoff-retirement.html" }
+];
+
 function loadFrame(frame, path) {
     return new Promise((resolve, reject) => {
         const timeoutId = window.setTimeout(() => {
@@ -195,6 +287,33 @@ function loadFrame(frame, path) {
         };
 
         frame.src = path;
+    });
+}
+
+function setSmokeFrameViewport(frame, width, height) {
+    const host = document.getElementById("smokeTestHost");
+
+    if (host) {
+        host.style.width = `${width}px`;
+        host.style.height = `${height}px`;
+    }
+
+    frame.style.width = `${width}px`;
+    frame.style.height = `${height}px`;
+    frame.width = width;
+    frame.height = height;
+}
+
+function settleFrame(frame) {
+    return new Promise(resolve => {
+        window.setTimeout(() => {
+            try {
+                frame.contentWindow?.dispatchEvent(new Event("resize"));
+            } catch (error) {
+                // Ignore cross-document timing issues inside verification.
+            }
+            window.setTimeout(resolve, 50);
+        }, 50);
     });
 }
 
@@ -226,8 +345,11 @@ async function runBrowserSmokeTests() {
     const frame = document.getElementById("smokeTestFrame");
     assert(frame, "Smoke test frame missing");
 
+    setSmokeFrameViewport(frame, 1280, 900);
+
     for (const page of SMOKE_TEST_PAGES) {
         await loadFrame(frame, page.path);
+        await settleFrame(frame);
 
         const doc = frame.contentDocument;
         assert(doc, `${page.name} document was not available`);
@@ -236,6 +358,119 @@ async function runBrowserSmokeTests() {
         assertSmokeImages(doc, page);
 
         logSmokeResult(`${page.name} smoke test passed`);
+    }
+}
+
+function assertNoHorizontalOverflow(doc, page, viewport) {
+    const root = doc.documentElement;
+    const body = doc.body;
+    const scrollWidth = Math.max(
+        root?.scrollWidth || 0,
+        body?.scrollWidth || 0
+    );
+    const clientWidth = root?.clientWidth || viewport.width;
+
+    assert(
+        scrollWidth <= clientWidth + 2,
+        `${page.name} overflow at ${viewport.name}: ${scrollWidth}px content width inside ${clientWidth}px viewport`
+    );
+}
+
+function assertResponsiveSelectors(doc, page, viewport) {
+    page.selectors.forEach(selector => {
+        const el = doc.querySelector(selector);
+
+        assert(
+            el,
+            `${page.name} missing selector ${selector} during ${viewport.name} check`
+        );
+
+        const rect = el.getBoundingClientRect();
+        assert(
+            rect.width <= viewport.width + 2,
+            `${page.name} selector ${selector} exceeds ${viewport.name} width`
+        );
+    });
+}
+
+async function runResponsiveLayoutChecks() {
+    const frame = document.getElementById("smokeTestFrame");
+    assert(frame, "Smoke test frame missing");
+
+    for (const viewport of RESPONSIVE_VIEWPORTS) {
+        setSmokeFrameViewport(frame, viewport.width, viewport.height);
+
+        for (const page of RESPONSIVE_TEST_PAGES) {
+            await loadFrame(frame, page.path);
+            await settleFrame(frame);
+
+            const doc = frame.contentDocument;
+            assert(doc, `${page.name} document was not available`);
+
+            assertNoHorizontalOverflow(doc, page, viewport);
+            assertResponsiveSelectors(doc, page, viewport);
+            logResponsiveResult(`${page.name} passed ${viewport.name} overflow/layout check`);
+        }
+    }
+}
+
+function getMetaContent(doc, selector) {
+    return doc.querySelector(selector)?.getAttribute("content")?.trim() || "";
+}
+
+function assertMetadata(doc, page) {
+    const title = doc.querySelector("title")?.textContent?.trim() || "";
+    const description =
+        getMetaContent(doc, 'meta[name="description"]');
+    const canonical =
+        doc.querySelector('link[rel="canonical"]')?.getAttribute("href")?.trim() || "";
+    const ogTitle =
+        getMetaContent(doc, 'meta[property="og:title"]');
+    const ogDescription =
+        getMetaContent(doc, 'meta[property="og:description"]');
+    const ogImage =
+        getMetaContent(doc, 'meta[property="og:image"]');
+    const twitterImage =
+        getMetaContent(doc, 'meta[name="twitter:image"]');
+
+    assert(title && !title.includes("{{"), `${page.name} missing a real <title>`);
+    assert(description.length >= 40, `${page.name} missing a meaningful meta description`);
+    assert(
+        canonical.startsWith("https://leoffhelper.com"),
+        `${page.name} canonical URL should point at https://leoffhelper.com`
+    );
+    assert(ogTitle && !ogTitle.includes("{{"), `${page.name} missing og:title`);
+    assert(ogDescription.length >= 40, `${page.name} missing og:description`);
+
+    if (ogImage) {
+        assert(
+            ogImage.startsWith("https://leoffhelper.com"),
+            `${page.name} og:image should use an absolute leoffhelper.com URL`
+        );
+    }
+
+    if (twitterImage) {
+        assert(
+            twitterImage.startsWith("https://leoffhelper.com"),
+            `${page.name} twitter:image should use an absolute leoffhelper.com URL`
+        );
+    }
+}
+
+async function runMetadataChecks() {
+    const frame = document.getElementById("smokeTestFrame");
+    assert(frame, "Smoke test frame missing");
+
+    setSmokeFrameViewport(frame, 1280, 900);
+
+    for (const page of METADATA_TEST_PAGES) {
+        await loadFrame(frame, page.path);
+        await settleFrame(frame);
+
+        const doc = frame.contentDocument;
+        assert(doc, `${page.name} document was not available`);
+        assertMetadata(doc, page);
+        logMetadataResult(`${page.name} metadata check passed`);
     }
 }
 
@@ -292,6 +527,8 @@ function buildSampleResults() {
 }
 
 function testSimulationStateRoundTrip() {
+    const spouseBirthYear = new Date().getFullYear() - 43;
+
     const inputs = {
         profile: {
             birthMonth: 4,
@@ -300,7 +537,7 @@ function testSimulationStateRoundTrip() {
             currentAge: 45,
             spouse: {
                 name: "Taylor",
-                currentAge: 43,
+                birthYear: spouseBirthYear,
                 retirementAge: 58,
                 annualIncome: 65000
             }
@@ -320,7 +557,14 @@ function testSimulationStateRoundTrip() {
             birthYear: 1981,
             claimAge: 67,
             cola: 0.02,
-            fraBenefit: 24000
+            fraBenefit: 24000,
+            spouse: {
+                enabled: true,
+                birthYear: 1963,
+                claimAge: 64,
+                cola: 0.02,
+                fraBenefit: 1800
+            }
         },
         expenses: {
             housing: 1800,
@@ -358,12 +602,17 @@ function testSimulationStateRoundTrip() {
     assert(roundTrip.profile.birthMonth === 4, "Birth month round-trip failed");
     assert(roundTrip.profile.birthYear === 1981, "Birth year round-trip failed");
     assert(roundTrip.profile.maritalStatus === "married", "Marital status round-trip failed");
+    assert(roundTrip.profile.spouse.birthYear === spouseBirthYear, "Spouse birth year round-trip failed");
     assert(roundTrip.profile.spouse.currentAge === 43, "Spouse current age round-trip failed");
     assert(roundTrip.profile.spouse.retirementAge === 58, "Spouse retirement age round-trip failed");
     assert(roundTrip.profile.spouse.annualIncome === 65000, "Spouse income round-trip failed");
     assert(roundTrip.expenses.housing === 1800, "Expense detail round-trip failed");
     assert(roundTrip.expenses.insurance === 250, "Insurance round-trip failed");
     assert(roundTrip.socialSecurity.claimAge === 67, "Social Security round-trip failed");
+    assert(
+        roundTrip.socialSecurity.spouse.claimAge === 64,
+        "Spouse Social Security round-trip failed"
+    );
     assert(roundTrip.assumptions.housingInflationRate === 0.04, "Inflation split round-trip failed");
     assert(roundTrip.toggles.showReal === true, "Toggle round-trip failed");
 
@@ -460,6 +709,90 @@ function testPortablePlanExportImport() {
             : StateManager.defaultState();
 
     logResult("Portable plan export/import passed");
+}
+
+function testReadinessTimelineContent() {
+    const content = buildReadinessTimelineContent({
+        entries: [
+            {
+                retireAge: 53,
+                readinessScore: 61,
+                readinessBand: "Workable",
+                averageMargin: -4200,
+                firstDeficitAge: 77,
+                assetDepletionAge: 89
+            },
+            {
+                retireAge: 54,
+                readinessScore: 72,
+                readinessBand: "Strong",
+                averageMargin: 2200,
+                firstDeficitAge: null,
+                assetDepletionAge: null
+            },
+            {
+                retireAge: 55,
+                readinessScore: 81,
+                readinessBand: "Strong",
+                averageMargin: 8400,
+                firstDeficitAge: null,
+                assetDepletionAge: null
+            }
+        ],
+        currentRetireAge: 54,
+        recommendedRetirementAge: 55
+    });
+
+    assert(
+        content.summary.includes("age 54") &&
+        content.summary.includes("age 55"),
+        "Readiness timeline summary should mention the current and recommended ages"
+    );
+    assert(
+        content.rows.length === 3,
+        "Readiness timeline should preserve each row"
+    );
+    assert(
+        content.rows[1].isCurrent === true,
+        "Readiness timeline should mark the current row"
+    );
+    assert(
+        content.rows[2].isRecommended === true,
+        "Readiness timeline should mark the recommended row"
+    );
+    assert(
+        content.rows[0].marginLabel.startsWith("-$"),
+        "Readiness timeline should format negative average margin values"
+    );
+
+    logResult("Readiness timeline content passed");
+}
+
+function testMonteCarloTrustContent() {
+    const content = buildMonteCarloTrustContent({
+        monteCarlo: {
+            successRate: 0.82,
+            essentialSuccessRate: 0.94
+        },
+        premiumEnabled: true,
+        stressTestingActive: true
+    });
+
+    assert(
+        content.summary.includes("82%") &&
+        content.summary.includes("94%"),
+        "Monte Carlo trust summary should reflect the current run metrics"
+    );
+    assert(
+        content.cards.length === 4,
+        "Monte Carlo trust content should provide four explanation cards"
+    );
+    assert(
+        content.cards[3].title.includes("stress testing"),
+        "Monte Carlo trust content should adapt when premium stress testing is active"
+    );
+
+    logResult("Monte Carlo trust content passed");
 }
 
 function testPremiumSavedScenarioComparisonCard() {
@@ -1058,6 +1391,130 @@ function testSocialSecurityOptimization() {
     logResult("Social Security optimizer passed");
 }
 
+function testSurvivorOptionOptimization() {
+    const inputs = {
+        profile: {
+            currentAge: 53,
+            spouse: {
+                currentAge: 50,
+                retirementAge: 58,
+                annualIncome: 36000
+            }
+        },
+        retireAge: 56,
+        lifeExpectancy: 92,
+        pension: {
+            serviceYears: 27,
+            finalAverageSalary: 124000,
+            currentAnnualPay: 120000,
+            cola: 0.02,
+            benefitEnhancement: "tiered_multiplier",
+            survivorOption: "50%",
+            survivorAge: 50
+        },
+        socialSecurity: {
+            birthYear: 1973,
+            claimAge: 67,
+            cola: 0.02,
+            fraBenefit: 2500
+        },
+        expenses: {
+            monthly: 5800,
+            annual: 69600,
+            essentialMonthly: 4300,
+            essentialAnnual: 51600,
+            discretionaryMonthly: 1500,
+            discretionaryAnnual: 18000
+        },
+        assumptions: {
+            inflationRate: 0.03,
+            goodsServicesInflationRate: 0.03,
+            housingInflationRate: 0.034,
+            healthcareInflationRate: 0.05
+        }
+    };
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const optimization = buildSurvivorOptionOptimization({
+        simulationState
+    });
+
+    assert(
+        optimization.available,
+        "Survivor-option optimizer should be available when spouse and pension inputs exist"
+    );
+    assert(
+        optimization.options.length === 4,
+        "Survivor-option optimizer should compare single life, 50%, 66.67%, and 100%"
+    );
+    assert(
+        optimization.options.some(option =>
+            option.badge === "Best Fit" ||
+            option.fitScore === Math.max(...optimization.options.map(entry => entry.fitScore || 0))
+        ),
+        "Survivor-option optimizer should rank and highlight a best-fit option"
+    );
+    assert(
+        optimization.notes.some(note => note.label === "Confidence"),
+        "Survivor-option optimizer should report recommendation confidence notes"
+    );
+    assert(
+        optimization.exportText.includes("Survivor option comparison"),
+        "Survivor-option optimizer should produce exportable comparison text"
+    );
+
+    logResult("Survivor-option optimizer passed");
+}
+
+function testTaxDetailView() {
+    const inputs = buildDashboardVerificationInputs();
+    const incomeSources = buildSimulationIncomeSources({
+        inputs,
+        assetRegistry
+    });
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const projection = runProjection(simulationState);
+    const taxDetail = buildTaxDetailView({
+        simulationState,
+        projection
+    });
+
+    assert(
+        taxDetail.available,
+        "Tax detail view should be available once a projection exists"
+    );
+    assert(
+        taxDetail.rows.length === projection.results.length,
+        "Tax detail view should provide one row per projection year"
+    );
+    assert(
+        taxDetail.highlights?.lifetimeTaxes &&
+        taxDetail.highlights.lifetimeTaxes.startsWith("$"),
+        "Tax detail view should expose a lifetime tax highlight"
+    );
+    assert(
+        taxDetail.notes.some(note => note.label === "RMD watch"),
+        "Tax detail view should include an RMD watch note"
+    );
+    assert(
+        taxDetail.exportText.includes("Year-by-year detail:"),
+        "Tax detail view should produce exportable year-by-year text"
+    );
+
+    logResult("Tax detail view passed");
+}
+
 function testProjectionChartModes() {
     const results = buildSampleResults();
 
@@ -1166,7 +1623,14 @@ function testSharedSimulatorHelpers() {
         socialSecurity: {
             claimAge: 67,
             cola: 0.02,
-            fraBenefit: 24000
+            fraBenefit: 24000,
+            spouse: {
+                enabled: true,
+                birthYear: 1963,
+                claimAge: 64,
+                cola: 0.02,
+                fraBenefit: 1800
+            }
         }
     };
 
@@ -1196,7 +1660,7 @@ function testSharedSimulatorHelpers() {
         normalizeLeoffSurvivorOption("50%") === "JOINT_50",
         "Survivor option normalization failed"
     );
-    assert(incomeSources.length === 6, "Income source assembly failed");
+    assert(incomeSources.length === 7, "Income source assembly failed");
     assert(
         incomeSources.some(source => source.name === "LEOFF Pension"),
         "LEOFF pension source missing"
@@ -1212,6 +1676,10 @@ function testSharedSimulatorHelpers() {
     assert(
         incomeSources.some(source => source.name === "TRS Plan 2 Pension"),
         "TRS2 pension source missing"
+    );
+    assert(
+        incomeSources.some(source => source.name === "Spouse Social Security"),
+        "Spouse Social Security source missing"
     );
 
     logResult("Shared simulator income helper passed");
@@ -1261,6 +1729,36 @@ function testSocialSecurityCalculation() {
     assert(
         Math.round(normalizedFraFrom70) === 2000,
         "Social Security 70 benefit normalization failed"
+    );
+
+    const householdSources =
+        calculateHouseholdSocialSecurityIncomeSources(
+            {
+                birthYear: 1960,
+                claimAge: 67,
+                fraBenefit: 2000,
+                spouse: {
+                    enabled: true,
+                    birthYear: 1962,
+                    claimAge: 64,
+                    fraBenefit: 1600
+                }
+            },
+            {
+                maritalStatus: "married",
+                spouse: {
+                    currentAge: 62
+                }
+            }
+        );
+
+    assert(
+        householdSources.length === 2,
+        "Household Social Security source assembly failed"
+    );
+    assert(
+        householdSources.some(entry => entry.name === "Spouse Social Security"),
+        "Spouse Social Security labeling failed"
     );
 
     logResult("Social Security calculation passed");
@@ -3356,9 +3854,30 @@ function testAccountEntitlements() {
         "Account entitlement helper should grant Monte Carlo Plus to active premium accounts"
     );
     assert(
+        hasPremiumAccess(premiumContext, "readinessTimeline"),
+        "Account entitlement helper should grant readiness timeline access to active premium accounts"
+    );
+    assert(
+        hasPremiumAccess(premiumContext, "survivorOptionOptimizer"),
+        "Account entitlement helper should grant survivor-option optimizer access to active premium accounts"
+    );
+    assert(
+        hasPremiumAccess(premiumContext, "taxDetailViews"),
+        "Account entitlement helper should grant tax detail view access to active premium accounts"
+    );
+    assert(
         getPlanTierLabel(expiredContext) === "Free" &&
         hasPremiumAccess(expiredContext, "monteCarloPlus") === false,
         "Expired premium access should normalize back to the free tier"
+    );
+    assert(
+        hasPremiumAccess(expiredContext, "readinessTimeline") === false,
+        "Expired premium access should remove readiness timeline access"
+    );
+    assert(
+        hasPremiumAccess(expiredContext, "survivorOptionOptimizer") === false &&
+        hasPremiumAccess(expiredContext, "taxDetailViews") === false,
+        "Expired premium access should remove survivor and tax detail access"
     );
 
     logResult("Account entitlement helper passed");
@@ -3631,6 +4150,8 @@ function testMultipleRetirementAccountPayloads() {
 }
 
 function testInputPopulationAndPreviewMetrics() {
+    const spouseBirthYear = new Date().getFullYear() - 43;
+
     document.getElementById("profileModuleContainer").innerHTML = `
         <input id="userName" type="text">
         <select id="birthMonth">
@@ -3644,7 +4165,7 @@ function testInputPopulationAndPreviewMetrics() {
         </select>
         <div id="spouseSection" style="display:none;">
             <input id="spouseName" type="text">
-            <input id="spouseCurrentAge" type="number">
+            <input id="spouseBirthYear" type="number">
             <input id="spouseRetirementAge" type="number">
             <input id="spouseAnnualIncome" type="number">
         </div>
@@ -3661,7 +4182,7 @@ function testInputPopulationAndPreviewMetrics() {
             maritalStatus: "married",
             spouse: {
                 name: "Taylor",
-                currentAge: 43,
+                birthYear: spouseBirthYear,
                 retirementAge: 58,
                 annualIncome: 65000
             }
@@ -3683,7 +4204,15 @@ function testInputPopulationAndPreviewMetrics() {
             cola: 0.02,
             mode: "benefit62",
             benefit62: 1800,
-            optimize: true
+            optimize: true,
+            spouse: {
+                enabled: true,
+                birthYear: 1963,
+                claimAge: 64,
+                cola: 0.02,
+                mode: "benefit70",
+                benefit70: 2480
+            }
         },
         expenses: {
             housing: 1800,
@@ -3723,8 +4252,8 @@ function testInputPopulationAndPreviewMetrics() {
         "Shared input population failed for marital status"
     );
     assert(
-        document.getElementById("spouseCurrentAge").value === "43",
-        "Shared input population failed for spouse age"
+        document.getElementById("spouseBirthYear").value === String(spouseBirthYear),
+        "Shared input population failed for spouse birth year"
     );
     assert(
         document.getElementById("retireAge").value === "53",
@@ -3761,6 +4290,18 @@ function testInputPopulationAndPreviewMetrics() {
     assert(
         document.getElementById("ssBenefit62").value === "1800",
         "Shared input population failed for Social Security benefit"
+    );
+    assert(
+        document.getElementById("includeSpouseSocialSecurity").checked === true,
+        "Shared input population failed for spouse Social Security toggle"
+    );
+    assert(
+        document.getElementById("spouseSsMode").value === "benefit70",
+        "Shared input population failed for spouse Social Security mode"
+    );
+    assert(
+        document.getElementById("spouseSsBenefit70").value === "2480",
+        "Shared input population failed for spouse Social Security benefit"
     );
     assert(
         document.getElementById("ssOptimize").checked === true,
@@ -4141,10 +4682,14 @@ async function runVerification() {
         await testDebtModuleCardFlow();
         testSimulationStateRoundTrip();
         testPortablePlanExportImport();
+        testReadinessTimelineContent();
+        testMonteCarloTrustContent();
         testPremiumSavedScenarioComparisonCard();
         testWithdrawalStrategyOptimizer();
         testSocialSecurityOptimization();
+        testSurvivorOptionOptimization();
         testEstateProjectionSummary();
+        testTaxDetailView();
         testProjectionChartModes();
         testProjectionChartDatasets();
         testSharedSimulatorHelpers();

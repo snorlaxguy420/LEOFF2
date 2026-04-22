@@ -14,12 +14,32 @@
 <meta name="keywords" content="LEOFF 2 pension calculator, firefighter retirement planning, Washington LEOFF retirement, firefighter pension estimate">
 
 <meta name="author" content="LEOFF Helper">
+<meta name="robots" content="index,follow">
 
 <link rel="canonical" href="https://leoffhelper.com/leoff-retirement-planner">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="LEOFF Helper Retirement Planner | LEOFF 2 Pension Calculator">
+<meta property="og:description" content="Interactive retirement planning calculator for Washington LEOFF Plan 2 members. Model pensions, Social Security, assets, debts, expenses, and retirement sustainability in one flow.">
+<meta property="og:url" content="https://leoffhelper.com/leoff-retirement-planner">
+<meta property="og:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LEOFF Helper Retirement Planner | LEOFF 2 Pension Calculator">
+<meta name="twitter:description" content="Interactive retirement planning calculator for Washington LEOFF Plan 2 members. Model pensions, Social Security, assets, debts, expenses, and retirement sustainability in one flow.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/logo/LEOFFHELPERBANNER.png">
 
 <link rel="stylesheet" href="/ui/simulator-dashboard.css">
-
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "LEOFF Helper Retirement Planner",
+  "url": "https://leoffhelper.com/leoff-retirement-planner",
+  "description": "Interactive retirement planning calculator for Washington LEOFF Plan 2 members."
+}
+</script>
     <script defer src="/ui/analytics.js"></script>
+
 </head>
 
 <body>
@@ -60,6 +80,8 @@ CENTER INPUT PANEL
 =============================== -->
 
 <section class="planner-input">
+
+<div id="plannerStatusMessage" class="planner-status-message" aria-live="polite" hidden></div>
 
 <div class="mobile-section-progress" aria-live="polite">
 <div class="mobile-section-progress-kicker">Calculator Step</div>
@@ -253,6 +275,62 @@ Benefit at 70
 
 </div>
 
+<div id="spouseSocialSecurityToggleWrap" class="secondary-pension-card" style="margin-top:18px;display:none;">
+<label class="secondary-pension-toggle">
+<input id="includeSpouseSocialSecurity" type="checkbox">
+Also add spouse Social Security
+</label>
+
+<div id="spouseSocialSecuritySection" style="display:none;margin-top:18px;">
+<p class="module-helper-text">
+Add a second Social Security claimant when your spouse will also claim retirement benefits and that income matters to the household plan.
+</p>
+
+<div class="form-grid">
+
+<label>
+Spouse Birth Year
+<input id="spouseSsBirthYear" type="number">
+</label>
+
+<label>
+Spouse Claim Age
+<input id="spouseSsClaimAge" type="number">
+</label>
+
+<label>
+Spouse COLA
+<input id="spouseSsCola" type="number">
+</label>
+
+<label>
+Spouse Known Benefit Type
+<select id="spouseSsMode">
+<option value="fraBenefit">Benefit at FRA</option>
+<option value="benefit62">Benefit at 62</option>
+<option value="benefit70">Benefit at 70</option>
+</select>
+</label>
+
+<label id="spouseSsFraBenefitField">
+Spouse Benefit at FRA
+<input id="spouseSsFraBenefit" type="number">
+</label>
+
+<label id="spouseSsBenefit62Field" style="display:none;">
+Spouse Benefit at 62
+<input id="spouseSsBenefit62" type="number">
+</label>
+
+<label id="spouseSsBenefit70Field" style="display:none;">
+Spouse Benefit at 70
+<input id="spouseSsBenefit70" type="number">
+</label>
+
+</div>
+</div>
+</div>
+
 </div>
 
 <!-- RETIREMENT ACCOUNTS -->
@@ -370,17 +448,6 @@ Sign in with a premium account to define harsher Monte Carlo assumptions for inf
 Enable custom premium stress profile
 </label>
 
-<label class="premium-stress-preset">
-Stress Pack
-<select id="premiumStressPreset">
-<option value="custom">Custom</option>
-<option value="early_recession">Early Retirement Recession</option>
-<option value="sticky_inflation">Sticky Inflation Decade</option>
-<option value="weak_first_decade">Weak First 10 Years</option>
-<option value="healthcare_shock">Healthcare Cost Shock</option>
-</select>
-</label>
-
 <div class="form-grid premium-stress-grid">
 
 <label>
@@ -465,37 +532,26 @@ RIGHT PREVIEW PANEL
 
 </div>
 
-<div class="planner-next-step-card">
-<div class="planner-next-step-kicker">What To Do Next</div>
-<h3 id="plannerNextStepTitle">Start with your profile basics</h3>
-<p id="plannerNextStepSummary">
-Enter your timing and household basics first so the rest of the planner can build from the right retirement timeline.
+<div class="planner-report-card">
+<div class="planner-report-kicker">Full Retirement Report</div>
+<h3>Open the report when you want the full decision view</h3>
+<p>
+Use the full retirement report for the dashboard view, share-ready planning output, and deeper scenario review. Keep the calculator focused on inputs here.
 </p>
-<div id="plannerNextStepChecklist" class="planner-next-step-checklist"></div>
+<a href="/ui/retirementDashboard.html" class="report-link planner-report-link">
+<button id="fullReportBtn" class="primary-btn planner-report-btn">
+Open Full Retirement Report
+</button>
+</a>
 </div>
 
 <div class="account-plans-card">
 <div class="account-plans-head">
 <div class="account-plans-head-copy">
 <h3>My Scenarios</h3>
-<p>Keep synced versions of your retirement what-ifs in one place, then reopen or update the one you want to keep working on.</p>
+<p>Save, reopen, rename, duplicate, or share synced scenarios without cluttering the calculator with report-style review panels.</p>
 </div>
 <a href="/ui/login.html" class="account-plans-link">Account Settings</a>
-</div>
-
-<div class="account-plans-subsection account-plans-subsection-primary">
-<div class="account-plans-subhead">
-<span class="account-plans-kicker">Workspace</span>
-<h4>Report And Sync</h4>
-</div>
-<p class="account-plans-subcopy">
-Generate a report for the currently open scenario, save it to your account, or keep a local backup on this device.
-</p>
-<a href="/ui/retirementDashboard.html" class="report-link account-plans-report-link">
-<button id="fullReportBtn" class="primary-btn account-plans-report-btn">
-Generate Retirement Report
-</button>
-</a>
 </div>
 
 <div id="accountPlansSummary" class="account-plans-summary">
@@ -514,29 +570,6 @@ Sign in to save and reopen scenarios across devices.
 
 <div id="accountPlansList" class="account-plans-list">
 <div class="account-plan-empty">No account scenarios loaded yet.</div>
-</div>
-
-<div class="account-plans-subsection">
-<div class="account-plans-subhead">
-<span class="account-plans-kicker">Comparison</span>
-<h4>Scenario Snapshot Compare</h4>
-</div>
-<p class="account-plans-subcopy">
-Compare the current workspace against selected synced scenarios. Save the current scenario after updating the comparison set if you want that selection to travel with your account.
-</p>
-<div id="accountComparisonPremiumNote" class="account-comparison-premium-note">
-Premium unlocks deeper saved-scenario comparison with readiness, retirement margin, depletion timing, and strategy setup side by side.
-</div>
-<div id="accountComparisonSummary" class="account-comparison-summary">
-Sign in to compare the current workspace with synced scenarios.
-</div>
-<div id="accountComparisonScoreboard" class="account-comparison-scoreboard" hidden></div>
-<div class="account-comparison-actions">
-<button id="clearScenarioComparisonBtn" type="button" class="secondary-btn">Clear Comparison</button>
-</div>
-<div id="accountComparisonList" class="account-comparison-list">
-<div class="account-plan-empty">No scenario comparison loaded yet.</div>
-</div>
 </div>
 
 <div class="account-plans-divider"></div>

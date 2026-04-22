@@ -103,7 +103,13 @@ export async function readStore() {
             ? parsed.users.map(normalizeUserRecord)
             : [],
         sessions: Array.isArray(parsed?.sessions) ? parsed.sessions : [],
-        plans: Array.isArray(parsed?.plans) ? parsed.plans : [],
+        plans: Array.isArray(parsed?.plans)
+            ? parsed.plans.map(plan => ({
+                ...plan,
+                shareToken: String(plan?.shareToken || "").trim() || null,
+                shareCreatedAt: normalizeIsoDate(plan?.shareCreatedAt)
+            }))
+            : [],
         passwordResetTokens: Array.isArray(parsed?.passwordResetTokens)
             ? parsed.passwordResetTokens
             : []

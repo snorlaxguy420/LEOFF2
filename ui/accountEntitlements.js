@@ -15,6 +15,21 @@ function normalizeIsoDate(value) {
         : parsed.toISOString();
 }
 
+function resolveFeatureFlag(rawFeatures, key, premiumActive) {
+    if (!premiumActive) {
+        return false;
+    }
+
+    if (
+        rawFeatures &&
+        Object.prototype.hasOwnProperty.call(rawFeatures, key)
+    ) {
+        return Boolean(rawFeatures[key]);
+    }
+
+    return true;
+}
+
 export function normalizeEntitlements(raw = {}) {
     const requestedPlanTier = normalizePlanTier(raw?.planTier);
     const premiumExpiresAt = normalizeIsoDate(raw?.premiumExpiresAt);
@@ -25,8 +40,29 @@ export function normalizeEntitlements(raw = {}) {
             !premiumExpiresAt ||
             new Date(premiumExpiresAt).getTime() > Date.now()
         );
+    const rawFeatures =
+        raw?.features && typeof raw.features === "object"
+            ? raw.features
+            : {};
     const features = {
-        monteCarloPlus: premium && Boolean(raw?.features?.monteCarloPlus)
+        monteCarloPlus:
+            resolveFeatureFlag(rawFeatures, "monteCarloPlus", premium),
+        readinessTimeline:
+            resolveFeatureFlag(rawFeatures, "readinessTimeline", premium),
+        withdrawalStrategyOptimizer:
+            resolveFeatureFlag(rawFeatures, "withdrawalStrategyOptimizer", premium),
+        socialSecurityOptimizer:
+            resolveFeatureFlag(rawFeatures, "socialSecurityOptimizer", premium),
+        survivorOptionOptimizer:
+            resolveFeatureFlag(rawFeatures, "survivorOptionOptimizer", premium),
+        estateProjection:
+            resolveFeatureFlag(rawFeatures, "estateProjection", premium),
+        taxDetailViews:
+            resolveFeatureFlag(rawFeatures, "taxDetailViews", premium),
+        premiumScenarioComparison:
+            resolveFeatureFlag(rawFeatures, "premiumScenarioComparison", premium),
+        premiumStressTesting:
+            resolveFeatureFlag(rawFeatures, "premiumStressTesting", premium)
     };
 
     return {

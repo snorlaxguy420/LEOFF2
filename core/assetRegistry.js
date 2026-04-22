@@ -37,8 +37,6 @@ export const assetRegistry = {
 
         assets[asset.id] = asset;
 
-        console.log("Registered asset:", asset.id);
-
     },
 
     /* -----------------------------------------------------

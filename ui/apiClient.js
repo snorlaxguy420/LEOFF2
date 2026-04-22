@@ -156,6 +156,30 @@ export async function getPlan(planId) {
     return payload?.plan || null;
 }
 
+export async function createPlanShare(planId) {
+    const payload = await request(`/plans/${encodeURIComponent(planId)}/share`, {
+        method: "POST"
+    });
+
+    return payload?.share || null;
+}
+
+export async function deletePlanShare(planId) {
+    const payload = await request(`/plans/${encodeURIComponent(planId)}/share`, {
+        method: "DELETE"
+    });
+
+    return payload?.share || null;
+}
+
+export async function getSharedPlan(sharedPlanToken) {
+    const payload = await request(`/shared-plans/${encodeURIComponent(sharedPlanToken)}`, {
+        method: "GET"
+    });
+
+    return payload?.plan || null;
+}
+
 export async function updatePlan(planId, updates) {
     const payload = await request(`/plans/${encodeURIComponent(planId)}`, {
         method: "PUT",

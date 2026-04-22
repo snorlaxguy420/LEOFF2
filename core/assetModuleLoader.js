@@ -20,8 +20,6 @@ export async function loadAssetModules() {
     for (const path of modules) {
 
         try {
-
-            console.log("Loading asset module:", path);
             await import(path);
 
         } catch (err) {

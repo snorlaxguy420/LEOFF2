@@ -58,11 +58,20 @@ const schema = {
     ssClaimAge: "number",
     ssCola: "number",
     ssMode: "text",
+    includeSpouseSocialSecurity: "checkbox",
+    spouseSsBirthYear: "int",
+    spouseSsClaimAge: "number",
+    spouseSsCola: "number",
+    spouseSsMode: "text",
 
     ssFraBenefit: "number",
     ssBenefit62: "number",
     ssBenefitFRA: "number",
     ssBenefit70: "number",
+    spouseSsFraBenefit: "number",
+    spouseSsBenefit62: "number",
+    spouseSsBenefitFRA: "number",
+    spouseSsBenefit70: "number",
 
     ssOptimize: "checkbox",
 
@@ -95,6 +104,17 @@ export function collectInputs() {
     });
 
     const ssMode = raw.ssMode || "fraBenefit";
+    const spouseSsMode = raw.spouseSsMode || "fraBenefit";
+    const spouseSocialSecurityEnabled =
+        Boolean(
+            raw.includeSpouseSocialSecurity ||
+            raw.spouseSsBirthYear ||
+            raw.spouseSsClaimAge ||
+            raw.spouseSsFraBenefit ||
+            raw.spouseSsBenefit62 ||
+            raw.spouseSsBenefitFRA ||
+            raw.spouseSsBenefit70
+        );
 
     /* =====================================================
        DERIVED VALUES
@@ -185,7 +205,18 @@ export function collectInputs() {
             benefit62: raw.ssBenefit62,
             benefitFRA: raw.ssBenefitFRA,
             benefit70: raw.ssBenefit70,
-            optimize: raw.ssOptimize
+            optimize: raw.ssOptimize,
+            spouse: {
+                enabled: spouseSocialSecurityEnabled,
+                birthYear: raw.spouseSsBirthYear,
+                claimAge: raw.spouseSsClaimAge,
+                cola: raw.spouseSsCola / 100,
+                mode: spouseSsMode,
+                fraBenefit: raw.spouseSsFraBenefit,
+                benefit62: raw.spouseSsBenefit62,
+                benefitFRA: raw.spouseSsBenefitFRA,
+                benefit70: raw.spouseSsBenefit70
+            }
         },
 
         expenses: {

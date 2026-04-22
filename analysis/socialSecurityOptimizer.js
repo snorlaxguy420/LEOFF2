@@ -42,7 +42,16 @@ function sumSocialSecurityIncomeThroughAge(results = [], targetAge = 85) {
     return (results || [])
         .filter(result => (result?.age ?? 0) <= targetAge)
         .reduce((sum, result) => {
-            return sum + (result?.breakdown?.["Social Security"] || 0);
+            return sum + sumSocialSecurityBreakdown(result?.breakdown);
+        }, 0);
+}
+
+function sumSocialSecurityBreakdown(breakdown = {}) {
+    return Object.entries(breakdown || {})
+        .reduce((sum, [name, value]) => {
+            return name.includes("Social Security")
+                ? sum + (value || 0)
+                : sum;
         }, 0);
 }
 
@@ -255,9 +264,15 @@ function buildCrossoverAge(laterOption, earlierOption) {
 
 function replaceSocialSecuritySource(incomeSources = [], replacement = null) {
     const filteredSources = (incomeSources || []).filter(source => {
+        const householdMember =
+            source?.metadata?.householdMember;
+
         return !(
             source?.name === "Social Security" ||
-            source?.taxCategory === "social_security"
+            (
+                source?.taxCategory === "social_security" &&
+                (!householdMember || householdMember === "primary")
+            )
         );
     });
 
@@ -453,7 +468,7 @@ export function buildSocialSecurityOptimization({
             cumulativeTo85:
                 sumSocialSecurityIncomeThroughAge(results, 85),
             age85SocialSecurity:
-                age85Result?.breakdown?.["Social Security"] || 0,
+                sumSocialSecurityBreakdown(age85Result?.breakdown),
             endingNetWorth:
                 lastResult?.netWorth || 0,
             endingPortfolio:

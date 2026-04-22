@@ -604,6 +604,169 @@ export function buildSpouseConversationSummary({
     };
 }
 
+export function buildHouseholdDecisionBrief({
+    currentInputs = {},
+    analysis = {},
+    vulnerabilityAnalysis = {},
+    projection = {}
+}) {
+    const retireAge =
+        currentInputs?.retireAge ??
+        currentInputs?.profile?.retirementAge ??
+        null;
+    const recommendedAge =
+        getDisplayedRecommendationAge(analysis, retireAge);
+    const results = projection?.results || [];
+    const retirementYear =
+        findResultForAge(results, retireAge) ||
+        results[0] ||
+        null;
+    const retirementMargin =
+        (retirementYear?.income || 0) - (retirementYear?.expenses || 0);
+    const marginLabel =
+        retirementMargin >= 0
+            ? `+${formatCurrency(retirementMargin)}`
+            : `-${formatCurrency(Math.abs(retirementMargin))}`;
+    const primaryRiskLabel =
+        vulnerabilityAnalysis?.primaryRisk?.label ||
+        "No dominant current risk";
+    const primaryRiskMitigation =
+        vulnerabilityAnalysis?.primaryRisk?.mitigation ||
+        "Keep preserving income margin and review the plan when major life changes happen.";
+    const survivorOption =
+        formatSurvivorOptionLabel(currentInputs?.pension?.survivorOption);
+    const firstDeficitAge =
+        Number.isFinite(analysis?.retirementFailureAge)
+            ? `Age ${analysis.retirementFailureAge}`
+            : "No modeled deficit";
+    const summary =
+        `Use this brief when you need to explain the current retirement decision without walking someone through the full dashboard. The selected age is ${formatAgeLabel(retireAge)}, the current model preference is ${formatAgeLabel(recommendedAge)}, and the plan's main watch item is ${primaryRiskLabel.toLowerCase()}.`;
+    const talkingPoints = [
+        Number.isFinite(retireAge) && Number.isFinite(recommendedAge) && retireAge < recommendedAge
+            ? `The current plan is being tested at age ${retireAge}, but the model still prefers waiting until age ${recommendedAge} for a stronger cushion.`
+            : `The selected retirement age and the current model preference are aligned at ${formatAgeLabel(recommendedAge)}.`,
+        `The current pension setup uses ${survivorOption}. This should be discussed as a household-income decision, not just a pension option.`,
+        `The current retirement-year margin is ${marginLabel}, and the first modeled deficit point is ${firstDeficitAge}.`
+    ];
+    const exportLines = [
+        "LEOFF Helper Household Decision Brief",
+        `Selected retirement age: ${formatAgeLabel(retireAge)}`,
+        `Current model preference: ${formatAgeLabel(recommendedAge)}`,
+        `Retirement-year margin: ${marginLabel}`,
+        `Primary risk: ${primaryRiskLabel}`,
+        `Primary mitigation: ${primaryRiskMitigation}`,
+        `Survivor option: ${survivorOption}`,
+        `First modeled deficit: ${firstDeficitAge}`,
+        "",
+        "Household talking points:",
+        ...talkingPoints.map((point, index) => `${index + 1}. ${point}`)
+    ];
+
+    return {
+        headline: "Household decision brief",
+        summary,
+        cards: [
+            {
+                label: "Selected Age",
+                value: formatAgeLabel(retireAge)
+            },
+            {
+                label: "Model Preference",
+                value: formatAgeLabel(recommendedAge)
+            },
+            {
+                label: "Retirement-Year Margin",
+                value: marginLabel
+            },
+            {
+                label: "Primary Risk",
+                value: primaryRiskLabel
+            }
+        ],
+        talkingPoints,
+        note:
+            "Use this section when you want one plain-English explanation of timing, household income protection, and the fallback move to agree on before retirement starts.",
+        exportText: exportLines.join("\n")
+    };
+}
+
+export function buildProfessionalReviewSummary({
+    currentInputs = {},
+    analysis = {},
+    vulnerabilityAnalysis = {},
+    projection = {}
+}) {
+    const retireAge =
+        currentInputs?.retireAge ??
+        currentInputs?.profile?.retirementAge ??
+        null;
+    const recommendedAge =
+        getDisplayedRecommendationAge(analysis, retireAge);
+    const results = projection?.results || [];
+    const retirementYear =
+        findResultForAge(results, retireAge) ||
+        results[0] ||
+        null;
+    const taxSummary =
+        buildTaxSnapshotSummary(retirementYear);
+    const shortfallSummary =
+        buildShortfallSummary({
+            projection,
+            analysis
+        });
+    const topRisks =
+        buildTopRiskEntries(vulnerabilityAnalysis);
+    const questions = [
+        `Validate whether the planned retirement timing at ${formatAgeLabel(retireAge)} still looks right relative to the stronger model preference at ${formatAgeLabel(recommendedAge)}.`,
+        `Review tax drag in the selected retirement year, currently modeled at ${taxSummary.taxesAtRetirement} on ${taxSummary.taxableIncomeAtRetirement} of taxable income.`,
+        `Pressure-test the main risk areas: ${topRisks.slice(0, 2).map(risk => risk.label).join(" and ") || "current retirement margin"}.`,
+        `Confirm the fallback response if the plan hits its first modeled deficit at ${shortfallSummary.firstDeficitAge}.`
+    ];
+    const exportLines = [
+        "LEOFF Helper Professional Review Summary",
+        `Selected retirement age: ${formatAgeLabel(retireAge)}`,
+        `Current model preference: ${formatAgeLabel(recommendedAge)}`,
+        `Retirement-year taxes: ${taxSummary.taxesAtRetirement}`,
+        `Retirement-year taxable income: ${taxSummary.taxableIncomeAtRetirement}`,
+        `Cumulative shortfall: ${shortfallSummary.cumulativeShortfall}`,
+        `Worst annual deficit: ${shortfallSummary.worstAnnualDeficit}`,
+        "",
+        "Top review questions:",
+        ...questions.map((question, index) => `${index + 1}. ${question}`),
+        "",
+        "Top risks:",
+        ...topRisks.map((risk, index) => `${index + 1}. ${risk.label}: ${risk.explanation}`)
+    ];
+
+    return {
+        headline: "Professional review summary",
+        summary:
+            "Use this packet when you want a CPA, fiduciary, attorney, or other advisor to understand the retirement timing, tax drag, shortfall pressure, and current risk stack without reading the full dashboard first.",
+        cards: [
+            {
+                label: "Selected Age",
+                value: formatAgeLabel(retireAge)
+            },
+            {
+                label: "Retirement-Year Taxes",
+                value: taxSummary.taxesAtRetirement
+            },
+            {
+                label: "Taxable Income",
+                value: taxSummary.taxableIncomeAtRetirement
+            },
+            {
+                label: "Cumulative Shortfall",
+                value: shortfallSummary.cumulativeShortfall
+            }
+        ],
+        questions,
+        note:
+            "This is not professional advice. It is a cleaner briefing layer meant to shorten the handoff into tax, estate, or fiduciary planning conversations.",
+        exportText: exportLines.join("\n")
+    };
+}
+
 export function buildTopRiskEntries(vulnerabilityAnalysis = {}) {
     const topRisks = (vulnerabilityAnalysis?.risks || []).slice(0, 3);
 
@@ -662,6 +825,17 @@ export function buildShortfallSummary({
                 ? formatCurrency(worstAnnualDeficit)
                 : "None"
     };
+}
+
+function getReadinessBandRank(band) {
+    const ranks = {
+        Fragile: 1,
+        Workable: 2,
+        Strong: 3,
+        Durable: 4
+    };
+
+    return ranks[band] || 0;
 }
 
 function formatAgeValue(age) {
@@ -749,6 +923,161 @@ export function buildMonteCarloContent(monteCarlo = {}) {
         medianEndingNetWorth,
         percentile90EndingNetWorth,
         iterations: String(iterations || 0)
+    };
+}
+
+export function buildReadinessTimelineContent({
+    entries = [],
+    currentRetireAge = null,
+    recommendedRetirementAge = null
+} = {}) {
+    const sortedEntries =
+        (entries || [])
+            .filter(entry => Number.isFinite(entry?.retireAge))
+            .slice()
+            .sort((left, right) => left.retireAge - right.retireAge);
+
+    if (!sortedEntries.length) {
+        return {
+            summary: "Readiness-by-age data is not available yet.",
+            rows: []
+        };
+    }
+
+    const currentEntry =
+        sortedEntries.find(entry => entry.retireAge === currentRetireAge) ||
+        sortedEntries[0];
+    const bestEntry =
+        sortedEntries.reduce((best, entry) => {
+            if (!best) {
+                return entry;
+            }
+
+            if ((entry.readinessScore || 0) > (best.readinessScore || 0)) {
+                return entry;
+            }
+
+            if (
+                (entry.readinessScore || 0) === (best.readinessScore || 0) &&
+                getReadinessBandRank(entry.readinessBand) >
+                    getReadinessBandRank(best.readinessBand)
+            ) {
+                return entry;
+            }
+
+            return best;
+        }, null);
+    const firstStrongEntry =
+        sortedEntries.find(entry =>
+            getReadinessBandRank(entry.readinessBand) >=
+                getReadinessBandRank("Strong")
+        ) || null;
+    const firstDurableEntry =
+        sortedEntries.find(entry => entry.readinessBand === "Durable") || null;
+    const summaryParts = [
+        `The current selection is age ${currentEntry.retireAge}, with a readiness score of ${currentEntry.readinessScore || 0}/100 in the ${currentEntry.readinessBand || "Fragile"} band.`,
+        `The strongest score in this age range appears at age ${bestEntry?.retireAge}, at ${bestEntry?.readinessScore || 0}/100 (${bestEntry?.readinessBand || "Fragile"}).`
+    ];
+
+    if (firstStrongEntry) {
+        summaryParts.push(
+            `The first age that reaches a Strong-or-better readiness band is age ${firstStrongEntry.retireAge}.`
+        );
+    }
+
+    if (firstDurableEntry) {
+        summaryParts.push(
+            `The first Durable score appears at age ${firstDurableEntry.retireAge}.`
+        );
+    }
+
+    if (Number.isFinite(recommendedRetirementAge)) {
+        summaryParts.push(
+            `The current dashboard recommendation is age ${recommendedRetirementAge}.`
+        );
+    }
+
+    return {
+        summary: summaryParts.join(" "),
+        rows: sortedEntries.map(entry => {
+            const status = [];
+
+            if (entry.retireAge === currentRetireAge) {
+                status.push("Current");
+            }
+
+            if (entry.retireAge === recommendedRetirementAge) {
+                status.push("Recommended");
+            }
+
+            return {
+                retireAge: entry.retireAge,
+                ageLabel: `Age ${entry.retireAge}`,
+                scoreLabel: `${entry.readinessScore || 0} / 100`,
+                band: entry.readinessBand || "Fragile",
+                bandClass:
+                    `readiness-band-${String(entry.readinessBand || "fragile").trim().toLowerCase()}`,
+                marginLabel: formatSignedCurrency(entry.averageMargin || 0),
+                firstDeficitAgeLabel: formatAgeValue(entry.firstDeficitAge),
+                assetDepletionAgeLabel: formatAgeValue(entry.assetDepletionAge),
+                isCurrent: entry.retireAge === currentRetireAge,
+                isRecommended: entry.retireAge === recommendedRetirementAge,
+                status: status.join(" · ")
+            };
+        })
+    };
+}
+
+export function buildMonteCarloTrustContent({
+    monteCarlo = null,
+    premiumEnabled = false,
+    stressTestingActive = false
+} = {}) {
+    const successRate =
+        Number.isFinite(monteCarlo?.successRate)
+            ? formatPercent(monteCarlo.successRate)
+            : null;
+    const essentialSuccessRate =
+        Number.isFinite(monteCarlo?.essentialSuccessRate)
+            ? formatPercent(monteCarlo.essentialSuccessRate)
+            : null;
+    const summary =
+        successRate && essentialSuccessRate
+            ? `Monte Carlo is a durability check, not a promise. In the selected scenario, this run stayed fully solvent in ${successRate} of trials and still covered essential expenses in ${essentialSuccessRate} of trials.`
+            : "Monte Carlo is a durability check, not a promise. It varies the current plan through many different inflation and return paths to show how resilient the plan looks when the world does not follow one average forecast.";
+
+    const cards = [
+        {
+            title: "What changes in each trial",
+            body:
+                "The engine varies inflation, portfolio returns, and real-estate growth year by year around the plan assumptions you entered instead of projecting one smooth average future."
+        },
+        {
+            title: "What does not automatically change",
+            body:
+                "Your retirement age, pension formula inputs, contribution settings, taxes, and spending choices stay tied to the current plan unless you change those inputs directly."
+        },
+        {
+            title: "How to read the result",
+            body:
+                "A success rate is not the chance that life will go exactly as modeled. It is a pass rate across the current stress-test set, so lower percentages mean the plan is more exposed to weak sequences and higher costs."
+        },
+        {
+            title: stressTestingActive
+                ? "How to use this with stress testing"
+                : "How to use this in practice",
+            body: stressTestingActive
+                ? "Premium custom stress settings are active, so treat this run as a harsher downside check. Compare it against the base plan and ask whether both still support the retirement timing you want."
+                : "Use Monte Carlo beside the deterministic report. If a retirement age only works with a thin margin or a mixed Monte Carlo result, treat that as a planning discussion point rather than a green light."
+        }
+    ];
+
+    return {
+        summary,
+        cards,
+        footnote: premiumEnabled
+            ? "Monte Carlo Plus uses deeper trial counts and premium-only path views, but it still depends on the quality of the underlying plan inputs."
+            : "The free dashboard uses a lighter Monte Carlo trial count, so the panel is best used as a directional durability check rather than a precise forecast."
     };
 }
 

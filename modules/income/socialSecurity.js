@@ -1,5 +1,5 @@
 import {
-    calculateSocialSecurityIncomeSource
+    calculateHouseholdSocialSecurityIncomeSources
 } from "../../core/socialSecurityEngine.js";
 
 const socialSecurityModule = {
@@ -9,8 +9,9 @@ const socialSecurityModule = {
     type: "income",
 
     getSimulationPayloads(inputs) {
-        return calculateSocialSecurityIncomeSource(
-            inputs.socialSecurity
+        return calculateHouseholdSocialSecurityIncomeSources(
+            inputs.socialSecurity,
+            inputs.profile
         );
     }
 };

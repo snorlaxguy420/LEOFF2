@@ -1,5 +1,6 @@
 import { normalizeEmail } from "./lib/security.js";
 import { withStore } from "./lib/store.js";
+import { recordAuditEvent } from "./lib/auditLog.js";
 
 function printUsage() {
     console.log(
@@ -85,8 +86,29 @@ async function main() {
     }));
 
     if (!updatedUser) {
+        await recordAuditEvent({
+            action: "account.tier_update",
+            outcome: "failed",
+            email,
+            metadata: {
+                reason: "user_not_found",
+                planTier
+            }
+        });
         throw new Error(`No user found for ${email}.`);
     }
+
+    await recordAuditEvent({
+        action: "account.tier_update",
+        outcome: "success",
+        targetUserId: updatedUser.id,
+        email: updatedUser.email,
+        metadata: {
+            planTier: updatedUser.planTier,
+            premiumSource: updatedUser.premiumSource || "none",
+            hasPremiumExpiry: Boolean(updatedUser.premiumExpiresAt)
+        }
+    });
 
     console.log(
         JSON.stringify(

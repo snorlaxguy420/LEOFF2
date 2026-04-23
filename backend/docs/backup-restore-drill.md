@@ -1,6 +1,6 @@
 # Backup Restore Drill
 
-Last updated: April 17, 2026
+Last updated: April 23, 2026
 
 ## Purpose
 
@@ -118,3 +118,76 @@ This is a restore checklist, not a migration guide.
 - The backend can boot against restored data.
 - Auth and plan CRUD work on restored data.
 - The snapshot can also recover a working host state.
+
+## Drill log
+
+### April 23, 2026 - App-managed encrypted backup restore
+
+Result: Pass for the app-managed encrypted PostgreSQL backup layer.
+
+Scope:
+
+- Verified the live LEOFF Helper API target at `api.leoffhelper.com`
+  resolves to the production Lightsail host used for `leoff-api.service`.
+- Confirmed `leoff-api.service` was active and serving the backend.
+- Confirmed `leoff-api-backup.timer` was enabled and scheduled for
+  `10:15 UTC` daily.
+- Confirmed the latest observed backup service run completed with
+  `status=0/SUCCESS` on April 22, 2026 at `10:15:14 UTC`.
+- Used encrypted backup set
+  `/home/ubuntu/leoff-backups/20260422-101514/leoff_helper.pg.sql.enc`.
+- Confirmed backup directories were root-owned with `700` permissions and
+  encrypted backup files were root-owned with `600` permissions.
+- Confirmed `/etc/leoff-api.env` and `/etc/leoff-api-backup.key` were
+  root-owned with `600` permissions.
+
+Restore validation:
+
+- Decrypted the selected encrypted PostgreSQL backup into a temporary root-only
+  restore directory.
+- Restored the SQL dump into disposable database
+  `leoff_restore_drill_20260423`.
+- Verified restored row counts before API validation:
+  `users=1`, `sessions=1`, `password_reset_tokens=1`, `plans=1`.
+- Started a temporary local-only API process on `127.0.0.1:8799` pointed at
+  the disposable restored database.
+- Verified temporary API `GET /health`.
+- Registered a throwaway `.invalid` restore-drill account against the
+  disposable database.
+- Created a throwaway plan through `POST /plans`.
+- Verified the throwaway plan appeared through `GET /plans`.
+
+Cleanup:
+
+- Stopped the temporary API process.
+- Dropped the disposable database `leoff_restore_drill_20260423`.
+- Removed the temporary decrypted SQL file, temporary postgres-owned SQL copy,
+  temporary script, response files, and cookie jar.
+
+Notes:
+
+- The temporary API initially failed because the disposable database was created
+  by `postgres`, so the app database user did not have schema privileges. The
+  drill continued after granting the app database user privileges on the
+  disposable database only. Production data and production schema privileges
+  were not changed.
+
+### April 23, 2026 - Lightsail automatic snapshot verification
+
+Result: Pending.
+
+- AWS CLI was not installed locally.
+- AWS CLI was not installed on the production Lightsail host.
+- No local AWS credentials or local AWS config were found.
+- No `~/.aws` config was found for the `ubuntu` user on the production host.
+- The first successful automatic Lightsail snapshot still needs to be verified
+  through the AWS Lightsail console or a configured AWS CLI/API environment.
+
+Recommended verification record once AWS control-plane access is available:
+
+- Snapshot name or ID.
+- Snapshot creation date and time.
+- Source instance name.
+- Region.
+- Snapshot state.
+- Whether a non-production instance restore was performed from that snapshot.

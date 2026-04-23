@@ -53,6 +53,9 @@ server reads:
 - `FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MINUTES`
 - `RESET_PASSWORD_RATE_LIMIT_MAX`
 - `RESET_PASSWORD_RATE_LIMIT_WINDOW_MINUTES`
+- `RATE_LIMIT_BACKEND`
+- `REQUEST_IDENTITY_HASH_SALT`
+- `AUDIT_LOG_PATH`
 - `DATA_FILE_PATH`
 
 ## Current endpoints
@@ -126,7 +129,16 @@ Recommended production scheduling:
 - Account responses now include a safe `entitlements` payload so the frontend
   can gate premium-ready features without exposing billing internals.
 - Password reset links default to a 60-minute lifetime.
-- Auth-sensitive endpoints now use in-memory rate limiting keyed by client IP.
+- Auth-sensitive endpoints now use rate limiting keyed by client IP.
+- When `DATA_BACKEND=postgres` and `RATE_LIMIT_BACKEND=auto`, auth-sensitive
+  endpoint limits use shared PostgreSQL-backed buckets instead of process-local
+  memory.
+- Audit events are recorded for critical auth and account-management actions.
+  Production audit records use hashed request/email identifiers instead of raw
+  IP addresses or raw email addresses.
+- Account-backed plan saves minimize persisted planner payloads before storage,
+  dropping obvious direct identifiers and financial-account identifiers from
+  `simulationState` and `workspaceState`.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, reset links are
   logged on the server so local/dev testing can still complete the flow.
 - If `EMAIL_FROM` and `RESEND_API_KEY` are not configured, account-created

@@ -26,6 +26,8 @@ import {
     takeRateLimitToken
 } from "./lib/rateLimit.js";
 import { readStore, withStore } from "./lib/store.js";
+import { recordAuditEvent } from "./lib/auditLog.js";
+import { normalizePersistedPlanPayload } from "./lib/privacy.js";
 
 function getCookieSecurity(req) {
     const forwardedProto = req.headers["x-forwarded-proto"];
@@ -64,8 +66,8 @@ function buildSessionCookieOptions(req) {
     };
 }
 
-function enforceRateLimit(req, res, options) {
-    const result = takeRateLimitToken({
+async function enforceRateLimit(req, res, options) {
+    const result = await takeRateLimitToken({
         req,
         ...options
     });
@@ -75,6 +77,17 @@ function enforceRateLimit(req, res, options) {
     if (result.allowed) {
         return true;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "rate_limit.blocked",
+        outcome: "blocked",
+        metadata: {
+            scope: options.scope || "unknown",
+            limit: result.limit,
+            retryAfterSeconds: result.retryAfterSeconds
+        }
+    });
 
     sendError(
         res,
@@ -343,7 +356,7 @@ function normalizeWorkspaceStatePayload(payload = {}) {
         };
     }
 
-    return {
+    return normalizePersistedPlanPayload({
         simulationState,
         workspaceState: {
             ...(rawWorkspaceState && typeof rawWorkspaceState === "object"
@@ -356,7 +369,7 @@ function normalizeWorkspaceStatePayload(payload = {}) {
                     ? rawWorkspaceState.moduleState
                     : {}
         }
-    };
+    });
 }
 
 function getRouteParams(pathname, routePrefix) {
@@ -424,11 +437,26 @@ async function handleRegister(req, res) {
     const password = String(body.password || "");
 
     if (!email || !email.includes("@")) {
+        await recordAuditEvent({
+            req,
+            action: "auth.register",
+            outcome: "validation_failed",
+            email
+        });
         sendError(res, 400, "A valid email address is required.");
         return;
     }
 
     if (password.length < 8) {
+        await recordAuditEvent({
+            req,
+            action: "auth.register",
+            outcome: "validation_failed",
+            email,
+            metadata: {
+                reason: "weak_password"
+            }
+        });
         sendError(res, 400, "Password must be at least 8 characters.");
         return;
     }
@@ -437,6 +465,13 @@ async function handleRegister(req, res) {
     const existingUser = existingStore.users.find(user => user.email === email);
 
     if (existingUser) {
+        await recordAuditEvent({
+            req,
+            action: "auth.register",
+            outcome: "duplicate_email",
+            targetUserId: existingUser.id,
+            email
+        });
         sendError(res, 409, "An account with that email already exists.");
         return;
     }
@@ -473,6 +508,15 @@ async function handleRegister(req, res) {
         users: [...store.users, user],
         sessions: [...store.sessions, session]
     }));
+
+    await recordAuditEvent({
+        req,
+        action: "auth.register",
+        outcome: "success",
+        actorUserId: user.id,
+        targetUserId: user.id,
+        email: user.email
+    });
 
     try {
         await sendWelcomeEmail({
@@ -513,6 +557,15 @@ async function handleLogin(req, res) {
     const user = store.users.find(entry => entry.email === email);
 
     if (!user) {
+        await recordAuditEvent({
+            req,
+            action: "auth.login",
+            outcome: "failed",
+            email,
+            metadata: {
+                reason: "unknown_email"
+            }
+        });
         sendError(res, 401, "Invalid email or password.");
         return;
     }
@@ -524,6 +577,16 @@ async function handleLogin(req, res) {
     );
 
     if (!validPassword) {
+        await recordAuditEvent({
+            req,
+            action: "auth.login",
+            outcome: "failed",
+            targetUserId: user.id,
+            email,
+            metadata: {
+                reason: "invalid_password"
+            }
+        });
         sendError(res, 401, "Invalid email or password.");
         return;
     }
@@ -547,6 +610,15 @@ async function handleLogin(req, res) {
             session
         ]
     }));
+
+    await recordAuditEvent({
+        req,
+        action: "auth.login",
+        outcome: "success",
+        actorUserId: user.id,
+        targetUserId: user.id,
+        email: user.email
+    });
 
     res.setHeader(
         "Set-Cookie",
@@ -573,6 +645,15 @@ async function handleLogout(req, res) {
                 entry => entry.tokenHash !== sessionContext.tokenHash
             )
         }));
+
+        await recordAuditEvent({
+            req,
+            action: "auth.logout",
+            outcome: "success",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            email: sessionContext.user.email
+        });
     }
 
     res.setHeader(
@@ -703,9 +784,32 @@ async function handleUpdateMe(req, res) {
     }));
 
     if (!updatedUser) {
+        await recordAuditEvent({
+            req,
+            action: "account.profile_update",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "user_not_found"
+            }
+        });
         sendError(res, 404, "User not found.");
         return;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "account.profile_update",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            changedRetirementCheckInFrequency:
+                nextRetirementCheckInFrequency !== undefined
+        }
+    });
 
     sendJson(res, 200, buildAccountContextPayload({
         user: updatedUser,
@@ -725,11 +829,28 @@ async function handleChangePassword(req, res) {
     const nextPassword = String(body.newPassword || "");
 
     if (!currentPassword || !nextPassword) {
+        await recordAuditEvent({
+            req,
+            action: "account.password_change",
+            outcome: "validation_failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id
+        });
         sendError(res, 400, "Current password and new password are required.");
         return;
     }
 
     if (nextPassword.length < 8) {
+        await recordAuditEvent({
+            req,
+            action: "account.password_change",
+            outcome: "validation_failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "weak_password"
+            }
+        });
         sendError(res, 400, "New password must be at least 8 characters.");
         return;
     }
@@ -741,6 +862,17 @@ async function handleChangePassword(req, res) {
     );
 
     if (!validPassword) {
+        await recordAuditEvent({
+            req,
+            action: "account.password_change",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            email: sessionContext.user.email,
+            metadata: {
+                reason: "invalid_current_password"
+            }
+        });
         sendError(res, 401, "Current password is incorrect.");
         return;
     }
@@ -764,6 +896,15 @@ async function handleChangePassword(req, res) {
         })
     }));
 
+    await recordAuditEvent({
+        req,
+        action: "account.password_change",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email
+    });
+
     sendJson(res, 200, {
         message: "Password updated successfully."
     });
@@ -776,6 +917,12 @@ async function handleForgotPassword(req, res) {
         "If that email is registered, a password reset link is on the way.";
 
     if (!email || !email.includes("@")) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset_request",
+            outcome: "validation_failed",
+            email
+        });
         sendError(res, 400, "A valid email address is required.");
         return;
     }
@@ -784,6 +931,15 @@ async function handleForgotPassword(req, res) {
     const user = store.users.find(entry => entry.email === email);
 
     if (!user) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset_request",
+            outcome: "accepted",
+            email,
+            metadata: {
+                knownAccount: false
+            }
+        });
         sendJson(res, 200, {
             message: genericMessage
         });
@@ -810,6 +966,17 @@ async function handleForgotPassword(req, res) {
             passwordResetRecord
         ]
     }));
+
+    await recordAuditEvent({
+        req,
+        action: "auth.password_reset_request",
+        outcome: "accepted",
+        targetUserId: user.id,
+        email: user.email,
+        metadata: {
+            knownAccount: true
+        }
+    });
 
     try {
         await sendPasswordResetEmail({
@@ -838,11 +1005,27 @@ async function handleResetPassword(req, res) {
     const nextPassword = String(body.newPassword || "");
 
     if (!resetToken) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset",
+            outcome: "validation_failed",
+            metadata: {
+                reason: "missing_token"
+            }
+        });
         sendError(res, 400, "A password reset token is required.");
         return;
     }
 
     if (nextPassword.length < 8) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset",
+            outcome: "validation_failed",
+            metadata: {
+                reason: "weak_password"
+            }
+        });
         sendError(res, 400, "New password must be at least 8 characters.");
         return;
     }
@@ -854,6 +1037,14 @@ async function handleResetPassword(req, res) {
     ).find(entry => entry.tokenHash === tokenHash);
 
     if (!activeResetToken) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset",
+            outcome: "failed",
+            metadata: {
+                reason: "invalid_or_expired_token"
+            }
+        });
         sendError(res, 400, "That password reset link is invalid or has expired.");
         return;
     }
@@ -861,6 +1052,15 @@ async function handleResetPassword(req, res) {
     const user = store.users.find(entry => entry.id === activeResetToken.userId);
 
     if (!user) {
+        await recordAuditEvent({
+            req,
+            action: "auth.password_reset",
+            outcome: "failed",
+            targetUserId: activeResetToken.userId,
+            metadata: {
+                reason: "user_not_found"
+            }
+        });
         sendError(res, 404, "User not found.");
         return;
     }
@@ -887,6 +1087,15 @@ async function handleResetPassword(req, res) {
             nextStore.passwordResetTokens
         ).filter(entry => entry.userId !== user.id)
     }));
+
+    await recordAuditEvent({
+        req,
+        action: "auth.password_reset",
+        outcome: "success",
+        actorUserId: user.id,
+        targetUserId: user.id,
+        email: user.email
+    });
 
     sendJson(res, 200, {
         message: "Password reset successfully."
@@ -948,6 +1157,18 @@ async function handleCreatePlan(req, res) {
         ...store,
         plans: [...store.plans, plan]
     }));
+
+    await recordAuditEvent({
+        req,
+        action: "plan.create",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            planId: plan.id
+        }
+    });
 
     sendJson(res, 201, {
         plan: sanitizePlan(plan)
@@ -1049,9 +1270,36 @@ async function handleUpdatePlan(req, res, planId) {
     }));
 
     if (!updatedPlan) {
+        await recordAuditEvent({
+            req,
+            action: "plan.update",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "plan_not_found",
+                planId
+            }
+        });
         sendError(res, 404, "Plan not found.");
         return;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "plan.update",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            planId: updatedPlan.id,
+            nameChanged: nextName !== undefined,
+            payloadChanged:
+                nextSimulationState !== undefined ||
+                nextWorkspaceState !== undefined
+        }
+    });
 
     sendJson(res, 200, {
         plan: sanitizePlan(updatedPlan)
@@ -1083,9 +1331,32 @@ async function handleDeletePlan(req, res, planId) {
     }));
 
     if (!removed) {
+        await recordAuditEvent({
+            req,
+            action: "plan.delete",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "plan_not_found",
+                planId
+            }
+        });
         sendError(res, 404, "Plan not found.");
         return;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "plan.delete",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            planId
+        }
+    });
 
     sendNoContent(res);
 }
@@ -1125,9 +1396,32 @@ async function handleCreatePlanShare(req, res, planId) {
     }));
 
     if (!sharedPlan) {
+        await recordAuditEvent({
+            req,
+            action: "plan.share_create",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "plan_not_found",
+                planId
+            }
+        });
         sendError(res, 404, "Plan not found.");
         return;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "plan.share_create",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            planId: sharedPlan.id
+        }
+    });
 
     sendJson(res, 200, {
         share: sanitizePlanShare(sharedPlan),
@@ -1166,9 +1460,32 @@ async function handleDeletePlanShare(req, res, planId) {
     }));
 
     if (!updatedPlan) {
+        await recordAuditEvent({
+            req,
+            action: "plan.share_revoke",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "plan_not_found",
+                planId
+            }
+        });
         sendError(res, 404, "Plan not found.");
         return;
     }
+
+    await recordAuditEvent({
+        req,
+        action: "plan.share_revoke",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            planId: updatedPlan.id
+        }
+    });
 
     sendJson(res, 200, {
         share: sanitizePlanShare(updatedPlan),
@@ -1224,7 +1541,7 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/register") {
-            if (!enforceRateLimit(req, res, {
+            if (!await enforceRateLimit(req, res, {
                 scope: "auth-register",
                 maxRequests: config.registerRateLimitMax,
                 windowMs: config.registerRateLimitWindowMs
@@ -1237,7 +1554,7 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/login") {
-            if (!enforceRateLimit(req, res, {
+            if (!await enforceRateLimit(req, res, {
                 scope: "auth-login",
                 maxRequests: config.loginRateLimitMax,
                 windowMs: config.loginRateLimitWindowMs
@@ -1270,7 +1587,7 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/forgot-password") {
-            if (!enforceRateLimit(req, res, {
+            if (!await enforceRateLimit(req, res, {
                 scope: "auth-forgot-password",
                 maxRequests: config.forgotPasswordRateLimitMax,
                 windowMs: config.forgotPasswordRateLimitWindowMs
@@ -1283,7 +1600,7 @@ export async function handleRequest(req, res) {
         }
 
         if (req.method === "POST" && pathname === "/auth/reset-password") {
-            if (!enforceRateLimit(req, res, {
+            if (!await enforceRateLimit(req, res, {
                 scope: "auth-reset-password",
                 maxRequests: config.resetPasswordRateLimitMax,
                 windowMs: config.resetPasswordRateLimitWindowMs

@@ -104,6 +104,17 @@ export const config = {
         "RESET_PASSWORD_RATE_LIMIT_WINDOW_MINUTES",
         60
     ),
+    rateLimitBackend: readEnv("RATE_LIMIT_BACKEND", "auto")
+        .trim()
+        .toLowerCase(),
+    requestIdentityHashSalt: readEnv(
+        "REQUEST_IDENTITY_HASH_SALT",
+        readEnv("SESSION_COOKIE_NAME", "leoff_helper_session")
+    ),
+    auditLogPath: readEnv(
+        "AUDIT_LOG_PATH",
+        path.join(projectRoot, "data", "audit-events.jsonl")
+    ),
     dataFilePath: readEnv(
         "DATA_FILE_PATH",
         path.join(projectRoot, "data", "store.json")

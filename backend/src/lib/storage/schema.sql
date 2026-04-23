@@ -75,3 +75,40 @@ CREATE INDEX IF NOT EXISTS plans_user_id_updated_at_idx
 
 CREATE INDEX IF NOT EXISTS plans_share_token_idx
     ON plans (share_token);
+
+CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+    bucket_key TEXT PRIMARY KEY,
+    scope TEXT NOT NULL,
+    identifier_hash TEXT NOT NULL,
+    window_start TIMESTAMPTZ NOT NULL,
+    reset_at TIMESTAMPTZ NOT NULL,
+    count INTEGER NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS rate_limit_buckets_reset_at_idx
+    ON rate_limit_buckets (reset_at);
+
+CREATE INDEX IF NOT EXISTS rate_limit_buckets_scope_identifier_idx
+    ON rate_limit_buckets (scope, identifier_hash);
+
+CREATE TABLE IF NOT EXISTS audit_events (
+    id TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    actor_user_id TEXT NULL,
+    target_user_id TEXT NULL,
+    client_ip_hash TEXT NULL,
+    email_hash TEXT NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS audit_events_created_at_idx
+    ON audit_events (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS audit_events_action_created_at_idx
+    ON audit_events (action, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS audit_events_target_user_created_at_idx
+    ON audit_events (target_user_id, created_at DESC);

@@ -1,341 +1,78 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: April 21, 2026
+Last updated: April 23, 2026
 
-## Current Status
+This document is split into two parts:
 
-### Phase 1 - Pension Calculation Engine
-Status: Implemented for LEOFF2, PERS2, and TRS2
+- Completed Features: shipped or operationally proven work.
+- Pending Roadmap: only work that still needs implementation, verification, or follow-up.
 
-Completed:
-- Dedicated LEOFF2 pension engine exists in [pensions/LEOFF2/leoff2Engine.js](/D:/LEOFF%202/pensions/LEOFF2/leoff2Engine.js)
-- Dedicated PERS2 pension engine exists in [pensions/pers2/pers2Engine.js](/D:/LEOFF%202/pensions/pers2/pers2Engine.js)
-- Early retirement reduction logic exists in [pensions/LEOFF2/leoff2EarlyRetirement.js](/D:/LEOFF%202/pensions/LEOFF2/leoff2EarlyRetirement.js)
-- Early retirement reduction logic exists in [pensions/pers2/pers2EarlyRetirement.js](/D:/LEOFF%202/pensions/pers2/pers2EarlyRetirement.js)
-- Pension registry routing exists in [pensions/pensionRegistry.js](/D:/LEOFF%202/pensions/pensionRegistry.js)
-- Dashboard UI now calls the pension engine instead of calculating LEOFF pension inline
-- LEOFF2 engine now exposes formal pension math functions:
-  `calculateBasePension()`, `calculateEarlyRetirementReduction()`,
-  `calculateTieredMultiplier()`, and `calculateMonthlyPension()`
-- LEOFF2 engine now models the DRS optional `tiered multiplier` versus `2% pension + lump sum` election, and the simulator can project the one-time lump sum at retirement
-- PERS2 engine now exposes formal pension math functions:
-  `calculateBasePension()`, `calculateEarlyRetirementReduction()`,
-  and `calculateMonthlyPension()`
-- Dedicated TRS2 pension engine now exists in [pensions/trs2/trs2Engine.js](/D:/LEOFF%202/pensions/trs2/trs2Engine.js)
-- TRS2 engine now exposes formal pension math functions:
-  `calculateBasePension()`, `calculateEarlyRetirementReduction()`,
-  and `calculateMonthlyPension()`
-- Simulator support now includes optional TRS Plan 2 inputs as an additional pension alongside LEOFF2 and optional PERS2 in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/inputCollector.js](/D:/LEOFF%202/ui/inputCollector.js), and [ui/simulatorShared.js](/D:/LEOFF%202/ui/simulatorShared.js)
+## Pending Roadmap
 
-Remaining:
-- Add additional pension-system engines later through the registry pattern
-- Continue expanding multi-pension UI support beyond the current LEOFF2 + optional PERS2 + optional TRS2 flow
+### Security, Operations, and Launch Readiness
 
-### Phase 2 - Projection Engine
-Status: Implemented and refactored
+- Verify the first successful Lightsail automatic snapshot through the AWS Lightsail console or a configured AWS CLI/API environment, then document the snapshot name or ID, source instance, region, creation time, state, and whether a non-production restore was performed.
+- Add audit-event retention and review procedures once real traffic makes recurring audit review useful.
+- Continue hardening the deployment/update workflow for safer live releases.
+- Verify live asset paths, SEO metadata, and public page routing after significant launch changes.
 
-Completed:
-- Core projection math exists in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
-- Projection wrapper added in [core/projectionEngine.js](/D:/LEOFF%202/core/projectionEngine.js)
-- Canonical simulation state builder added in [core/simulationState.js](/D:/LEOFF%202/core/simulationState.js)
-- Workspace state persistence now stores canonical `simulationState` in [core/stateManager.js](/D:/LEOFF%202/core/stateManager.js)
-- Standard simulator inputs can now repopulate from canonical `simulationState`
-- Dashboard can rebuild from persisted canonical `simulationState` when session projection data is absent
-- UI and analysis callers now route through the projection engine
-- Shared simulator helpers now reduce duplication between simulator entry points in [ui/simulatorShared.js](/D:/LEOFF%202/ui/simulatorShared.js)
-- Shared UI helpers now reduce duplicated input population and preview logic in [ui/simulatorUiShared.js](/D:/LEOFF%202/ui/simulatorUiShared.js)
-- Shared simulator bootstrap helpers now reduce duplicated profile/module bootstrapping and asset-button setup in [ui/simulatorBootstrap.js](/D:/LEOFF%202/ui/simulatorBootstrap.js)
-- Canonical simulator state now carries `Current Annual Pay` alongside final salary assumptions, allowing pay-based retirement-account accumulation to project consistently across save/restore, simulator, and dashboard flows
-- Retirement account withdrawals now distinguish `401k`, `Roth 401k`, `Traditional IRA`, `Roth IRA`, and `457b` tax treatment in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
-- Expense projection now supports split inflation across goods/services, housing, and healthcare in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [core/projectionEngine.js](/D:/LEOFF%202/core/projectionEngine.js)
-- Canonical state round-tripping now preserves birth month, birth year, and marital-status profile fields needed for trustworthy simulator fallback restores, and shared simulator prefill now restores dependent UI state such as spouse visibility, Social Security optimize, and survivor-option visibility in [core/simulationState.js](/D:/LEOFF%202/core/simulationState.js) and [ui/simulatorUiShared.js](/D:/LEOFF%202/ui/simulatorUiShared.js)
+### Pension and Deterministic Accuracy
 
-Remaining:
-- No major standalone Phase 2 items remain beyond incidental restore/input-prefill bugs discovered during future QA
+- Add additional pension-system engines later through the pension registry pattern.
+- Continue expanding multi-pension UI support beyond the current LEOFF2 + optional PERS2 + optional TRS2 flow.
+- Continue deepening edge-case pension-rule accuracy across LEOFF2, PERS2, TRS2, and future systems.
+- Continue improving expense-category realism beyond the current split-inflation and essential/discretionary baseline.
+- Continue improving tax-aware retirement withdrawals beyond the current progressive-tax and need-aware sequencing baseline.
+- Add stronger non-Monte-Carlo deterministic stress paths, such as stagnant-decade and early-retirement recession scenarios.
 
-### Phase 3 - Retirement Analysis Engine
-Status: Implemented
+### Asset, Cash Flow, and Withdrawal Modeling
 
-Completed:
-- Readiness score engine exists in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js)
-- The readiness score now uses a lighter interim deterministic model focused on retirement-year income coverage, essential coverage, longevity safety, early retirement cushion, and margin strength; this is intended as a bridge until Monte Carlo modeling arrives
-- Scenario comparison exists in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js)
-- Unified analysis engine added in [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js)
-- Dashboard now consumes the analysis engine instead of recomputing key values inline
-- V1 retirement vulnerability engine exists in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
-- Retirement vulnerability analysis now includes richer stress categories, severity tiers, and mitigation guidance in [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
-- Shared dashboard view-model helpers now own more of the dashboard-specific recommendation, report, and summary derivation in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), reducing inline business logic in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Probability-informed readiness scoring now exists for Monte Carlo Plus, blending deterministic coverage/longevity math with a dedicated Monte Carlo durability component so premium dashboard scores react to success odds and failure timing instead of deterministic projections alone in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Readiness labels now use plain-language bands instead of letter grades, with user-facing `Durable`, `Strong`, `Workable`, and `Fragile` states reflected in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
+- Deepen retirement-account withdrawal realism around year-by-year tax-aware bridge strategy and later premium tax-detail views.
+- Add explicit pre-retirement surplus savings modeling so excess earned income can flow into cash, savings, or taxable brokerage instead of disappearing after annual expenses, with user-controlled sweep behavior and clear chart/report treatment.
 
-Remaining:
-- No major standalone Phase 3 items remain beyond ongoing score tuning and trust-language refinement already tracked under Phase 11
+### Dashboard, Reports, and Tools
 
-### Phase 4 - Chart Engine
-Status: Implemented
+- Continue trimming section-specific render orchestration from the dashboard loader as needed.
+- Continue refining the Survivor Benefit Estimator toward closer DRS-table fidelity.
+- Add optional true one-click PDF generation beyond the browser print-to-PDF flow.
+- Continue tuning readiness score language, trust language, and score calibration as more modeling and user feedback arrive.
 
-Completed:
-- Bar chart renderer exists in [ui/chartRenderer.js](/D:/LEOFF%202/ui/chartRenderer.js)
-- Timeline renderer exists in [ui/incomeTimelineRenderer.js](/D:/LEOFF%202/ui/incomeTimelineRenderer.js)
-- Tooltips are supported
-- Retirement markers are supported
-- Asset depletion markers are supported
-- Shared chart wrapper now provides one projection-chart API in [ui/projectionChart.js](/D:/LEOFF%202/ui/projectionChart.js)
-- Shared chart wrapper now supports explicit dataset contracts for `incomeVsExpenses`, `pensionIncome`, and `assetsOverTime`
-- Shared chart wrapper now also owns default series-color assignment, reducing caller-specific chart assumptions in [ui/projectionChart.js](/D:/LEOFF%202/ui/projectionChart.js)
-- Shared chart wrapper now owns tooltip and legend target configuration, reducing page-specific renderer assumptions in [ui/projectionChart.js](/D:/LEOFF%202/ui/projectionChart.js), [ui/chartRenderer.js](/D:/LEOFF%202/ui/chartRenderer.js), and [ui/incomeTimelineRenderer.js](/D:/LEOFF%202/ui/incomeTimelineRenderer.js)
-- Browser verification page exists for chart/render/state/module smoke checks in [ui/verification.html](/D:/LEOFF%202/ui/verification.html)
-- Verification runner now exercises shared simulator helpers and preview metrics in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Verification runner now checks differentiated retirement-account tax handling in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Level 1 browser smoke testing now exists in [ui/verification.html](/D:/LEOFF%202/ui/verification.html) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js), covering key page loads, key DOM surfaces, and image-load checks across the main public pages
-- Verification coverage now includes dashboard recommendation consistency, dashboard age-order integrity, dashboard age-adjusted pension/source behavior, retirement-age comparison monotonicity, survivor-estimator ordering, and Monte Carlo regression checks in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
+### Accounts, Billing, and Premium
 
-### Phase 5 - Asset Modules
-Status: Partially implemented
-
-Completed:
-- Asset modules exist for real estate, retirement accounts, metals, crypto, and debts
-- Several modules already support edit, save, remove, and collapse behavior
-- Shared collapsible card helper exists in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js)
-- Real estate, crypto, metals, debt, and retirement account cards now use the shared helper
-- Shared container resolution now normalizes restore and placement logic in [core/assetRegistry.js](/D:/LEOFF%202/core/assetRegistry.js)
-- Retirement account modules now save, restore, and simulate multiple cards of the same account type more consistently in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js)
-- Retirement accounts now support distinct account labels so spouse and duplicate same-type accounts are projected as separate sources in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js)
-- Real estate modules now roll rent from any property type into a shared `Rental Income` category so it is counted in total income and charted consistently across the simulator/report flow in [modules/assets/realEstate.js](/D:/LEOFF%202/modules/assets/realEstate.js), [core/realEstateEngine.js](/D:/LEOFF%202/core/realEstateEngine.js), and [ui/projectionChart.js](/D:/LEOFF%202/ui/projectionChart.js)
-- Real estate rent growth is now modeled separately from property appreciation, with a Washington-specific suggested default sourced from WCRER apartment-market reporting in [modules/assets/realEstate.js](/D:/LEOFF%202/modules/assets/realEstate.js) and [core/realEstateEngine.js](/D:/LEOFF%202/core/realEstateEngine.js)
-- Asset/debt module state collection now skips empty modules instead of persisting null/empty noise in [core/stateManager.js](/D:/LEOFF%202/core/stateManager.js)
-- Real estate, crypto, precious metals, and debt modules now restore and emit single-versus-multiple card payloads more consistently across save/restore/simulation flows
-- Debt modules now emit true `expense` payloads instead of negative `income`, aligning debt treatment with the rest of the projection engine in [modules/assets/debts.js](/D:/LEOFF%202/modules/assets/debts.js) and [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
-- Shared collapsible cards now support module-level validation messaging, and current asset/debt modules now block obviously incomplete saves more gracefully in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js)
-- Asset/debt saved-card summaries are now more consistent in tone and structure, with save-time and restore-time cards sharing the same summary builders across crypto, metals, real estate, debts, and retirement accounts
-- Unsaved draft asset/debt cards no longer persist into saved workspace state or simulation payloads, and restore/import now clears both saved and unsaved draft module cards before rebuilding the saved state in [core/createCollapsibleCard.js](/D:/LEOFF%202/core/createCollapsibleCard.js), [core/assetRegistry.js](/D:/LEOFF%202/core/assetRegistry.js), and the current asset/debt modules
-- Retirement-account projection now applies an approximate IRS-style required minimum distribution floor for eligible tax-deferred accounts at age 73+, and processes retirement-account sources in a more realistic default order in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js)
-- Retirement-account cards now support employee contribution rates as `% of annual pay`, plus employer match fields across `401k`, `Roth 401k`, `Traditional IRA`, `Roth IRA`, `457b`, `403(b)`, `401(a)`, and `TSP`, and the projection engine now amortizes pay from current annual pay to expected final annual pay while continuing account growth before withdrawals begin in [modules/assets/taxAdvantagedAccounts.js](/D:/LEOFF%202/modules/assets/taxAdvantagedAccounts.js), [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js), and [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html)
-- Retirement-account withdrawal modeling now treats configured retirement-account draws as need-aware caps instead of unconditional automatic payouts, so tax-advantaged accounts cover the remaining annual spending gap in sequence while still honoring RMD floors where applicable in [core/incomeEngine.js](/D:/LEOFF%202/core/incomeEngine.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Real estate cards now support an `Extra Principal Payment (monthly $)` field, and the real-estate engine now increases annual mortgage expense plus shortens mortgage payoff timing when extra principal is modeled in [modules/assets/realEstate.js](/D:/LEOFF%202/modules/assets/realEstate.js), [core/realEstateEngine.js](/D:/LEOFF%202/core/realEstateEngine.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-
-Remaining:
-- Continue deepening retirement-account withdrawal realism beyond the current need-aware sequencing baseline, especially around year-by-year tax-aware bridge strategy and later premium tax-detail views
-- Add explicit pre-retirement surplus savings modeling so excess earned income can flow into cash, savings, or taxable brokerage instead of disappearing after annual expenses, with user-controlled sweep behavior and clear chart/report treatment
-
-### Phase 6 - Dashboard
-Status: Implemented
-
-Completed:
-- Dashboard file exists in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html)
-- Dashboard loader exists in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Current dashboard shows recommendation ages, readiness, chart, and financial snapshot
-- Dashboard page shell and styling now align with the simulator/site visual language in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Dashboard slider now reruns the report by retirement age, and recommendation logic now targets the earliest age that avoids deficits and avoids asset depletion through age 100 in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js) and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Retirement summary ages now use more distinct definitions in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js):
-  `Earliest Sustainable` focuses on solvency,
-  `Financial Freedom` allows planned withdrawals while covering expenses,
-  and `Recommended Retirement Age` requires expense coverage without portfolio withdrawals
-- Dashboard now displays the `Largest Retirement Vulnerability` with a tooltip and stress-test explanation using [analysis/retirementVulnerability.js](/D:/LEOFF%202/analysis/retirementVulnerability.js)
-- Dashboard now displays mitigation guidance and ranked secondary vulnerability output for the currently selected retirement age
-- Retirement-age recommendations no longer scan or recommend ages below the user's current age in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with browser verification coverage in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Dashboard recommendation messaging now avoids showing `Not Achievable` for scenarios that still cover expenses but rely on planned portfolio withdrawals, instead falling back to the strongest available displayed timing in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Dashboard retirement-age slider and related actions now live within the timeline/chart panel instead of a separate top control bar, improving chart-context alignment in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Dashboard now includes a dedicated Monte Carlo Outlook section, separate from the deterministic chart toggle, with stress-tested success, essential-coverage, failure-age, depletion-age, and net-worth-range summaries in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js)
-- Dashboard retirement-age slider modeling now adjusts pension service credit, pension salary assumptions, and retirement-linked portfolio withdrawal timing so later retirement ages compare against the correct retirement start assumptions in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js)
-- Recommended retirement age now requires the earliest age that both avoids portfolio-withdrawal dependence and clears a `90%` Monte Carlo success threshold in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js), with supporting dashboard copy and regression coverage in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Dashboard retirement-age bounds, age-adjusted projection rebuilding, and vulnerability list content now live in shared helper modules instead of inline page logic in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardScenario.js](/D:/LEOFF%202/ui/dashboardScenario.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-
-Remaining:
-- Continue trimming section-specific render orchestration from the dashboard loader as needed
-
-### Phase 7 - LEOFF-Specific Tools
-Status: In progress
-
-Completed / In progress:
-- Retirement Age Comparison Tool page now exists in [ui/retirement-age-comparison.html](/D:/LEOFF%202/ui/retirement-age-comparison.html)
-- The tool now focuses on the economic power of working longer instead of full-plan affordability
-- It now uses `Birth Year` plus `LEOFF Start Year` to derive age-specific service credit and reuses birth year for Social Security timing
-- It now keeps user-entered `Final Average Salary` fixed while deriving service credit from retirement year minus LEOFF start year
-- It now supports `Tiered Multiplier` versus `2% Pension + Lump Sum` comparison inputs
-- It now shows `% of FAS`, bridge years, deltas versus the earliest compared age, a key takeaway summary, copy/print actions, and a print-friendly comparison box
-- The comparison page now includes tooltips and on-page formula guidance for the tiered multiplier and related retirement-age math
-- Existing public placeholder links for `Pension Age Comparison` now route to the new tool
-- Survivor Benefit Estimator page now exists in [ui/survivor-benefit-estimator.html](/D:/LEOFF%202/ui/survivor-benefit-estimator.html)
-- The survivor tool now uses sampled DRS age-gap outputs to estimate joint-option reductions for `50%`, `66.67%`, and `100%` survivor choices
-- The estimator now compares single life versus survivor options with a clearer decision-oriented layout: monthly-benefit comparison, give-up versus single-life framing, early/middle/late death snapshots, copy/print actions, and explicit estimator framing
-- Lifetime Pension Value Calculator page now exists in [ui/lifetime-pension-value-calculator.html](/D:/LEOFF%202/ui/lifetime-pension-value-calculator.html)
-- The lifetime-value tool now estimates service credit from `Birth Year`, `Retirement Age`, and `LEOFF Start Year`, then shows monthly pension, annual pension, `% of FAS`, cumulative pension value through a target age, and optional lump-sum-inclusive totals
-- The lifetime-value tool now includes milestone payout checkpoints, copy/print actions, and a one-more-year tradeoff summary so members can see both pension scale and the cost/benefit of waiting
-- Homepage, supporting tool pages, and the articles hub now link into the Lifetime Pension Value Calculator, improving discoverability and internal linking for the new Phase 7 tool
-- Homepage hero now includes a direct launch CTA for the Survivor Benefit Comparison tool, improving discoverability of the estimator from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
-- Focused-tool public labels now use product-facing language instead of internal roadmap wording, removing `Phase 7 Tool` copy from [ui/retirement-age-comparison.html](/D:/LEOFF%202/ui/retirement-age-comparison.html), [ui/survivor-benefit-estimator.html](/D:/LEOFF%202/ui/survivor-benefit-estimator.html), and [ui/lifetime-pension-value-calculator.html](/D:/LEOFF%202/ui/lifetime-pension-value-calculator.html)
-
-Planned:
-- Continue refining the Survivor Benefit Estimator toward closer DRS-table fidelity
-
-### Phase 8 - Reports
-Status: Partially implemented
-
-Completed:
-- [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) functions as a report-style output page for retirement recommendation, projections, charting, and financial summary
-- The dashboard report can now be interactively reviewed by retirement age using the slider in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- The dashboard now includes a print-focused report layer with executive summary content, print actions, and cleaner print CSS in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- The next five report additions are now defined in [PHASE8_REPORT_SPEC.md](/D:/LEOFF%202/PHASE8_REPORT_SPEC.md): readiness score breakdown, expense breakdown, tax snapshot, top 3 risks, and shortfall summary
-- The full printable report now includes a recommendation section, readiness score breakdown, expense breakdown, tax snapshot, top 3 risks, shortfall summary, and print-only stacked bar/line charts in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Browser smoke testing now verifies the new report sections on the dashboard in [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- The report now includes a browser-native PDF export flow through a dedicated `Download PDF` action on [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- The printable dashboard report now includes a softer `Spouse Conversation Summary` section that translates the plan into household-discussion prompts around timing, spouse income, survivor elections, and fallback decisions in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- The dashboard report now includes a copyable `Household Decision Brief` that condenses retirement timing, retirement-year margin, survivor setup, and fallback framing into a plain-English share/export layer in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- The dashboard report now also supports downloadable text exports for both the `Household Decision Brief` and premium `Professional Review` packet, extending the copyable summaries into a more usable low-friction export path in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-
-Remaining:
-- Optional true one-click PDF generation beyond the browser print-to-PDF flow
-
-### Phase 9 - Accounts (Premium Feature)
-Status: In progress
-
-Completed / In progress:
-- A standalone backend service now exists in [backend/src/server.js](/D:/LEOFF%202/backend/src/server.js) and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), with session-based auth and plan CRUD routes for account work
-- The live API is now deployed behind `https://api.leoffhelper.com`, giving the project a real backend entry point for account features
-- The login page now supports real email/password account creation, sign-in, session restore, and logout through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
-- Simulator import/export remains available as a non-backend backup path, while account-backed plan syncing is now wired into the simulator shell through [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html) and [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js)
-- Account plans can now persist full `workspaceState`, not just `simulationState`, so asset/debt module cards restore more faithfully across saved sessions in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
-- Shared site headers now support logged-in account state, showing `Welcome, <username>` plus `LOG OUT` instead of `LOG IN`, through [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js) and the public page shells
-- Accounts now use a 15-minute inactivity timeout with backend sliding-session refresh behavior in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js), and [ui/authHeader.js](/D:/LEOFF%202/ui/authHeader.js)
-- The account page now includes a real settings surface for preferred name, visible session-policy details, session refresh, and in-session password updates through [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js), and [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js)
-- Account settings now let each user choose retirement check-in email frequency (`monthly`, `every 6 months`, `yearly`, or `never`), and the backend now includes a scheduled reminder job that only sends the check-in when that account is actually due; the job is now deployed on Lightsail as a daily systemd timer in [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/sendRetirementCheckInEmails.js](/D:/LEOFF%202/backend/src/sendRetirementCheckInEmails.js), and [backend/src/lib/email.js](/D:/LEOFF%202/backend/src/lib/email.js)
-- New registrations now trigger an automated account-created email with a simulator/login return path, using the same outbound email configuration and local log fallback as password recovery, through [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js) and [backend/src/lib/email.js](/D:/LEOFF%202/backend/src/lib/email.js)
-- Out-of-session password recovery now exists through token-based reset links, with configurable outbound email delivery plus a server-log fallback for local/dev testing, in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/lib/email.js](/D:/LEOFF%202/backend/src/lib/email.js), [ui/login.html](/D:/LEOFF%202/ui/login.html), [ui/login.js](/D:/LEOFF%202/ui/login.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
-- The live Lightsail backend now has production email env configuration for `RESEND_API_KEY`, `EMAIL_FROM`, and `PUBLIC_SITE_URL`, and the deployed API on `https://api.leoffhelper.com` is healthy on the current password-recovery build
-- Production password recovery has now been live-verified end to end against `https://api.leoffhelper.com`, with Resend-backed forgot-password requests successfully accepted for a real production account
-- The simulator now includes a first-pass `My Scenarios` account surface with clearer synced-scenario framing, current save-target messaging, rename, duplicate, delete, and reopen flows in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- The simulator preview rail now gives `My Scenarios` a more intentional workspace section, grouping report generation, synced-scenario actions, and local import/export into a clearer saved-scenario management surface in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html) and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- `My Scenarios` now includes a first-pass scenario comparison surface that compares the current workspace against selected synced scenarios and persists the selected comparison scenario IDs inside `workspaceState`, allowing that comparison set to travel with saved account scenarios in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [core/stateManager.js](/D:/LEOFF%202/core/stateManager.js)
-- The account stack now exposes billing-agnostic entitlement state, including `free` versus `premium` tier data plus a shared frontend helper for premium gating, and includes a manual tier-assignment script for testing before checkout is built in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/lib/store.js](/D:/LEOFF%202/backend/src/lib/store.js), [backend/src/setUserPlanTier.js](/D:/LEOFF%202/backend/src/setUserPlanTier.js), [ui/accountEntitlements.js](/D:/LEOFF%202/ui/accountEntitlements.js), and [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js)
-- Premium custom stress testing V1 now exists in the simulator and dashboard flow, allowing premium members to persist harsher inflation, healthcare, portfolio-floor, and early-recession assumptions into `workspaceState` and apply them to Monte Carlo Plus runs in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [core/stateManager.js](/D:/LEOFF%202/core/stateManager.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Premium saved-scenario comparison now upgrades `My Scenarios` from a plain assumptions snapshot to a richer side-by-side planning compare view for premium accounts, showing readiness, retirement-year income/margin, depletion timing, and key strategy setup details while keeping the lighter snapshot compare available on free accounts in [analysis/scenarioComparisonSummary.js](/D:/LEOFF%202/analysis/scenarioComparisonSummary.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- A first-pass premium withdrawal strategy optimizer now exists on the dashboard, turning the current account mix into personalized withdrawal-order, bridge-year, RMD, and Roth-preservation guidance for premium members in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- The premium withdrawal strategy area now includes a real bridge-year funding planner, showing the cumulative bridge gap before Social Security begins, the cleanest bridge funding source, bridge-pressure signaling, and step-by-step bridge funding phases for the current plan in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Premium custom stress testing now includes named recession-style stress packs in the simulator, letting premium members quickly apply presets like `Early Retirement Recession`, `Sticky Inflation Decade`, `Weak First 10 Years`, or `Healthcare Cost Shock` without hand-tuning every Monte Carlo stress input in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- Premium saved-scenario comparison now includes a first-pass decision scoreboard that quickly highlights which compared scenario leads on readiness, retirement margin, downside durability, and net worth at retirement before the user reads the full side-by-side card grid in [analysis/scenarioComparisonSummary.js](/D:/LEOFF%202/analysis/scenarioComparisonSummary.js), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- A first-pass premium estate projection now exists on the dashboard, showing deterministic expected net worth for every projected year of life plus estate-planning prompts around beneficiaries, real-estate transfer planning, household coordination, and when to seek professional help in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Premium dashboards now include a copyable `Professional Review Summary` packet that turns the current plan into a cleaner advisor handoff covering tax drag, shortfall pressure, top review questions, and risk framing in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- A first-pass premium survivor-option optimizer now exists on the dashboard, comparing `single life`, `50%`, `66.67%`, and `100%` survivor elections against the current household plan and ranking the cleanest fit based on spouse protection, retirement margin, and broader readiness durability in [analysis/survivorOptionOptimizer.js](/D:/LEOFF%202/analysis/survivorOptionOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), [ui/accountEntitlements.js](/D:/LEOFF%202/ui/accountEntitlements.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- Premium dashboards now include year-by-year tax detail views, expanding the retirement-year snapshot into a full projection table for income, portfolio draws, taxable income, taxes, after-tax income, tax drag, and net margin across the modeled retirement path in [analysis/taxDetailView.js](/D:/LEOFF%202/analysis/taxDetailView.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), [ui/accountEntitlements.js](/D:/LEOFF%202/ui/accountEntitlements.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-- PostgreSQL migration groundwork now exists in the backend through a storage-adapter layer, PostgreSQL schema file, JSON-to-PostgreSQL import script, and backend config support in [backend/src/lib/storage/index.js](/D:/LEOFF%202/backend/src/lib/storage/index.js), [backend/src/lib/storage/postgresStore.js](/D:/LEOFF%202/backend/src/lib/storage/postgresStore.js), [backend/src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql), and [backend/src/migrateJsonStoreToPostgres.js](/D:/LEOFF%202/backend/src/migrateJsonStoreToPostgres.js)
-- The live Lightsail backend has now been migrated from the temporary JSON store to PostgreSQL, with production smoke-test coverage for auth and plan CRUD plus rollback backups of both the legacy `store.json` and the PostgreSQL database
-- Auth-sensitive backend endpoints now use per-IP in-memory rate limiting for `register`, `login`, `forgot-password`, and `reset-password`, with configurable thresholds and retry headers in [backend/src/lib/rateLimit.js](/D:/LEOFF%202/backend/src/lib/rateLimit.js), [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), and [backend/src/config.js](/D:/LEOFF%202/backend/src/config.js)
-- The live backend now has a stronger operational security baseline: runtime secrets moved out of systemd drop-ins into a protected root-owned env file, and root-owned daily PostgreSQL backups now run on a systemd timer with `700` directory permissions and `600` backup files on Lightsail
-- The live backup flow is now encrypted at rest on the server as well: daily PostgreSQL and legacy JSON backups are written as encrypted artifacts with a separate root-only backup key, and older plaintext backup files on Lightsail have been converted to encrypted versions
-
-Remaining:
-- Deploy the latest frontend auth and synced-plan UI to the live site and verify the full end-to-end account flow against production
 - Replace the old one-time premium plan direction with a clearer annual-subscription path:
   - make annual premium the primary paid offer, bundling Monte Carlo Plus, premium scenario comparison, withdrawal strategy guidance, estate projection, premium readiness-by-age analysis, and stronger export/report output around real retirement decisions
   - keep the core planner, account creation, saved scenarios, and basic dashboard/report flow free so trust and product adoption stay high
   - consider adding a monthly option later only if there is clear ongoing value and lower-friction pricing is needed after the annual offer is established
-- Add billing and payment collection for the annual premium subscription
-- Add premium `Monte Carlo Plus` features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries
-- Continue premium strategy optimization beyond the current withdrawal-order V1, including Social Security timing guidance, deeper bridge-year funding suggestions, and stronger tax-aware income planning
-- Continue premium estate-planning / estate-advising beyond the current estate-projection V1, including deeper transfer, beneficiary, and professional-review support
-- Continue improving premium export packages beyond the new household/advisor copy packets, including cleaner print bundles and stronger professional-facing formatting
-- Add major life-event presets inside the planner and `My Scenarios` flow, such as `work one more year`, `pay off mortgage`, `healthcare costs jump`, `buy a second home`, or `spouse retires earlier`, so users can generate high-value comparison scenarios faster
-- Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together
-- Add premium priority support / plan-review options if the product later includes a service layer alongside the software features
-- Revisit whether a monthly option is worth offering only after the annual premium subscription proves its value
+- Add billing and payment collection for the annual premium subscription.
+- Add premium Monte Carlo Plus features such as deeper stress testing, higher-trial runs, retirement-age probability comparison, and stronger downside-case summaries.
+- Continue premium strategy optimization beyond the current withdrawal-order V1, including Social Security timing guidance, deeper bridge-year funding suggestions, and stronger tax-aware income planning.
+- Continue premium estate-planning / estate-advising beyond the current estate-projection V1, including deeper transfer, beneficiary, and professional-review support.
+- Continue improving premium export packages beyond the current household/advisor copy packets, including cleaner print bundles and stronger professional-facing formatting.
+- Add major life-event presets inside the planner and `My Scenarios` flow, such as `work one more year`, `pay off mortgage`, `healthcare costs jump`, `buy a second home`, or `spouse retires earlier`.
+- Add premium household-planning mode so spouse income, survivor elections, and shared retirement sequencing become easier to model together.
+- Add premium priority support / plan-review options if the product later includes a service layer alongside the software features.
 
-### Phase 10 - Search Engine Optimization
-Status: In progress
+### Monte Carlo and Scenario Modeling
 
-Completed:
-- Article SEO system now exists in [ui/articles/SEO_SYSTEM.md](/D:/LEOFF%202/ui/articles/SEO_SYSTEM.md)
-- Reusable SEO-ready article template now exists in [ui/articles/article-template.html](/D:/LEOFF%202/ui/articles/article-template.html)
-- Published article pages now include canonical tags, keyword metadata, Open Graph metadata, Twitter metadata, and JSON-LD `Article` schema
-- Article sidebars now use more systematic related-guide internal linking across the article library
-- Public site pages now include canonical tags, page metadata, share metadata, and page-level schema across [ui/index.html](/D:/LEOFF%202/ui/index.html), [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), and [ui/about.html](/D:/LEOFF%202/ui/about.html)
-- Homepage retirement-guide links now point into the published article library instead of placeholder anchors
-- Retirement Age Comparison now has stronger metadata, structured data, internal linking, and supporting on-page content so it can function as a real search landing page
-- Long-form article coverage now includes:
-  [ui/articles/article-how-leoff-2-pensions-work.html](/D:/LEOFF%202/ui/articles/article-how-leoff-2-pensions-work.html)
-  and
-  [ui/articles/article-when-to-get-professional-financial-help.html](/D:/LEOFF%202/ui/articles/article-when-to-get-professional-financial-help.html)
-- Existing article pages now link to the Retirement Age Comparison Tool where relevant, strengthening internal linking density across the article library
-- The survivor-options article now links directly into the Survivor Benefit Estimator where relevant, extending internal linking into the new Phase 7 tool
-- Homepage hero CTA stack now links directly into the Survivor Benefit Comparison tool, extending internal linking and tool discovery from the main landing page in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
-- The article library now includes a dedicated Monte Carlo guide in [ui/articles/article-monte-carlo-retirement-modeling.html](/D:/LEOFF%202/ui/articles/article-monte-carlo-retirement-modeling.html), and the dashboard Monte Carlo panel plus related retirement guides now link into it from [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), [ui/articles/article-recession-before-retirement.html](/D:/LEOFF%202/ui/articles/article-recession-before-retirement.html), and [ui/articles/article-leoff-retirement.html](/D:/LEOFF%202/ui/articles/article-leoff-retirement.html)
-- The tools directory now has fuller non-article SEO treatment in [ui/tools.html](/D:/LEOFF%202/ui/tools.html) and [ui/tools.css](/D:/LEOFF%202/ui/tools.css), including share metadata, collection/breadcrumb/item-list/FAQ schema, stronger internal linking to guides and tools, and support content that makes the page a more meaningful search landing page
-- The tools directory has since been simplified into a cleaner public navigation hub by removing the redundant tool FAQ stack while keeping the core internal-linking and discovery structure intact in [ui/tools.html](/D:/LEOFF%202/ui/tools.html) and [ui/tools.css](/D:/LEOFF%202/ui/tools.css)
-- The article library now also includes dedicated long-form guides for withdrawal sequencing and structured scenario comparison in [ui/articles/article-retirement-withdrawal-order.html](/D:/LEOFF%202/ui/articles/article-retirement-withdrawal-order.html), [ui/articles/article-retirement-scenario-comparison.html](/D:/LEOFF%202/ui/articles/article-retirement-scenario-comparison.html), and [ui/articles.html](/D:/LEOFF%202/ui/articles.html), with new internal links from premium dashboard sections in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html)
+- Continue scenario comparison work where deeper comparison is still needed outside the current saved-scenario comparison surfaces.
+- Consider explicit recession/regime clustering beyond the current independent year-by-year Monte Carlo shocks.
 
-Planned:
-- Technical SEO improvements for non-article pages
-- Page-level keyword targeting beyond the current article library
-- Internal linking strategy expansion across the full site
-- Build a trusted assumptions library that explains core model defaults and methodology around inflation, return assumptions, Social Security handling, pension COLA treatment, and other planning assumptions in one transparent public reference
-- A new public [ui/trusted-assumptions.html](/D:/LEOFF%202/ui/trusted-assumptions.html) page now serves as the trusted assumptions library, documenting the current planning defaults, model boundaries, and methodology references in a dashboard-linkable public reference
+### SEO, Content, and Public Site
 
-### Phase 11 - Premium Modeling
-Status: In progress
+- Continue technical SEO improvements for non-article pages.
+- Expand page-level keyword targeting beyond the current article library.
+- Expand internal linking strategy across the full site.
+- Continue maintaining the trusted assumptions library as model defaults, methodology, and public trust language evolve.
 
-Completed / In progress:
-- Monte Carlo simulation now exists as a separate engine in [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js) rather than being mixed into the deterministic projection path
-- Monte Carlo now samples year-by-year market and inflation scenarios, reuses the shared projection engine, and reports aggregated success, essential-coverage, readiness, depletion-age, failure-age, and ending-wealth summaries
-- Monte Carlo is now surfaced on the dashboard as its own `Monte Carlo Outlook` section rather than as a deterministic chart mode in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Monte Carlo dashboard comparisons now use a stable seed across retirement ages and evaluate retirement-year outcomes against age-adjusted pension and withdrawal timing assumptions, improving slider-to-slider comparability in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), and [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js)
-- Monte Carlo-backed recommendation policy now uses a `90%` success-rate threshold for the earliest strict recommended age, separating `workable` retirement ages from more durable `recommended` ones in [analysis/retirementScenarios.js](/D:/LEOFF%202/analysis/retirementScenarios.js)
-- Monte Carlo now exposes representative best-case, mean, and worst-case net-worth paths directly on the dashboard, giving the report a more premium-style downside/upside visualization in [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/monteCarloProjectionChart.js](/D:/LEOFF%202/ui/monteCarloProjectionChart.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Monte Carlo Plus now respects the new account-entitlement layer, using deeper trial counts plus premium-only best/mean/worst path visualization when an authenticated account has premium access in [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/accountEntitlements.js](/D:/LEOFF%202/ui/accountEntitlements.js), and [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html)
-- Probability-informed readiness scoring now exists for Monte Carlo Plus, blending deterministic coverage/longevity math with a dedicated Monte Carlo durability component so premium dashboard scores react to success odds and failure timing instead of deterministic projections alone in [analysis/readinessScore.js](/D:/LEOFF%202/analysis/readinessScore.js), [analysis/retirementAnalysis.js](/D:/LEOFF%202/analysis/retirementAnalysis.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- Premium custom stress testing now lets Monte Carlo Plus runs apply persisted harsher inflation, healthcare, downside-floor, and early-recession assumptions from the simulator workspace, creating a clearer member-facing downside-analysis upgrade in [core/premiumStressTesting.js](/D:/LEOFF%202/core/premiumStressTesting.js), [analysis/monteCarloEngine.js](/D:/LEOFF%202/analysis/monteCarloEngine.js), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js)
-- A first-pass withdrawal strategy optimizer now exists for premium dashboards, turning the account mix into suggested withdrawal order, bridge-year funding, RMD watch, and Roth-preservation guidance in [analysis/withdrawalStrategyOptimizer.js](/D:/LEOFF%202/analysis/withdrawalStrategyOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- A first-pass estate projection now exists for premium dashboards, showing expected net worth by projected year of life and wiring in estate-planning prompts around beneficiaries, property transfer, household coordination, and professional review in [analysis/estateProjectionSummary.js](/D:/LEOFF%202/analysis/estateProjectionSummary.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- The premium Social Security optimizer now has a stronger V2 decision layer, comparing age `62`, full retirement age, and age `70` against the current plan while explaining bridge strain, portfolio draw before claiming, break-even crossovers, monthly-benefit lift, and the clearest best-fit claiming age for the scenario in [analysis/socialSecurityOptimizer.js](/D:/LEOFF%202/analysis/socialSecurityOptimizer.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- The dashboard now includes a premium-gated readiness timeline that shows how the readiness score, band, average annual margin, first deficit age, and depletion timing change across retirement ages, instead of only showing one snapshot score for the currently selected age in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Shareable read-only plan links now exist for synced scenarios, with owner-side create/copy/revoke actions in `My Scenarios` and direct shared-dashboard loading through a public read-only token route in [backend/src/app.js](/D:/LEOFF%202/backend/src/app.js), [backend/src/lib/storage/schema.sql](/D:/LEOFF%202/backend/src/lib/storage/schema.sql), [ui/apiClient.js](/D:/LEOFF%202/ui/apiClient.js), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Monte Carlo trust language is now stronger on the dashboard through a dedicated trust-notes section tied to the new trusted assumptions library, clarifying what the stress test varies, what stays fixed, and how to interpret success-rate output in live beta use in [analysis/dashboardViewModel.js](/D:/LEOFF%202/analysis/dashboardViewModel.js), [ui/dashboardLoader.js](/D:/LEOFF%202/ui/dashboardLoader.js), and [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html)
+### Mobile and Device QA
 
-Remaining:
-- Scenario comparison
-- Consider adding explicit recession/regime clustering beyond the current independent year-by-year shocks
+- Finish real-device QA across the homepage, simulator, dashboard, Retirement Age Comparison, Survivor Benefit Estimator, contact page, and at least one article page.
+- Validate the current responsive pass at `360px`, `390px`, `412px`, `430px`, and `768px` on real devices or reliable device labs.
+- Log and fix any remaining overflow, clipping, tiny touch targets, unreadable charts or tables, awkward spacing, or controls hidden below the fold.
+- Continue real-device QA on the contact-page flow and make sure public `Contact Us` links, larger social buttons, and footer icon visibility all feel intentional on real devices.
 
-### Phase 12 - Other Device Support (Phone/Tablet)
-Status: In progress
+### Domains and Social
 
-Progress:
-- Shared responsive breakpoints improved for the simulator layout in [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css)
-- Dashboard panels, metrics, and tooltip layout now collapse more cleanly on phone widths in [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Article hub and long-form article pages now have stronger phone/tablet layout behavior in [ui/articles.css](/D:/LEOFF%202/ui/articles.css) and [articles/article.css](/D:/LEOFF%202/articles/article.css)
-- Simulator chart renderers now use narrower mobile padding, lighter axis labels, and tighter sampling on phone widths in [ui/chartRenderer.js](/D:/LEOFF%202/ui/chartRenderer.js) and [ui/incomeTimelineRenderer.js](/D:/LEOFF%202/ui/incomeTimelineRenderer.js)
-- Simulator now has a dedicated phone-specific layout mode in [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css) and [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), with reordered mobile cards, touch-friendly two-column tab navigation, and a simplified total-income-versus-expenses chart view paired with a phone-only retirement income-source summary
-- Homepage feature panels have been refreshed to better match the current product mix of tools, forecasting, and guides, with cleaner card presentation in [ui/index.html](/D:/LEOFF%202/ui/index.html) and [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
-- Dashboard chart controls now collapse with the retirement-age slider inside the chart header rather than a separate top bar, improving mobile and desktop control grouping in [ui/retirementDashboard.html](/D:/LEOFF%202/ui/retirementDashboard.html) and [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Shared mobile header/nav treatment is now stronger across simulator-style public pages through [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), improving touch targets and stacked navigation on the calculator, dashboard-adjacent pages, about, articles, login, and tool shells
-- Homepage phone/tablet presentation now has a fuller mobile pass across the hero, CTA stack, feature sections, FAQ surfaces, and footer in [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css)
-- Articles, article pages, and login now use tighter mobile shell spacing, card padding, and typography in [ui/articles.css](/D:/LEOFF%202/ui/articles.css), [ui/articles/article.css](/D:/LEOFF%202/ui/articles/article.css), [ui/about.css](/D:/LEOFF%202/ui/about.css), and [ui/login.css](/D:/LEOFF%202/ui/login.css)
-- Simulator mobile usability now has a more intentional phone flow in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/simulator-dashboard.js](/D:/LEOFF%202/ui/simulator-dashboard.js), and [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), including a mobile step indicator, previous/next section controls, reordered mobile panel flow, and stronger phone-sized form controls
-- Dashboard mobile readability now has a fuller phone-specific pass in [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), including cleaner overview-card stacking, more readable recommendation/risk text wrapping, larger mobile actions, and a more intentional chart-control block around the retirement-age slider
-- Dashboard mobile chart controls no longer reserve a large empty block above the retirement-age slider on phone widths, with the chart header now collapsing without the old flex-basis dead space in [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css)
-- Retirement Age Comparison and Survivor Benefit Estimator now have stronger phone-specific card, action, and wide-table handling in [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css) and [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css)
-- A tighter `430px` pass now exists across the homepage, simulator shell, dashboard premium/report surfaces, Retirement Age Comparison, Survivor Benefit Estimator, and long-form article shell, reducing cramped header navigation, over-wide phone tables, and oversized card spacing in [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/simulator-dashboard.css](/D:/LEOFF%202/ui/simulator-dashboard.css), [ui/dashboard.css](/D:/LEOFF%202/ui/dashboard.css), [ui/retirement-age-comparison.css](/D:/LEOFF%202/ui/retirement-age-comparison.css), [ui/survivor-benefit-estimator.css](/D:/LEOFF%202/ui/survivor-benefit-estimator.css), and [ui/articles/article.css](/D:/LEOFF%202/ui/articles/article.css)
-- Homepage, tools, and the article-listing page have also had a first-pass public UX cleanup, including a lighter homepage hero treatment, simpler tools-hub content hierarchy, and corrected articles header/logo behavior in [ui/index.html](/D:/LEOFF%202/ui/index.html), [ui/homepage.css](/D:/LEOFF%202/ui/homepage.css), [ui/tools.html](/D:/LEOFF%202/ui/tools.html), [ui/tools.css](/D:/LEOFF%202/ui/tools.css), [ui/articles.html](/D:/LEOFF%202/ui/articles.html), and [ui/articles.css](/D:/LEOFF%202/ui/articles.css)
-- Public contact/discovery UX now includes a live dedicated [ui/contact.html](/D:/LEOFF%202/ui/contact.html) page and [ui/contact.css](/D:/LEOFF%202/ui/contact.css), giving the site a real `Contact Us` destination with a comment-to-email draft flow, direct email access, and larger Facebook/X links instead of footer-only mailto behavior
-- The contact page now also has a tighter phone-specific pass in [ui/contact.css](/D:/LEOFF%202/ui/contact.css), reducing hero/card bulk, improving stacked action buttons, and making the social cards read more cleanly on smaller screens
-- The browser verification harness now includes first-pass responsive overflow/layout checks across key pages at `360px`, `390px`, `412px`, `430px`, and `768px`, turning part of the device-readiness roadmap into a repeatable local audit in [ui/verification.html](/D:/LEOFF%202/ui/verification.html) and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-
-Remaining:
-- Finish real-device QA across the homepage, simulator, dashboard, Retirement Age Comparison, Survivor Benefit Estimator, and at least one article page
-- Validate the current responsive pass at `360px`, `390px`, `412px`, `430px`, and `768px`
-- Log and fix any remaining overflow, clipping, tiny touch targets, unreadable charts or tables, awkward spacing, or controls hidden below the fold
-- Continue real-device QA on the new contact-page flow and make sure public `Contact Us` links, larger social buttons, and footer icon visibility all feel intentional on real devices
-
-### Phase 13 - Domain and Launch
-Status: In progress
-
-Completed:
-- Production domain `leoffhelper.com` is now secured and configured through the current static-host setup
-- DNS and domain routing are now configured for the live site
-- The site is now published to a live production environment on GitHub Pages with the custom domain in place
-- A basic deployment/update workflow now exists through Git pushes to `main`
-- A live backend service now exists on Lightsail behind `https://api.leoffhelper.com`, with HTTPS, reverse proxying, and persistent service management in place for the new accounts foundation
-- The simulator page now has a full public metadata/social-card pass, and the browser verification harness now checks canonical and social metadata across the main public pages in [ui/simulator.html](/D:/LEOFF%202/ui/simulator.html), [ui/verification.html](/D:/LEOFF%202/ui/verification.html), and [ui/verificationRunner.js](/D:/LEOFF%202/ui/verificationRunner.js)
-
-Remaining:
 - Prioritize core domains:
   - `leoffhelper.com`
   - `leoff2helper.com`
@@ -348,91 +85,113 @@ Remaining:
   - `leoff2-helper.com`
   - `leoffhelper.org`
   - `leoffhelper.net`
-- Verify live asset paths, SEO metadata, and public page routing after launch
-- Continue hardening the deployment/update workflow for safer live releases
+- Align social profile visuals, bios, and outbound links with the live site and public tool pages.
+- Decide whether social links should also appear in the public header or stay footer/contact-page only.
+- Publish a first content set around retirement timing, survivor options, pension value, and new-tool releases.
+- Reuse article and tool content into short-form social posts that point back to the site.
+- Define a simple posting cadence for launch and early beta.
+- Track basic engagement and referral traffic from social posts into the public site.
 
-### Phase 14 - Social Media
-Status: In progress
+## Completed Features
 
-Goals:
-- Establish a lightweight social presence that supports trust, launch visibility, and ongoing product education
+### Pension Engines
 
-Completed / In progress:
-- An official LEOFF Helper Facebook page now exists at [facebook.com/LEOFFHELPER](https://www.facebook.com/LEOFFHELPER/)
-- An official X presence now exists at [x.com/LEOFFHelper](https://x.com/LEOFFHelper)
-- Public footers now link out to Facebook and X with icon-based social links, replacing the earlier placeholder/fake badge treatment on the public pages
-- A dedicated live contact page now brings together email, comment drafting, and Facebook/X discovery so the social presence is tied to a real public contact surface instead of footer-only links
+- Dedicated LEOFF2, PERS2, and TRS2 pension engines exist with formal base-pension, early-retirement reduction, and monthly-pension math.
+- LEOFF2 supports DRS optional tiered multiplier versus `2% pension + lump sum` election modeling.
+- Pension registry routing lets the dashboard and simulator call dedicated pension engines instead of inline pension math.
+- Simulator support includes optional PERS2 and TRS2 inputs alongside the main LEOFF2 flow.
 
-Planned:
-- Align profile visuals, bios, and outbound links with the live site and public tool pages
-- Decide whether social links should also appear in the public header or stay footer/contact-page only
-- Publish a first content set around retirement timing, survivor options, pension value, and new-tool releases
-- Reuse article and tool content into short-form social posts that point back to the site
-- Define a simple posting cadence for launch and early beta
-- Track basic engagement and referral traffic from social posts into the public site
+### Projection Engine
 
-## Deterministic Accuracy Backlog
+- Core projection math lives in `core/incomeEngine.js`, with a projection wrapper in `core/projectionEngine.js`.
+- Canonical simulation state creation, save/restore, and dashboard fallback restore behavior are in place.
+- Shared simulator, simulator UI, and simulator bootstrap helpers reduce duplicate page logic.
+- Projection modeling includes current annual pay, final salary assumptions, retirement-account accumulation, split inflation, and differentiated retirement-account tax treatment.
+- Restore/input-prefill now preserves birth month, birth year, marital status, spouse visibility, Social Security optimize state, and survivor-option visibility.
 
-1. Social Security input fidelity
-   Status: Implemented
-   Goal: Let users enter the monthly SSA benefit number they actually know at 62, FRA, or 70 and normalize it through the shared engine.
+### Analysis Engine
 
-2. Expense realism
-   Status: In progress
-   Goal: Separate inflation assumptions across goods/services, housing, and healthcare while improving expense-category realism.
-   Progress:
-   - Added `Insurance` as a distinct expense category
-   - Added separate inflation assumptions for goods/services, housing, and healthcare
-   - Housing and healthcare suggested defaults now use BLS-based real-world assumptions
-   - Added hover tooltips explaining where the suggested defaults come from
-   - Added a `Reset to Suggested Defaults` button for inflation assumptions
-   - Real estate rent now rolls into a visible `Rental Income` category instead of staying hidden behind per-property assumptions
-   - Existing expense categories are now classified into `essential` versus `discretionary` spending inside the projection and analysis layers
+- Readiness score, scenario comparison, retirement vulnerability, and unified retirement analysis engines are implemented.
+- Dashboard view-model helpers own recommendation, report, summary, age-bound, age-adjusted projection, and vulnerability-list derivation.
+- Readiness scoring includes probability-informed Monte Carlo Plus scoring and plain-language readiness bands: `Durable`, `Strong`, `Workable`, and `Fragile`.
+- Vulnerability analysis includes stress categories, severity tiers, mitigation guidance, primary risk, and ranked secondary risks.
 
-3. Tax-aware retirement withdrawals
-   Status: In progress
-   Goal: Improve net-income realism for pre-tax account withdrawals and bridge-year spending.
-   Progress:
-   - Pre-tax retirement withdrawals now use progressive incremental federal tax instead of a flat marginal estimate
-   - Pension income and Social Security taxability now contribute more realistically to taxable-income stacking
-   - Projection results now track estimated yearly taxes and taxable income
-   - Retirement accounts now accumulate using employee contributions, employer match where applicable, expected annual returns, and a pay path that ramps from `Current Annual Pay` to expected final pay
-   - Tax-advantaged retirement accounts now withdraw against the remaining annual spending need instead of auto-draining their full configured payout once retirement begins, while RMD floors still force minimum distributions where applicable
+### Charts and Verification
 
-4. Pension rule depth
-   Status: Planned
-   Goal: Continue deepening edge-case accuracy across LEOFF2, PERS2, and future systems.
+- Bar chart, income timeline, shared projection chart wrapper, tooltip support, retirement markers, asset depletion markers, default series coloring, and chart legends are implemented.
+- Browser verification coverage exists for chart/render/state/module smoke checks, simulator helper behavior, tax handling, dashboard consistency, age ordering, retirement-age comparison, survivor estimator ordering, Monte Carlo regressions, and responsive overflow/layout checks.
 
-5. Deterministic stress realism
-   Status: Planned
-   Goal: Add stronger non-Monte-Carlo sequences like stagnant-decade and early-retirement recession paths.
-   Progress:
-   - Late-life expense stress now separately tests healthcare, insurance, and housing pressure in the vulnerability engine
+### Asset Modules
 
-## Security Hardening Roadmap
+- Asset modules exist for real estate, retirement accounts, metals, crypto, debts, and liquid/taxable assets.
+- Real estate, crypto, metals, debt, and retirement account cards use shared collapsible-card behavior with validation, save, restore, remove, summaries, and draft cleanup.
+- Asset/debt module state collection skips empty modules and restores single-versus-multiple card payloads consistently.
+- Real estate modeling includes rental income, rent growth separate from property appreciation, extra principal payments, mortgage payoff timing, and debt expense treatment.
+- Retirement account modeling includes duplicate/spouse labels, pay-based employee contributions, employer match, account-type tax treatment, RMD floors, realistic default ordering, and need-aware withdrawals.
 
-Completed:
-- Production storage has been migrated from the temporary JSON file backend to PostgreSQL on Lightsail, with smoke-tested auth and plan CRUD plus rollback backups
-- Auth-sensitive routes now use per-IP rate limiting for `register`, `login`, `forgot-password`, and `reset-password`
-- Runtime secrets now load from a protected root-owned env file on the Lightsail host instead of raw systemd drop-ins
-- Root-owned daily backups now run through `leoff-api-backup.timer`, with `700` backup directories and `600` backup files
-- Backup artifacts are now encrypted at rest on the server using a separate root-only backup key, and older plaintext backup files have been converted
-- Lightsail automatic snapshots are now enabled for the production instance on a daily `4:00 AM Pacific` schedule, complementing the app-managed encrypted backup flow
-- Local operations docs now exist for a production security baseline and an explicit backup/snapshot restore drill in [backend/docs/production-security-baseline.md](/D:/LEOFF%202/backend/docs/production-security-baseline.md) and [backend/docs/backup-restore-drill.md](/D:/LEOFF%202/backend/docs/backup-restore-drill.md)
+### Dashboard and Report Output
 
-Deferred / To Revisit:
-- Minimize what gets persisted in `workspaceState`, with the explicit intent to avoid full names, spouse names, full birth dates, SSNs, and financial-account identifiers wherever they are not strictly necessary
+- Retirement dashboard exists with recommendation ages, readiness, charting, financial snapshot, vulnerability analysis, Monte Carlo outlook, retirement-age slider modeling, and age-adjusted projection rebuilds.
+- Recommendation logic avoids recommending ages below current age and requires both non-withdrawal dependence and a 90% Monte Carlo success threshold for recommended retirement age.
+- Dashboard shell, chart controls, slider placement, mobile behavior, and report-style print layer have been improved.
+- Full printable report sections include recommendation, readiness score breakdown, expense breakdown, tax snapshot, top risks, shortfall summary, and print-focused charts.
 
-Next:
-1. Verify the first successful Lightsail automatic snapshot, then add a short documented restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
-2. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
-3. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.
-4. Add lightweight access/audit visibility for critical auth and account-management actions so suspicious login, reset, or admin-tier activity is easier to review.
+### LEOFF-Specific Public Tools
 
-## Immediate Next Steps
+- Retirement Age Comparison Tool is implemented with birth-year/start-year service-credit derivation, tiered multiplier versus lump-sum comparison, bridge-year framing, deltas, tooltips, copy/print actions, and public links.
+- Survivor Benefit Estimator is implemented with sampled DRS age-gap outputs for 50%, 66.67%, and 100% survivor choices, decision-oriented comparisons, copy/print actions, and explicit estimator framing.
+- Lifetime Pension Value Calculator is implemented with service-credit derivation, monthly/annual pension, percent of FAS, cumulative value, lump-sum-inclusive totals, milestone checkpoints, copy/print actions, and one-more-year tradeoff summary.
 
-1. Verify the first successful Lightsail automatic snapshot, then run and document the restore drill so the provider-managed at-rest layer and the app-managed encrypted backup flow are both operationally proven.
-2. Minimize what gets persisted in `workspaceState` so the backend stores less sensitive financial detail by default, with the explicit goal of avoiding full names, spouse names, full birth dates, SSNs, or financial-account identifiers where they are not strictly necessary.
-3. Document a tighter production security baseline covering secret rotation, backup restore drills, least-privilege access, and deployment/update handling so the live process is operationally repeatable.
-4. Replace the current in-memory auth limiter with a durable/shared limiter if the backend ever scales beyond a single instance or adds heavier public traffic.
-5. Add lightweight access/audit visibility for critical auth and account-management actions so suspicious login, reset, or admin-tier activity is easier to review.
+### Accounts and Persistence
+
+- Backend service exists with session-based auth, login/register/logout, `/me`, password change, forgot/reset password, plan CRUD, shareable read-only plan links, and health checks.
+- Live API runs behind `https://api.leoffhelper.com`.
+- Account-backed plan syncing, `My Scenarios`, scenario rename/duplicate/delete/reopen, selected comparison IDs, and import/export backup paths are implemented.
+- Account settings include preferred name, session details, session refresh, in-session password updates, and retirement check-in email frequency.
+- Account-created, password-reset, daily signup summary, and retirement check-in email jobs exist, with production email configuration and local log fallback.
+- Billing-agnostic entitlement state, premium gating helper, and manual tier assignment script exist.
+- PostgreSQL storage adapter, schema, JSON migration script, production PostgreSQL migration, auth/plan CRUD smoke testing, and rollback backup flow are complete.
+- Account-backed plan persistence now minimizes saved `simulationState` and `workspaceState` before storage by dropping obvious direct identifiers and financial-account identifiers while preserving projection math and restorable labels.
+
+### Premium Modeling
+
+- Monte Carlo engine exists as a separate module that samples market and inflation scenarios, reuses the shared projection engine, and reports success, essential coverage, readiness, depletion, failure-age, and ending-wealth summaries.
+- Monte Carlo Plus supports account entitlements, deeper trial counts, premium-only path visualization, trusted assumptions language, and custom stress inputs.
+- Premium stress testing supports harsher inflation, healthcare, downside-floor, early-recession assumptions, and named recession-style stress packs.
+- Premium saved-scenario comparison includes side-by-side planning compare cards and a decision scoreboard.
+- Premium withdrawal optimizer, bridge-year funding planner, estate projection, Social Security optimizer, readiness timeline, survivor-option optimizer, tax detail views, household decision brief, and professional review packet have first-pass implementations.
+
+### SEO and Public Content
+
+- Article SEO system, reusable article template, canonical tags, keyword metadata, Open Graph/Twitter metadata, JSON-LD article schema, related-guide sidebars, and main public-page metadata/schema are implemented.
+- Homepage links, article library links, tool links, and internal links connect guides, tools, dashboard premium sections, and the trusted assumptions library.
+- Published long-form guides include LEOFF pension basics, professional financial help, Monte Carlo modeling, withdrawal sequencing, scenario comparison, recession planning, survivor options, and related retirement guides.
+- Tools directory has metadata, schema, internal linking, and simplified navigation-hub treatment.
+- Trusted assumptions library exists as a public reference page for model defaults, boundaries, and methodology.
+
+### Mobile and Public UX
+
+- Simulator, dashboard, homepage, tools hub, article pages, login, about, Retirement Age Comparison, Survivor Benefit Estimator, contact page, and long-form article shell have responsive/mobile passes.
+- Simulator includes phone-specific layout mode, reordered mobile flow, touch-friendly tab navigation, mobile step indicator, previous/next controls, and phone-sized form controls.
+- Public contact page exists with comment-to-email draft flow, direct email access, and Facebook/X discovery.
+- Responsive verification harness checks key pages at `360px`, `390px`, `412px`, `430px`, and `768px`.
+
+### Domain, Deployment, and Operations
+
+- `leoffhelper.com` is secured, routed, and published through the current static host setup.
+- Git push to `main` is the basic deployment/update workflow for the public site.
+- Lightsail backend runs with HTTPS, reverse proxying, persistent service management, PostgreSQL, protected root-owned runtime env file, and daily encrypted app-managed backups.
+- `leoff-api-backup.timer` runs root-owned daily backups with `700` backup directories, `600` backup files, encrypted artifacts, and a separate root-only backup key.
+- Lightsail automatic snapshots are enabled on a daily `4:00 AM Pacific` schedule.
+- App-managed encrypted PostgreSQL restore drill passed on April 23, 2026 using backup set `20260422-101514`, with disposable database restore, temporary local API validation, auth/plan smoke checks, and cleanup documented in `backend/docs/backup-restore-drill.md`.
+- Production security baseline documents secret rotation, restore drills, least-privilege access, deployment/update handling, audit review, and persistence minimization.
+- Auth-sensitive route limiting supports shared PostgreSQL-backed rate-limit buckets when `DATA_BACKEND=postgres` and `RATE_LIMIT_BACKEND=auto`, while retaining memory-backed limiting for local/file-backed development.
+- Lightweight audit logging records critical auth, account-profile, password, plan, plan-share, rate-limit block, and manual tier-update actions with hashed request/email identifiers.
+- A production-only `REQUEST_IDENTITY_HASH_SALT` has been set in the protected production env file.
+
+### Social Presence
+
+- Official Facebook page exists at `facebook.com/LEOFFHELPER`.
+- Official X presence exists at `x.com/LEOFFHelper`.
+- Public footers link to Facebook and X with icon-based links.
+- Contact page brings together email, comment drafting, and Facebook/X discovery.

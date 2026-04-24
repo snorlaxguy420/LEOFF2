@@ -181,16 +181,25 @@ export function renderChart({
     }
 
     // ---------- BARS ----------
-    const barGap = 10;
-    const groupSpacing = chartWidth / Math.max(sampledResults.length, 1);
-    // Make bar width responsive to available group spacing so bars don't overflow
-    const maxBarWidthPerSide = Math.max(8, (groupSpacing - barGap) / 2);
-    const barWidth = Math.min(36, maxBarWidthPerSide);
+    const sampleCount = Math.max(sampledResults.length, 1);
+    const groupSpacing = chartWidth / sampleCount;
+    const maxUsableGroupWidth =
+        Math.max(18, groupSpacing - (isNarrowScreen ? 8 : 12));
+    const preferredGroupWidth =
+        Math.min(
+            isNarrowScreen ? 44 : 72,
+            groupSpacing * (isNarrowScreen ? 0.82 : 0.74)
+        );
+    const totalGroupWidth =
+        Math.max(18, Math.min(preferredGroupWidth, maxUsableGroupWidth));
+    const barGap =
+        Math.max(3, Math.min(8, totalGroupWidth * 0.14));
+    const barWidth =
+        Math.max(6, (totalGroupWidth - barGap) / 2);
 
     sampledResults.forEach((r, index) => {
 
         const centerX = padding + index * groupSpacing + groupSpacing / 2;
-        const totalGroupWidth = 2 * barWidth + barGap;
         const leftX = centerX - totalGroupWidth / 2;
 
         // ============================
@@ -371,7 +380,10 @@ function processHover() {
         return;
     }
 
-    const index = Math.round((relativeX / chartWidth) * (sampledResults.length - 1));
+    const rawIndex =
+        Math.round((relativeX - groupSpacing / 2) / groupSpacing);
+    const index =
+        Math.max(0, Math.min(sampledResults.length - 1, rawIndex));
     const r = sampledResults[index];
     if (!r) {
         requestAnimationFrame(processHover);

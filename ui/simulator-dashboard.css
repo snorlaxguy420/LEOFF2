@@ -337,6 +337,133 @@ line-height:1.5;
 color:rgba(30,47,68,.82);
 }
 
+.profile-module-card{
+display:grid;
+gap:20px;
+}
+
+.profile-module-section{
+display:grid;
+gap:16px;
+padding:20px 22px;
+border-radius:18px;
+background:rgba(255,255,255,.58);
+border:1px solid rgba(30,47,68,.10);
+box-shadow:0 10px 24px rgba(30,47,68,.05);
+}
+
+.profile-module-card .grid-2{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+}
+
+.profile-module-copy{
+display:grid;
+gap:8px;
+}
+
+.profile-module-kicker{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:max-content;
+padding:7px 11px;
+border-radius:999px;
+background:rgba(31,77,58,.10);
+border:1px solid rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:11px;
+font-weight:800;
+letter-spacing:.12em;
+text-transform:uppercase;
+}
+
+.profile-module-card h2,
+.profile-module-card h3{
+margin:0;
+color:var(--pnw-navy);
+}
+
+.profile-module-copy p{
+margin:0;
+max-width:720px;
+font-size:14px;
+line-height:1.58;
+color:rgba(42,42,42,.74);
+}
+
+.report-step-shell{
+display:grid;
+gap:18px;
+}
+
+.report-step-head{
+display:grid;
+gap:8px;
+}
+
+.report-step-kicker{
+display:inline-flex;
+align-items:center;
+justify-content:center;
+width:max-content;
+padding:7px 11px;
+border-radius:999px;
+background:rgba(31,77,58,.10);
+border:1px solid rgba(31,77,58,.12);
+color:var(--pnw-evergreen);
+font-size:11px;
+font-weight:800;
+letter-spacing:.12em;
+text-transform:uppercase;
+}
+
+.report-step-head h2{
+margin:0;
+color:var(--pnw-navy);
+}
+
+.report-step-status{
+padding:14px 16px;
+border-radius:14px;
+background:rgba(30,47,68,.05);
+border:1px solid rgba(30,47,68,.08);
+font-size:14px;
+line-height:1.55;
+color:rgba(42,42,42,.78);
+}
+
+.report-step-status[data-tone="success"]{
+background:rgba(31,77,58,.08);
+border-color:rgba(31,77,58,.14);
+color:var(--pnw-evergreen);
+}
+
+.report-step-card{
+display:grid;
+gap:14px;
+padding:22px 24px;
+border-radius:18px;
+background:rgba(255,255,255,.64);
+border:1px solid rgba(30,47,68,.10);
+box-shadow:0 12px 28px rgba(30,47,68,.06);
+}
+
+.report-step-card h3{
+margin:0 0 10px;
+font-size:24px;
+color:var(--pnw-navy);
+}
+
+.report-step-card p{
+margin:0;
+max-width:720px;
+font-size:14px;
+line-height:1.62;
+color:rgba(42,42,42,.76);
+}
+
 .form-grid{
 display:grid;
 grid-template-columns:1fr 1fr;
@@ -1348,6 +1475,11 @@ margin-top:0;
 }
 
 @media (max-width: 900px){
+
+.profile-module-card .grid-2{
+grid-template-columns:1fr;
+gap:16px;
+}
 
 .site-header{
  padding:16px 20px;

@@ -191,6 +191,11 @@ const SMOKE_TEST_PAGES = [
         selectors: [".login-shell", "[data-auth-form]", "[data-auth-submit]"]
     },
     {
+        name: "Subscriptions Page",
+        path: "./subscriptions.html",
+        selectors: [".subscription-hero", ".subscription-benefits", ".subscription-final-cta"]
+    },
+    {
         name: "Retirement Age Comparison",
         path: "./retirement-age-comparison.html",
         selectors: [".comparison-shell", "#runComparisonBtn", "#comparisonTableBody"]
@@ -252,6 +257,11 @@ const RESPONSIVE_TEST_PAGES = [
         selectors: [".contact-shell", ".contact-grid", ".site-footer"]
     },
     {
+        name: "Subscriptions Page",
+        path: "./subscriptions.html",
+        selectors: [".subscription-hero", ".subscription-benefits", ".site-footer"]
+    },
+    {
         name: "Article Page",
         path: "./articles/article-leoff-retirement.html",
         selectors: [".article-shell", ".article-layout", ".site-footer"]
@@ -266,6 +276,7 @@ const METADATA_TEST_PAGES = [
     { name: "About Page", path: "./about.html" },
     { name: "Login Page", path: "./login.html" },
     { name: "Contact Page", path: "./contact.html" },
+    { name: "Subscriptions Page", path: "./subscriptions.html" },
     { name: "Trusted Assumptions Library", path: "./trusted-assumptions.html" },
     { name: "Article Page", path: "./articles/article-leoff-retirement.html" }
 ];
@@ -2557,6 +2568,95 @@ function testRetirementVulnerabilityEngine() {
     logResult("Retirement vulnerability engine passed");
 }
 
+function testDeterministicStressScenarios() {
+    const inputs = {
+        profile: {
+            currentAge: 52
+        },
+        retireAge: 53,
+        lifeExpectancy: 92,
+        expenses: {
+            monthly: 6200,
+            annual: 74400,
+            housing: 1800,
+            groceries: 850,
+            bills: 550,
+            auto: 500,
+            healthcare: 850,
+            insurance: 350,
+            other: 1300
+        },
+        assumptions: {
+            inflationRate: 0.03
+        }
+    };
+    const incomeSources = [
+        {
+            type: "fixed",
+            name: "LEOFF Pension",
+            annualAmount: 56000,
+            startAge: 53,
+            growthRate: 0.02,
+            taxable: true,
+            taxCategory: "ordinary_income"
+        },
+        {
+            type: "portfolio",
+            name: "457b",
+            balance: 450000,
+            startAge: 53,
+            growthRate: 0.06,
+            withdrawalType: "amount",
+            withdrawal: 26000,
+            accountType: "457b"
+        }
+    ];
+    const simulationState = buildSimulationState({
+        inputs,
+        incomeSources,
+        assumptions: inputs.assumptions
+    });
+    const projection = runProjection(simulationState);
+    const vulnerability = runRetirementVulnerabilityAnalysis({
+        inputs,
+        incomeSources,
+        projection,
+        assumedInflationRate: 0.03
+    });
+    const riskIds = new Set(
+        vulnerability.risks.map(risk => risk.id)
+    );
+    const earlyRecession =
+        vulnerability.risks.find(risk =>
+            risk.id === "early_retirement_recession_risk"
+        );
+    const stagnantDecade =
+        vulnerability.risks.find(risk =>
+            risk.id === "stagnant_decade_risk"
+        );
+
+    assert(
+        riskIds.has("early_retirement_recession_risk"),
+        "Vulnerability analysis should include early-retirement recession deterministic stress"
+    );
+    assert(
+        riskIds.has("stagnant_decade_risk"),
+        "Vulnerability analysis should include stagnant-decade deterministic stress"
+    );
+    assert(
+        earlyRecession.severityScore > 0 &&
+        stagnantDecade.severityScore > 0,
+        "Deterministic stress scenarios should produce non-zero severity when the plan relies on early portfolio growth"
+    );
+    assert(
+        earlyRecession.explanation.includes("sequence-of-return") &&
+        stagnantDecade.explanation.includes("stagnant first decade"),
+        "Deterministic stress scenarios should produce scenario-specific explanations"
+    );
+
+    logResult("Deterministic stress scenarios passed");
+}
+
 function testZeroHousingDoesNotTriggerHousingRisk() {
     const vulnerability = runRetirementVulnerabilityAnalysis({
         inputs: {
@@ -4706,6 +4806,7 @@ async function runVerification() {
         testDebtPayloadConsistency();
         testDebtExpenseDropsAfterPayoff();
         testRetirementVulnerabilityEngine();
+        testDeterministicStressScenarios();
         testZeroHousingDoesNotTriggerHousingRisk();
         testReadinessScoreUsesRetirementYearsOnly();
         testProbabilityAdjustedReadinessScore();

@@ -71,7 +71,7 @@ LEFT SIDEBAR
 
 <aside class="planner-sidebar">
 
-<button class="nav-item active" data-tab="profile">Profile</button> <button class="nav-item" data-tab="pension">Pension</button> <button class="nav-item" data-tab="ss">Social Security</button> <button class="nav-item" data-tab="retirement">Retirement Accounts</button> <button class="nav-item" data-tab="assets">Assets</button> <button class="nav-item" data-tab="debts">Debts</button> <button class="nav-item" data-tab="expenses">Expenses</button>
+<button class="nav-item active" data-tab="profile">Household</button> <button class="nav-item" data-tab="pension">Pension</button> <button class="nav-item" data-tab="ss">Social Security</button> <button class="nav-item" data-tab="retirement">Retirement Accounts</button> <button class="nav-item" data-tab="assets">Assets</button> <button class="nav-item" data-tab="debts">Debts</button> <button class="nav-item" data-tab="expenses">Expenses</button> <button class="nav-item" data-tab="report">Full Report</button>
 
 </aside>
 
@@ -86,8 +86,8 @@ CENTER INPUT PANEL
 <div class="mobile-section-progress" aria-live="polite">
 <div class="mobile-section-progress-kicker">Calculator Step</div>
 <div class="mobile-section-progress-row">
-<strong id="mobileSectionLabel">Profile</strong>
-<span id="mobileSectionCount">1 of 7</span>
+<strong id="mobileSectionLabel">Household</strong>
+<span id="mobileSectionCount">1 of 8</span>
 </div>
 </div>
 
@@ -120,11 +120,6 @@ Years of Service
 <label>
 Final Average Salary
 <input id="fas" type="number" value="110000">
-</label>
-
-<label>
-Current Annual Pay
-<input id="currentAnnualPay" type="number" value="110000">
 </label>
 
 <label>
@@ -495,6 +490,31 @@ These settings affect Monte Carlo Plus in the dashboard and save with the curren
 
 </div>
 
+<!-- FULL REPORT -->
+
+<div class="module" id="report">
+
+<div class="report-step-shell">
+<div class="report-step-head">
+<div class="report-step-kicker">Step 8</div>
+<h2>Generate the full retirement report</h2>
+</div>
+
+<div id="reportStepStatus" class="report-step-status">
+Complete your current household expenses first so the simulator can generate a live projection and report snapshot.
+</div>
+
+<div class="report-step-card">
+<a href="/ui/retirementDashboard.html" class="report-link planner-report-link">
+<button id="fullReportBtn" class="primary-btn planner-report-btn">
+Open Retirement Dashboard
+</button>
+</a>
+</div>
+</div>
+
+</div>
+
 <div class="mobile-section-actions">
 <button id="mobilePrevSectionBtn" type="button" class="secondary-btn">
 Previous Step
@@ -530,19 +550,6 @@ RIGHT PREVIEW PANEL
 <div id="incomeCoverage" class="preview-metric">—</div>
 
 
-</div>
-
-<div class="planner-report-card">
-<div class="planner-report-kicker">Full Retirement Report</div>
-<h3>Open the report when you want the full decision view</h3>
-<p>
-Use the full retirement report for the dashboard view, share-ready planning output, and deeper scenario review. Keep the calculator focused on inputs here.
-</p>
-<a href="/ui/retirementDashboard.html" class="report-link planner-report-link">
-<button id="fullReportBtn" class="primary-btn planner-report-btn">
-Open Full Retirement Report
-</button>
-</a>
 </div>
 
 <div class="account-plans-card">

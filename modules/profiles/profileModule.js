@@ -68,10 +68,11 @@ assetRegistry.registerAsset({
         "birthMonth",
         "birthYear",
         "maritalStatus",
+        "currentAnnualPay",
+        "spouseAnnualIncome",
         "spouseName",
         "spouseBirthYear",
-        "spouseRetirementAge",
-        "spouseAnnualIncome"
+        "spouseRetirementAge"
     ],
 
 /* --------------------------------
@@ -81,46 +82,58 @@ Create UI card
 createCard() {
 
     const card = document.createElement("div");
-    card.className = "module-card";
+    card.className = "module-card profile-module-card";
     card.dataset.module = "profile";
 
     card.innerHTML = `
 
-        <h2>Household Profile</h2>
+        <div class="profile-module-section">
+            <div class="profile-module-copy">
+                <div class="profile-module-kicker">Step 1</div>
+                <h2>Your Information</h2>
+            </div>
 
-        <div class="grid-2">
+            <div class="grid-2">
 
-            <label>Name
-                <input id="userName" type="text">
-            </label>
+                <label>Name
+                    <input id="userName" type="text">
+                </label>
 
-            <label>Birth Month
-                <select id="birthMonth">
-                    <option value="">Month</option>
-                    ${Array.from({length:12},(_,i)=>
-                        `<option value="${i+1}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`
-                    ).join("")}
-                </select>
-            </label>
+                <label>Birth Month
+                    <select id="birthMonth">
+                        <option value="">Month</option>
+                        ${Array.from({length:12},(_,i)=>
+                            `<option value="${i+1}">${new Date(0,i).toLocaleString('default',{month:'long'})}</option>`
+                        ).join("")}
+                    </select>
+                </label>
 
-            <label>Birth Year
-                <input id="birthYear" type="number">
-            </label>
+                <label>Birth Year
+                    <input id="birthYear" type="number">
+                </label>
 
-            <label>Marital Status
-                <select id="maritalStatus">
-                    <option value="single">Single</option>
-                    <option value="married">Married</option>
-                    <option value="divorced">Divorced</option>
-                    <option value="widowed">Widowed</option>
-                </select>
-            </label>
+                <label>Marital Status
+                    <select id="maritalStatus">
+                        <option value="single">Single</option>
+                        <option value="married">Married</option>
+                        <option value="divorced">Divorced</option>
+                        <option value="widowed">Widowed</option>
+                    </select>
+                </label>
 
+                <label>Your Current Annual Income
+                    <input id="currentAnnualPay" type="number" value="110000">
+                </label>
+            </div>
         </div>
 
-        <div id="spouseSection" style="display:none;margin-top:20px;">
+        <div id="spouseSection" class="profile-module-section" style="display:none;margin-top:20px;">
 
-            <h3>Spouse</h3>
+            <div class="profile-module-copy">
+                <div class="profile-module-kicker">Spouse Planning</div>
+                <h3>Spouse Details</h3>
+                <p>Add spouse retirement timing details here when household planning matters to the retirement decision.</p>
+            </div>
 
             <div class="grid-2">
 
@@ -136,7 +149,7 @@ createCard() {
                     <input id="spouseRetirementAge" type="number" value="65">
                 </label>
 
-                <label>Spouse Current Annual Income
+                <label>Spouse's Annual Income
                     <input id="spouseAnnualIncome" type="number" value="0">
                 </label>
 
@@ -236,9 +249,13 @@ restoreState(state){
 
     const marital = card.querySelector("#maritalStatus");
     const spouseSection = card.querySelector("#spouseSection");
+    const spouseIncomeField = card.querySelector("#spouseIncomeField");
 
     if(marital.value === "married"){
         spouseSection.style.display = "block";
+        if (spouseIncomeField) {
+            spouseIncomeField.hidden = false;
+        }
     }
 
     syncSocialSecurityBirthYear(

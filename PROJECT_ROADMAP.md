@@ -23,7 +23,7 @@ This document is split into two parts:
 - Continue deepening edge-case pension-rule accuracy across LEOFF2, PERS2, TRS2, and future systems.
 - Continue improving expense-category realism beyond the current split-inflation and essential/discretionary baseline.
 - Continue improving tax-aware retirement withdrawals beyond the current progressive-tax and need-aware sequencing baseline.
-- Add stronger non-Monte-Carlo deterministic stress paths, such as stagnant-decade and early-retirement recession scenarios.
+- Continue calibrating non-Monte-Carlo deterministic stress paths as more real plan examples and user feedback arrive.
 
 ### Asset, Cash Flow, and Withdrawal Modeling
 
@@ -188,6 +188,7 @@ This document is split into two parts:
 - Auth-sensitive route limiting supports shared PostgreSQL-backed rate-limit buckets when `DATA_BACKEND=postgres` and `RATE_LIMIT_BACKEND=auto`, while retaining memory-backed limiting for local/file-backed development.
 - Lightweight audit logging records critical auth, account-profile, password, plan, plan-share, rate-limit block, and manual tier-update actions with hashed request/email identifiers.
 - A production-only `REQUEST_IDENTITY_HASH_SALT` has been set in the protected production env file.
+- Non-Monte-Carlo vulnerability analysis includes deterministic stagnant-decade and early-retirement recession stress paths alongside existing inflation, longevity, recession, low-return, pension-policy, healthcare, insurance, and housing-cost stresses.
 
 ### Social Presence
 

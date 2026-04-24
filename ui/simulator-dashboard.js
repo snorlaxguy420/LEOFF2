@@ -58,21 +58,22 @@ const SIMULATOR_TAB_SEQUENCE = [
     "retirement",
     "assets",
     "debts",
-    "expenses"
+    "expenses",
+    "report"
 ];
 const SIMULATOR_TAB_META = {
     profile: {
-        label: "Profile",
-        shortLabel: "Profile",
-        title: "Start with your household baseline",
+        label: "Household",
+        shortLabel: "Household",
+        title: "Start with the household and income baseline",
         summary:
-            "Set the age and household context that every later retirement estimate depends on.",
+            "Set the household details first so the rest of the retirement plan builds from a clear current baseline.",
         checklist: [
-            "Add your birth month and birth year.",
-            "Set marital status if household planning matters.",
-            "Use this as the baseline before modeling pension or Social Security."
+            "Add your birth month, birth year, and marital status.",
+            "Enter current household income in one place before retirement modeling starts.",
+            "Add spouse details here if the retirement decision is a household decision."
         ],
-        navHint: "Household timing"
+        navHint: "Ages and income"
     },
     pension: {
         label: "Pension",
@@ -151,6 +152,19 @@ const SIMULATOR_TAB_META = {
             "Use inflation assumptions only if you want to override the defaults."
         ],
         navHint: "Monthly spending"
+    },
+    report: {
+        label: "Full Report",
+        shortLabel: "Report",
+        title: "Generate the full retirement report",
+        summary:
+            "Use the final step to open the long-form report once the calculator has a current scenario snapshot to work from.",
+        checklist: [
+            "Finish household income, pension, assets, debts, and expenses first.",
+            "Open the report when you want the deeper review instead of more setup.",
+            "Use the report for household discussion, premium analysis, and print-ready output."
+        ],
+        navHint: "Generate output"
     }
 };
 const SUGGESTED_INFLATION_DEFAULTS = {
@@ -1483,6 +1497,7 @@ function hasRequiredCurrentExpenses(inputs) {
 
 function setReportButtonDisabled(disabled) {
     const reportBtn = document.getElementById("fullReportBtn");
+    const reportStepStatus = document.getElementById("reportStepStatus");
 
     if (!reportBtn) return;
 
@@ -1495,6 +1510,13 @@ function setReportButtonDisabled(disabled) {
     if (reportLink) {
         reportLink.style.pointerEvents = disabled ? "none" : "";
         reportLink.setAttribute("aria-disabled", disabled ? "true" : "false");
+    }
+
+    if (reportStepStatus) {
+        reportStepStatus.textContent = disabled
+            ? "Complete your current household expenses first so the simulator can generate a live projection and report snapshot."
+            : "Your latest calculator snapshot is ready.";
+        reportStepStatus.dataset.tone = disabled ? "neutral" : "success";
     }
 }
 

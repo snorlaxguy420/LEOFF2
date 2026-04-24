@@ -289,6 +289,25 @@ export function buildPlanningLeverContent({
         };
     }
 
+    if (
+        primaryRisk?.id === "early_retirement_recession_risk" ||
+        primaryRisk?.id === "recession_risk"
+    ) {
+        return {
+            headline: "This scenario appears most sensitive to early market sequence",
+            narrative:
+                "Under the current assumptions, a weak market early in retirement creates the most pressure. A larger cash buffer, lower early withdrawals, or later retirement timing would likely improve this projection most."
+        };
+    }
+
+    if (primaryRisk?.id === "stagnant_decade_risk") {
+        return {
+            headline: "This scenario appears most sensitive to a stagnant first decade",
+            narrative:
+                "Under the current assumptions, the plan depends on early growth showing up soon enough. Wider cash-flow margin, lower fixed spending, or more guaranteed income would likely improve this projection most."
+        };
+    }
+
     if (primaryRisk?.id === "housing_concentration_risk") {
         return {
             headline: "This scenario appears most sensitive to housing concentration",

@@ -7,7 +7,7 @@
 <meta name="description" content="Log in to LEOFF Helper to access saved retirement plans, future scenario comparisons, and premium planning tools.">
 <meta name="keywords" content="LEOFF Helper login, retirement planning account login, saved retirement plans, premium retirement dashboard">
 <meta name="author" content="LEOFF Helper">
-<meta name="robots" content="index,follow">
+<meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://leoffhelper.com/login">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="LEOFF Helper">
@@ -101,6 +101,32 @@ Email Address
 <input type="email" name="email" placeholder="name@example.com" autocomplete="email" required>
 </label>
 
+<div class="login-register-fields" data-register-profile-fields hidden>
+<div class="login-form-grid">
+<label>
+First Name
+<input type="text" name="firstName" placeholder="First name" autocomplete="given-name">
+</label>
+
+<label>
+Last Name
+<input type="text" name="lastName" placeholder="Last name" autocomplete="family-name">
+</label>
+</div>
+
+<div class="login-form-grid">
+<label>
+IAFF Local #
+<input type="text" name="iaffLocalNumber" placeholder="Example: 27" inputmode="numeric">
+</label>
+
+<label>
+Birth Year
+<input type="number" name="birthYear" placeholder="Example: 1981" min="1900" max="2026" inputmode="numeric">
+</label>
+</div>
+</div>
+
 <label>
 Password
 <input type="password" name="password" placeholder="Enter your password" autocomplete="current-password" minlength="8" required>
@@ -176,6 +202,9 @@ here while saved-plan syncing continues to expand.
 <h4>Settings</h4>
 <div class="login-account-meta">
 <div><strong>Email:</strong> <span data-auth-email></span></div>
+<div><strong>Name:</strong> <span data-auth-full-name></span></div>
+<div><strong>IAFF Local #:</strong> <span data-auth-iaff-local></span></div>
+<div><strong>Birth year:</strong> <span data-auth-birth-year></span></div>
 <div><strong>Member since:</strong> <span data-auth-created-at></span></div>
 <div><strong>Plan tier:</strong> <span data-auth-plan-tier>Free</span></div>
 <div><strong>Premium modeling:</strong> <span data-auth-premium-access>Not active</span></div>
@@ -185,6 +214,30 @@ here while saved-plan syncing continues to expand.
 <div><strong>Last check-in email:</strong> <span data-auth-checkin-last-sent>Not sent yet</span></div>
 </div>
 <form class="login-settings-form" data-profile-form>
+<div class="login-form-grid">
+<label>
+First Name
+<input type="text" name="firstName" placeholder="First name" autocomplete="given-name">
+</label>
+
+<label>
+Last Name
+<input type="text" name="lastName" placeholder="Last name" autocomplete="family-name">
+</label>
+</div>
+
+<div class="login-form-grid">
+<label>
+IAFF Local #
+<input type="text" name="iaffLocalNumber" placeholder="Example: 27" inputmode="numeric">
+</label>
+
+<label>
+Birth Year
+<input type="number" name="birthYear" placeholder="Example: 1981" min="1900" max="2026" inputmode="numeric">
+</label>
+</div>
+
 <label>
 Preferred Name
 <input type="text" name="displayName" placeholder="How your name should appear">
@@ -214,6 +267,18 @@ site refreshes the session automatically while you are using it.
 <div><strong>Current expiry:</strong> <span data-session-expiry>Refreshing...</span></div>
 </div>
 <button type="button" class="login-secondary-btn" data-session-refresh>Refresh Session</button>
+</section>
+
+<section class="login-account-card">
+<div class="login-account-card-kicker">Planning Views</div>
+<h4>Open Your Analysis</h4>
+<p class="login-account-copy">
+Use the dashboard for the quick-glance view, then open the full retirement report when you want the deeper planning packet.
+</p>
+<div class="login-secondary-actions">
+<a href="/ui/retirementDashboard.html" class="login-secondary-btn">Open Retirement Dashboard</a>
+<a href="/ui/full-retirement-report.html" class="login-secondary-btn">Open Full Retirement Report</a>
+</div>
 </section>
 </div>
 

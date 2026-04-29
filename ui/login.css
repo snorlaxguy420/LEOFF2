@@ -14,6 +14,7 @@ body {
 }
 
 .login-form[hidden],
+.login-register-fields[hidden],
 .login-recovery-panel[hidden],
 .login-status[hidden],
 .login-divider[hidden],
@@ -228,6 +229,17 @@ body {
     gap: 16px;
 }
 
+.login-register-fields {
+    display: grid;
+    gap: 14px;
+}
+
+.login-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
 .login-form p {
     margin: 0;
 }
@@ -242,7 +254,9 @@ body {
 }
 
 .login-form input[type="email"],
-.login-form input[type="password"] {
+.login-form input[type="password"],
+.login-form input[type="text"],
+.login-form input[type="number"] {
     width: 100%;
     box-sizing: border-box;
     padding: 13px 14px;
@@ -508,6 +522,7 @@ body {
 }
 
 .login-settings-form input[type="text"],
+.login-settings-form input[type="number"],
 .login-settings-form input[type="password"],
 .login-settings-form select {
     width: 100%;
@@ -560,6 +575,10 @@ body {
     .login-row {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .login-form-grid {
+        grid-template-columns: 1fr;
     }
 
     .remember-row {

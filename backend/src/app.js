@@ -101,6 +101,11 @@ function sanitizeUser(user) {
     return {
         id: user.id,
         email: user.email,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        iaffLocalNumber: user.iaffLocalNumber || "",
+        birthYear: normalizeBirthYear(user.birthYear),
+        disclaimerAcceptedAt: normalizeIsoDate(user.disclaimerAcceptedAt),
         displayName: user.displayName || "",
         retirementCheckInFrequency:
             normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),
@@ -109,6 +114,37 @@ function sanitizeUser(user) {
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
     };
+}
+
+function normalizeProfileText(value, maxLength = 80) {
+    return String(value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, maxLength);
+}
+
+function normalizeIaffLocalNumber(value) {
+    return String(value || "")
+        .trim()
+        .replace(/^local\s*#?/i, "")
+        .replace(/^#/, "")
+        .trim()
+        .slice(0, 20);
+}
+
+function normalizeBirthYear(value) {
+    const parsed = parseInt(value, 10);
+    const currentYear = new Date().getFullYear();
+
+    if (
+        !Number.isFinite(parsed) ||
+        parsed < 1900 ||
+        parsed > currentYear
+    ) {
+        return null;
+    }
+
+    return parsed;
 }
 
 function normalizePlanTier(value) {
@@ -435,6 +471,10 @@ async function handleRegister(req, res) {
     const body = await readJsonBody(req);
     const email = normalizeEmail(body.email);
     const password = String(body.password || "");
+    const firstName = normalizeProfileText(body.firstName);
+    const lastName = normalizeProfileText(body.lastName);
+    const iaffLocalNumber = normalizeIaffLocalNumber(body.iaffLocalNumber);
+    const birthYear = normalizeBirthYear(body.birthYear);
 
     if (!email || !email.includes("@")) {
         await recordAuditEvent({
@@ -444,6 +484,24 @@ async function handleRegister(req, res) {
             email
         });
         sendError(res, 400, "A valid email address is required.");
+        return;
+    }
+
+    if (!firstName || !lastName || !iaffLocalNumber || !birthYear) {
+        await recordAuditEvent({
+            req,
+            action: "auth.register",
+            outcome: "validation_failed",
+            email,
+            metadata: {
+                reason: "missing_profile"
+            }
+        });
+        sendError(
+            res,
+            400,
+            "First name, last name, IAFF local number, and birth year are required."
+        );
         return;
     }
 
@@ -486,6 +544,11 @@ async function handleRegister(req, res) {
         email,
         passwordHash: passwordRecord.hash,
         passwordSalt: passwordRecord.salt,
+        firstName,
+        lastName,
+        iaffLocalNumber,
+        birthYear,
+        disclaimerAcceptedAt: null,
         retirementCheckInFrequency: "never",
         lastRetirementCheckInSentAt: null,
         planTier: "free",
@@ -521,7 +584,7 @@ async function handleRegister(req, res) {
     try {
         await sendWelcomeEmail({
             toEmail: user.email,
-            displayName: user.displayName
+            displayName: user.displayName || user.firstName
         });
     } catch (error) {
         console.warn(
@@ -734,16 +797,53 @@ async function handleUpdateMe(req, res) {
 
     const body = await readJsonBody(req);
     const nextDisplayName = String(body.displayName || "").trim();
+    const nextFirstName =
+        body.firstName !== undefined
+            ? normalizeProfileText(body.firstName)
+            : undefined;
+    const nextLastName =
+        body.lastName !== undefined
+            ? normalizeProfileText(body.lastName)
+            : undefined;
+    const nextIaffLocalNumber =
+        body.iaffLocalNumber !== undefined
+            ? normalizeIaffLocalNumber(body.iaffLocalNumber)
+            : undefined;
+    const nextBirthYear =
+        body.birthYear !== undefined
+            ? normalizeBirthYear(body.birthYear)
+            : undefined;
     const nextRetirementCheckInFrequency =
         body.retirementCheckInFrequency !== undefined
             ? normalizeRetirementCheckInFrequency(
                 body.retirementCheckInFrequency
             )
             : undefined;
+    const disclaimerAccepted = body.disclaimerAccepted === true;
     let updatedUser = null;
 
     if (nextDisplayName.length > 80) {
         sendError(res, 400, "Display name must be 80 characters or fewer.");
+        return;
+    }
+
+    if (nextFirstName !== undefined && !nextFirstName) {
+        sendError(res, 400, "First name is required.");
+        return;
+    }
+
+    if (nextLastName !== undefined && !nextLastName) {
+        sendError(res, 400, "Last name is required.");
+        return;
+    }
+
+    if (nextIaffLocalNumber !== undefined && !nextIaffLocalNumber) {
+        sendError(res, 400, "IAFF local number is required.");
+        return;
+    }
+
+    if (body.birthYear !== undefined && !nextBirthYear) {
+        sendError(res, 400, "Enter a valid birth year.");
         return;
     }
 
@@ -764,6 +864,21 @@ async function handleUpdateMe(req, res) {
             updatedUser = {
                 ...user,
                 displayName: nextDisplayName,
+                ...(nextFirstName !== undefined
+                    ? { firstName: nextFirstName }
+                    : {}),
+                ...(nextLastName !== undefined
+                    ? { lastName: nextLastName }
+                    : {}),
+                ...(nextIaffLocalNumber !== undefined
+                    ? { iaffLocalNumber: nextIaffLocalNumber }
+                    : {}),
+                ...(body.birthYear !== undefined
+                    ? { birthYear: nextBirthYear }
+                    : {}),
+                ...(disclaimerAccepted
+                    ? { disclaimerAcceptedAt: new Date().toISOString() }
+                    : {}),
                 ...(nextRetirementCheckInFrequency !== undefined
                     ? {
                         retirementCheckInFrequency:
@@ -807,7 +922,13 @@ async function handleUpdateMe(req, res) {
         email: sessionContext.user.email,
         metadata: {
             changedRetirementCheckInFrequency:
-                nextRetirementCheckInFrequency !== undefined
+                nextRetirementCheckInFrequency !== undefined,
+            changedProfileDetails:
+                nextFirstName !== undefined ||
+                nextLastName !== undefined ||
+                nextIaffLocalNumber !== undefined ||
+                body.birthYear !== undefined,
+            changedDisclaimerAcceptance: disclaimerAccepted
         }
     });
 
@@ -981,7 +1102,7 @@ async function handleForgotPassword(req, res) {
     try {
         await sendPasswordResetEmail({
             toEmail: user.email,
-            displayName: user.displayName || "",
+            displayName: user.displayName || user.firstName || "",
             resetUrl: buildPasswordResetUrl(resetToken)
         });
     } catch (error) {

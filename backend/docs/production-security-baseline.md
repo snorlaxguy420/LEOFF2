@@ -125,6 +125,8 @@ LEOFF Helper backend on Lightsail. The goal is repeatability, not theory.
 
 - Treat account-backed `workspaceState` as restorable planning state, not a
   general personal-data vault.
+- Store account identity fields such as name, IAFF local number, and birth year
+  only on the user profile record, not inside saved planner payloads.
 - Do not add full names, spouse names, full birth dates, SSNs, account numbers,
   routing numbers, member IDs, addresses, or phone numbers to persisted planner
   payloads unless there is a specific product requirement and security review.

@@ -3,6 +3,11 @@ CREATE TABLE IF NOT EXISTS users (
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     password_salt TEXT NOT NULL,
+    first_name TEXT NOT NULL DEFAULT '',
+    last_name TEXT NOT NULL DEFAULT '',
+    iaff_local_number TEXT NOT NULL DEFAULT '',
+    birth_year INTEGER NULL,
+    disclaimer_accepted_at TIMESTAMPTZ NULL,
     display_name TEXT NOT NULL DEFAULT '',
     retirement_check_in_frequency TEXT NOT NULL DEFAULT 'never',
     last_retirement_check_in_sent_at TIMESTAMPTZ NULL,
@@ -19,6 +24,21 @@ ALTER TABLE users
 
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS last_retirement_check_in_sent_at TIMESTAMPTZ NULL;
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS first_name TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS last_name TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS iaff_local_number TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS birth_year INTEGER NULL;
+
+ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS disclaimer_accepted_at TIMESTAMPTZ NULL;
 
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,

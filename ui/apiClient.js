@@ -53,10 +53,17 @@ export async function getCurrentUser() {
     return payload?.user || null;
 }
 
-export async function registerAccount(email, password) {
+export async function registerAccount(email, password, profile = {}) {
     const payload = await request("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({
+            email,
+            password,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            iaffLocalNumber: profile.iaffLocalNumber,
+            birthYear: profile.birthYear
+        })
     });
 
     return normalizeAccountContext(payload);

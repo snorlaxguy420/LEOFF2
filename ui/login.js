@@ -66,6 +66,11 @@ const elements = {
     form: document.querySelector("[data-auth-form]"),
     emailInput: document.querySelector('input[name="email"]'),
     passwordInput: document.querySelector('input[name="password"]'),
+    registerProfileFields: document.querySelector("[data-register-profile-fields]"),
+    registerFirstNameInput: document.querySelector('[data-auth-form] input[name="firstName"]'),
+    registerLastNameInput: document.querySelector('[data-auth-form] input[name="lastName"]'),
+    registerIaffLocalInput: document.querySelector('[data-auth-form] input[name="iaffLocalNumber"]'),
+    registerBirthYearInput: document.querySelector('[data-auth-form] input[name="birthYear"]'),
     submitButton: document.querySelector("[data-auth-submit]"),
     logoutButton: document.querySelector("[data-auth-logout]"),
     status: document.querySelector("[data-auth-status]"),
@@ -85,6 +90,9 @@ const elements = {
     resetBackButtons: Array.from(document.querySelectorAll("[data-reset-back]")),
     authenticatedPanel: document.querySelector("[data-authenticated-panel]"),
     authenticatedEmail: document.querySelector("[data-auth-email]"),
+    authenticatedFullName: document.querySelector("[data-auth-full-name]"),
+    authenticatedIaffLocal: document.querySelector("[data-auth-iaff-local]"),
+    authenticatedBirthYear: document.querySelector("[data-auth-birth-year]"),
     authenticatedDisplayName: document.querySelector("[data-auth-display-name]"),
     authenticatedCreatedAt: document.querySelector("[data-auth-created-at]"),
     authenticatedPlanTier: document.querySelector("[data-auth-plan-tier]"),
@@ -99,6 +107,10 @@ const elements = {
     modeButtons: Array.from(document.querySelectorAll("[data-auth-mode-toggle]")),
     profileForm: document.querySelector("[data-profile-form]"),
     profileSubmit: document.querySelector("[data-profile-submit]"),
+    firstNameInput: document.querySelector('[data-profile-form] input[name="firstName"]'),
+    lastNameInput: document.querySelector('[data-profile-form] input[name="lastName"]'),
+    iaffLocalInput: document.querySelector('[data-profile-form] input[name="iaffLocalNumber"]'),
+    birthYearInput: document.querySelector('[data-profile-form] input[name="birthYear"]'),
     displayNameInput: document.querySelector('[data-profile-form] input[name="displayName"]'),
     retirementCheckInFrequencySelect: document.querySelector("[data-profile-checkin-frequency]"),
     passwordForm: document.querySelector("[data-password-form]"),
@@ -157,6 +169,15 @@ function formatDisplayName(user) {
         return user.displayName.trim();
     }
 
+    const fullName = [user?.firstName, user?.lastName]
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+        .join(" ");
+
+    if (fullName) {
+        return fullName;
+    }
+
     const localPart = String(user?.email || "").split("@")[0] || "Member";
 
     return localPart
@@ -164,6 +185,83 @@ function formatDisplayName(user) {
         .replace(/\s+/g, " ")
         .trim()
         .replace(/\b\w/g, character => character.toUpperCase());
+}
+
+function getBirthYearBounds() {
+    return {
+        min: 1900,
+        max: new Date().getFullYear()
+    };
+}
+
+function normalizeBirthYearInput(value) {
+    const parsed = parseInt(value, 10);
+    const bounds = getBirthYearBounds();
+
+    if (
+        !Number.isFinite(parsed) ||
+        parsed < bounds.min ||
+        parsed > bounds.max
+    ) {
+        return null;
+    }
+
+    return parsed;
+}
+
+function readAccountProfileFields(source = "register") {
+    const inputs = source === "register"
+        ? {
+            firstName: elements.registerFirstNameInput,
+            lastName: elements.registerLastNameInput,
+            iaffLocalNumber: elements.registerIaffLocalInput,
+            birthYear: elements.registerBirthYearInput
+        }
+        : {
+            firstName: elements.firstNameInput,
+            lastName: elements.lastNameInput,
+            iaffLocalNumber: elements.iaffLocalInput,
+            birthYear: elements.birthYearInput
+        };
+
+    return {
+        firstName: inputs.firstName?.value?.trim() || "",
+        lastName: inputs.lastName?.value?.trim() || "",
+        iaffLocalNumber: inputs.iaffLocalNumber?.value?.trim() || "",
+        birthYear: normalizeBirthYearInput(inputs.birthYear?.value)
+    };
+}
+
+function validateRequiredProfile(profile) {
+    if (!profile.firstName || !profile.lastName) {
+        return "First name and last name are required.";
+    }
+
+    if (!profile.iaffLocalNumber) {
+        return "IAFF local number is required.";
+    }
+
+    if (!profile.birthYear) {
+        return "Enter a valid birth year.";
+    }
+
+    return "";
+}
+
+function initializeBirthYearInputs() {
+    const bounds = getBirthYearBounds();
+
+    [
+        elements.registerBirthYearInput,
+        elements.birthYearInput
+    ].forEach(input => {
+        if (!input) {
+            return;
+        }
+
+        input.min = String(bounds.min);
+        input.max = String(bounds.max);
+    });
 }
 
 function formatTimestamp(value) {
@@ -296,6 +394,13 @@ function renderAnonymousView() {
         elements.form.hidden = authenticated || inResetView;
     }
 
+    if (elements.registerProfileFields) {
+        elements.registerProfileFields.hidden =
+            authenticated ||
+            inResetView ||
+            state.mode !== "register";
+    }
+
     if (elements.recoveryPanel) {
         elements.recoveryPanel.hidden = authenticated || (inAuthView && !inResetView);
     }
@@ -354,6 +459,17 @@ function setPending(pending) {
             state.mode === "register" ? "new-password" : "current-password";
     }
 
+    [
+        elements.registerFirstNameInput,
+        elements.registerLastNameInput,
+        elements.registerIaffLocalInput,
+        elements.registerBirthYearInput
+    ].forEach(input => {
+        if (input) {
+            input.disabled = disabled;
+        }
+    });
+
     if (elements.submitButton) {
         elements.submitButton.disabled = disabled;
         elements.submitButton.textContent = pending
@@ -370,6 +486,17 @@ function setPending(pending) {
 
 function setProfilePending(pending) {
     state.profilePending = pending;
+
+    [
+        elements.firstNameInput,
+        elements.lastNameInput,
+        elements.iaffLocalInput,
+        elements.birthYearInput
+    ].forEach(input => {
+        if (input) {
+            input.disabled = pending;
+        }
+    });
 
     if (elements.displayNameInput) {
         elements.displayNameInput.disabled = pending;
@@ -516,6 +643,29 @@ function renderAuthenticatedState(accountContext = null) {
         elements.authenticatedEmail.textContent = user?.email || "";
     }
 
+    if (elements.authenticatedFullName) {
+        elements.authenticatedFullName.textContent = authenticated
+            ? (
+                [user?.firstName, user?.lastName]
+                    .map(value => String(value || "").trim())
+                    .filter(Boolean)
+                    .join(" ") || "Not set"
+            )
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedIaffLocal) {
+        elements.authenticatedIaffLocal.textContent = authenticated
+            ? (user?.iaffLocalNumber || "Not set")
+            : "Unavailable";
+    }
+
+    if (elements.authenticatedBirthYear) {
+        elements.authenticatedBirthYear.textContent = authenticated
+            ? (user?.birthYear || "Not set")
+            : "Unavailable";
+    }
+
     if (elements.authenticatedDisplayName) {
         elements.authenticatedDisplayName.textContent = authenticated
             ? formatDisplayName(user)
@@ -576,6 +726,22 @@ function renderAuthenticatedState(accountContext = null) {
         elements.displayNameInput.value = user?.displayName || "";
     }
 
+    if (elements.firstNameInput) {
+        elements.firstNameInput.value = user?.firstName || "";
+    }
+
+    if (elements.lastNameInput) {
+        elements.lastNameInput.value = user?.lastName || "";
+    }
+
+    if (elements.iaffLocalInput) {
+        elements.iaffLocalInput.value = user?.iaffLocalNumber || "";
+    }
+
+    if (elements.birthYearInput) {
+        elements.birthYearInput.value = user?.birthYear || "";
+    }
+
     if (elements.retirementCheckInFrequencySelect) {
         elements.retirementCheckInFrequencySelect.value =
             String(user?.retirementCheckInFrequency || "never").trim().toLowerCase() || "never";
@@ -629,6 +795,17 @@ async function handleSubmit(event) {
         return;
     }
 
+    const profile = readAccountProfileFields("register");
+    const profileError =
+        state.mode === "register"
+            ? validateRequiredProfile(profile)
+            : "";
+
+    if (profileError) {
+        setStatus(profileError, "error");
+        return;
+    }
+
     setPending(true);
     setStatus(
         state.mode === "register"
@@ -639,7 +816,7 @@ async function handleSubmit(event) {
 
     try {
         if (state.mode === "register") {
-            await registerAccount(email, password);
+            await registerAccount(email, password, profile);
         } else {
             await loginAccount(email, password);
         }
@@ -689,14 +866,25 @@ async function handleProfileSubmit(event) {
     }
 
     const displayName = elements.displayNameInput?.value?.trim() || "";
+    const profile = readAccountProfileFields("profile");
+    const profileError = validateRequiredProfile(profile);
     const retirementCheckInFrequency =
         elements.retirementCheckInFrequencySelect?.value || "never";
+
+    if (profileError) {
+        setStatus(profileError, "error");
+        return;
+    }
 
     setProfilePending(true);
     setStatus("Saving account settings...", "neutral");
 
     try {
         const accountContext = await updateAccountProfile({
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            iaffLocalNumber: profile.iaffLocalNumber,
+            birthYear: profile.birthYear,
             displayName,
             retirementCheckInFrequency
         });
@@ -943,6 +1131,7 @@ function bindEvents() {
     });
 }
 
+initializeBirthYearInputs();
 updateMode("login", { preserveStatus: true });
 setAnonymousView(state.view, { preserveStatus: true });
 bindEvents();

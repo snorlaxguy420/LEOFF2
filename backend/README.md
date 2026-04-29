@@ -75,6 +75,11 @@ server reads:
 - `PUT /plans/:id`
 - `DELETE /plans/:id`
 
+`POST /auth/register` requires `email`, `password`, `firstName`, `lastName`,
+`iaffLocalNumber`, and `birthYear`. The profile fields are stored on the user
+record and returned through `/me` for account settings and future planning
+defaults.
+
 ## Daily signup summary job
 
 The backend now includes a daily signup-summary script:

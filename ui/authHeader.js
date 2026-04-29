@@ -18,6 +18,15 @@ function formatDisplayName(user = null) {
         return user.displayName.trim();
     }
 
+    const fullName = [user?.firstName, user?.lastName]
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+        .join(" ");
+
+    if (fullName) {
+        return fullName;
+    }
+
     const localPart = String(user?.email || "").split("@")[0] || "Member";
 
     return localPart

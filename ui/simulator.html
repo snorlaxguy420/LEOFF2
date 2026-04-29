@@ -62,6 +62,7 @@
 </header>
 <div class="simbg-section">
 <main class="planner-container">
+<h1 class="sr-only">LEOFF Helper Retirement Planner</h1>
 
 <div class="planner-grid">
 
@@ -389,6 +390,35 @@ Enter your current monthly household expenses. These are required before the sim
 
 </div>
 
+<section class="surplus-sweep-card">
+<div class="surplus-sweep-copy">
+<h3>Pre-Retirement Surplus Savings</h3>
+<p>
+Choose whether excess household cash flow before retirement should be saved and modeled as a future retirement resource.
+</p>
+</div>
+
+<div class="form-grid">
+
+<label>Surplus Sweep Target
+<select id="preRetirementSurplusTarget">
+<option value="none">Do not model surplus savings</option>
+<option value="cash_reserve">Cash reserve</option>
+<option value="taxable_brokerage">Taxable brokerage</option>
+</select>
+</label>
+
+<label>Sweep % of Annual Surplus
+<input id="preRetirementSurplusSweepRate" type="number" min="0" max="100" step="5" value="100">
+</label>
+
+<label>Annual Growth %
+<input id="preRetirementSurplusGrowthRate" type="number" step="0.25" value="5">
+</label>
+
+</div>
+</section>
+
 <h2 style="margin-top:20px;">Expense Inflation Assumptions</h2>
 
 <div class="form-grid">
@@ -627,6 +657,41 @@ Bar Chart
 </div>
 </section>
 </main>
+
+<div
+id="disclaimerOverlay"
+class="disclaimer-overlay"
+role="dialog"
+aria-modal="true"
+aria-labelledby="disclaimerModalTitle"
+aria-hidden="true"
+>
+<section class="disclaimer-modal">
+<div class="disclaimer-kicker">Before You Use The Calculator</div>
+<h2 id="disclaimerModalTitle">Educational Planning Tool Only</h2>
+<p>
+LEOFF Helper can help you model retirement scenarios, but it is not financial,
+tax, legal, or investment advice. Use these projections as planning estimates
+and verify important decisions with qualified professionals and official
+retirement-system sources.
+</p>
+
+<label class="disclaimer-confirmation">
+<input id="disclaimerAcknowledgement" type="checkbox">
+<span>
+I understand this website is not financial advice, and I have read the
+<a href="/ui/disclaimer.html" target="_blank" rel="noopener noreferrer">disclaimer</a>.
+</span>
+</label>
+
+<div class="disclaimer-actions">
+<button id="acceptDisclaimerBtn" class="primary-btn" type="button" disabled>
+Continue to Calculator
+</button>
+</div>
+</section>
+</div>
+
 <!-- ===============================
 FOOTER
 =============================== -->

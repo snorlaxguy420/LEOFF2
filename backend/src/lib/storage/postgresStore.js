@@ -64,9 +64,45 @@ function normalizeRetirementCheckInFrequency(value) {
     return "never";
 }
 
+function normalizeProfileText(value, maxLength = 80) {
+    return String(value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, maxLength);
+}
+
+function normalizeIaffLocalNumber(value) {
+    return String(value || "")
+        .trim()
+        .replace(/^local\s*#?/i, "")
+        .replace(/^#/, "")
+        .trim()
+        .slice(0, 20);
+}
+
+function normalizeBirthYear(value) {
+    const parsed = parseInt(value, 10);
+    const currentYear = new Date().getFullYear();
+
+    if (
+        !Number.isFinite(parsed) ||
+        parsed < 1900 ||
+        parsed > currentYear
+    ) {
+        return null;
+    }
+
+    return parsed;
+}
+
 function normalizeUserRecord(user = {}) {
     return {
         ...user,
+        firstName: normalizeProfileText(user.firstName),
+        lastName: normalizeProfileText(user.lastName),
+        iaffLocalNumber: normalizeIaffLocalNumber(user.iaffLocalNumber),
+        birthYear: normalizeBirthYear(user.birthYear),
+        disclaimerAcceptedAt: normalizeIsoDate(user.disclaimerAcceptedAt),
         displayName: user.displayName || "",
         retirementCheckInFrequency:
             normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),
@@ -156,6 +192,11 @@ function mapUserRow(row) {
         email: row.email,
         passwordHash: row.password_hash,
         passwordSalt: row.password_salt,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        iaffLocalNumber: row.iaff_local_number,
+        birthYear: row.birth_year,
+        disclaimerAcceptedAt: row.disclaimer_accepted_at,
         displayName: row.display_name,
         retirementCheckInFrequency: row.retirement_check_in_frequency,
         lastRetirementCheckInSentAt: row.last_retirement_check_in_sent_at,
@@ -250,6 +291,11 @@ async function syncUsers(client, users) {
                     email,
                     password_hash,
                     password_salt,
+                    first_name,
+                    last_name,
+                    iaff_local_number,
+                    birth_year,
+                    disclaimer_accepted_at,
                     display_name,
                     retirement_check_in_frequency,
                     last_retirement_check_in_sent_at,
@@ -261,12 +307,17 @@ async function syncUsers(client, users) {
                     updated_at
                 )
                 VALUES (
-                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
+                    $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     email = EXCLUDED.email,
                     password_hash = EXCLUDED.password_hash,
                     password_salt = EXCLUDED.password_salt,
+                    first_name = EXCLUDED.first_name,
+                    last_name = EXCLUDED.last_name,
+                    iaff_local_number = EXCLUDED.iaff_local_number,
+                    birth_year = EXCLUDED.birth_year,
+                    disclaimer_accepted_at = EXCLUDED.disclaimer_accepted_at,
                     display_name = EXCLUDED.display_name,
                     retirement_check_in_frequency = EXCLUDED.retirement_check_in_frequency,
                     last_retirement_check_in_sent_at = EXCLUDED.last_retirement_check_in_sent_at,
@@ -282,6 +333,11 @@ async function syncUsers(client, users) {
                 user.email,
                 user.passwordHash,
                 user.passwordSalt,
+                normalizeProfileText(user.firstName),
+                normalizeProfileText(user.lastName),
+                normalizeIaffLocalNumber(user.iaffLocalNumber),
+                normalizeBirthYear(user.birthYear),
+                normalizeIsoDate(user.disclaimerAcceptedAt),
                 user.displayName || "",
                 normalizeRetirementCheckInFrequency(
                     user.retirementCheckInFrequency

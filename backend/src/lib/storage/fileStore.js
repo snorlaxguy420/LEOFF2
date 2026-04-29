@@ -53,9 +53,45 @@ function normalizeRetirementCheckInFrequency(value) {
     return "never";
 }
 
+function normalizeProfileText(value, maxLength = 80) {
+    return String(value || "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, maxLength);
+}
+
+function normalizeIaffLocalNumber(value) {
+    return String(value || "")
+        .trim()
+        .replace(/^local\s*#?/i, "")
+        .replace(/^#/, "")
+        .trim()
+        .slice(0, 20);
+}
+
+function normalizeBirthYear(value) {
+    const parsed = parseInt(value, 10);
+    const currentYear = new Date().getFullYear();
+
+    if (
+        !Number.isFinite(parsed) ||
+        parsed < 1900 ||
+        parsed > currentYear
+    ) {
+        return null;
+    }
+
+    return parsed;
+}
+
 function normalizeUserRecord(user = {}) {
     return {
         ...user,
+        firstName: normalizeProfileText(user.firstName),
+        lastName: normalizeProfileText(user.lastName),
+        iaffLocalNumber: normalizeIaffLocalNumber(user.iaffLocalNumber),
+        birthYear: normalizeBirthYear(user.birthYear),
+        disclaimerAcceptedAt: normalizeIsoDate(user.disclaimerAcceptedAt),
         displayName: user.displayName || "",
         retirementCheckInFrequency:
             normalizeRetirementCheckInFrequency(user.retirementCheckInFrequency),

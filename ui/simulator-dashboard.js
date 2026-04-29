@@ -30,6 +30,7 @@ import {
     getAccountContext,
     getPlan as fetchAccountPlan,
     listPlans as listAccountPlans,
+    updateAccountProfile,
     updatePlan as updateAccountPlan
 } from "./apiClient.js";
 import { hasPremiumAccess } from "./accountEntitlements.js";
@@ -181,8 +182,9 @@ const SUGGESTED_PREMIUM_STRESS_DEFAULTS = {
     earlyRetirementShockYears: 3,
     earlyRetirementShockRate: -0.12
 };
-const DISCLAIMER_STORAGE_KEY = "leoffHelperDisclaimerAccepted";
 const ACCOUNT_PLAN_META_KEY = "leoffHelperAccountPlanMeta";
+const DISCLAIMER_ACCEPTANCE_KEY_PREFIX =
+    "leoffHelperDisclaimerAcceptedForUser:";
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
 const SCENARIO_COMPARISON_MAX_SELECTION = 3;
 let currentAccountUser = null;
@@ -1663,24 +1665,56 @@ function syncChartModeUi() {
 function setupDisclaimerGate() {
     const overlay = document.getElementById("disclaimerOverlay");
     const acceptBtn = document.getElementById("acceptDisclaimerBtn");
+    const acknowledgement =
+        document.getElementById("disclaimerAcknowledgement");
 
-    if (!overlay || !acceptBtn) return;
+    if (!overlay || !acceptBtn || !acknowledgement) return;
 
-    const accepted =
-        localStorage.getItem(DISCLAIMER_STORAGE_KEY) === "true";
+    const userAcceptanceKey = currentAccountUser?.id
+        ? `${DISCLAIMER_ACCEPTANCE_KEY_PREFIX}${currentAccountUser.id}`
+        : "";
+    const acceptedForCurrentUser =
+        Boolean(currentAccountUser?.disclaimerAcceptedAt) ||
+        userAcceptanceKey &&
+        localStorage.getItem(userAcceptanceKey) === "true";
 
-    if (accepted) {
+    if (acceptedForCurrentUser) {
         overlay.style.display = "none";
+        overlay.setAttribute("aria-hidden", "true");
         document.body.classList.remove("disclaimer-open");
         return;
     }
 
+    acknowledgement.checked = false;
     overlay.style.display = "flex";
     overlay.setAttribute("aria-hidden", "false");
     document.body.classList.add("disclaimer-open");
+    acceptBtn.disabled = !acknowledgement.checked;
+
+    acknowledgement.addEventListener("change", () => {
+        acceptBtn.disabled = !acknowledgement.checked;
+    });
 
     acceptBtn.addEventListener("click", () => {
-        localStorage.setItem(DISCLAIMER_STORAGE_KEY, "true");
+        if (!acknowledgement.checked) {
+            return;
+        }
+
+        if (userAcceptanceKey) {
+            localStorage.setItem(userAcceptanceKey, "true");
+            updateAccountProfile({ disclaimerAccepted: true })
+                .then(accountContext => {
+                    currentAccountContext = accountContext;
+                    currentAccountUser = accountContext?.user || currentAccountUser;
+                })
+                .catch(error => {
+                    console.warn(
+                        "Disclaimer acceptance could not be saved to the account.",
+                        error
+                    );
+                });
+        }
+
         overlay.style.display = "none";
         overlay.setAttribute("aria-hidden", "true");
         document.body.classList.remove("disclaimer-open");
@@ -1935,6 +1969,7 @@ async function init(){
     setupAccountPlansUi();
     setupReportButton();   // add this line
     syncMobileSimulatorMode();
+    await refreshAccountPlans({ keepStatus: true });
     setupDisclaimerGate();
 
     if (workspaceState?.simulationState) {
@@ -1947,7 +1982,7 @@ async function init(){
     syncPremiumStressTestingUi();
 
     runProjection(workspaceState?.simulationState || null);
-    await refreshAccountPlans();
+    renderDefaultAccountStatus();
 }
 
 

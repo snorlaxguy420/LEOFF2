@@ -263,112 +263,181 @@ select:focus {
 /* ============================= */
 /* Disclaimer Page Styling       */
 /* ============================= */
-/* ============================= */
-/* Color Palette Variables       */
-/* ============================= */
 
-:root {
-    --bg-main: #ece0d1;
-    --bg-card: #dbc1ac;
-
-    --accent: #967259;
-
-    --text-heading: #634832;
-    --text-body: #38220f;
+.disclaimer-page-bg {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(244, 241, 234, 0.72) 0%,
+            rgba(244, 241, 234, 0.60) 34%,
+            rgba(244, 241, 234, 0.88) 100%
+        ),
+        radial-gradient(
+            circle at 82% 18%,
+            rgba(106, 143, 107, 0.22),
+            transparent 34%
+        ),
+        url("/assets/illustrations/deceptionpass.png");
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
 }
 
-/* ============================= */
-/* Base Page Styling             */
-/* ============================= */
+.disclaimer-shell {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 44px 36px 84px;
+}
 
-body {
-    margin: 0;
+.disclaimer-panel {
+    max-width: 900px;
+    padding: 36px 38px;
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at top right, rgba(203,223,189,.26), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.52)),
+        rgba(255,255,255,.36);
+    border: 1px solid rgba(255,255,255,.42);
+    box-shadow: 0 16px 38px rgba(30, 47, 68, .10);
+    backdrop-filter: blur(7px);
+}
+
+.disclaimer-kicker {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(31, 77, 58, .12);
+    color: var(--pnw-evergreen);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.disclaimer-panel h1 {
+    margin: 16px 0 14px;
+    max-width: 760px;
+    color: var(--pnw-navy);
+    font-size: clamp(38px, 6vw, 68px);
+    line-height: .98;
+    letter-spacing: -.04em;
+}
+
+.disclaimer-panel h2 {
+    margin: 30px 0 12px;
+    color: var(--pnw-evergreen);
+    font-size: 23px;
+    line-height: 1.18;
+}
+
+.disclaimer-panel p {
+    max-width: 760px;
+    margin: 0 0 16px;
+    color: rgba(42, 42, 42, .82);
+    font-size: 16px;
+    line-height: 1.68;
+}
+
+.disclaimer-panel > p:first-of-type {
+    color: rgba(42, 42, 42, .78);
+    font-size: 18px;
+    line-height: 1.65;
+}
+
+.disclaimer-panel .last-updated {
+    margin-top: 18px;
+    margin-bottom: 26px;
+    color: var(--pnw-river);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.disclaimer-panel p:last-child {
+    margin-bottom: 0;
+}
+
+.disclaimer-panel ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
     padding: 0;
-    background-color: var(--bg-main);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: var(--text-body);
+    margin: 4px 0 18px;
+    list-style: none;
 }
 
-/* ============================= */
-/* Disclaimer Container          */
-/* ============================= */
-
-.disclaimer-container {
-    max-width: 850px;
-    margin: 80px auto;
-    padding: 50px;
-    background-color: var(--bg-card);
+.disclaimer-panel li {
+    padding: 11px 13px;
     border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(56, 34, 15, 0.15);
-    line-height: 1.75;
+    background: rgba(31, 77, 58, .08);
+    border: 1px solid rgba(31, 77, 58, .10);
+    color: var(--pnw-navy);
+    font-weight: 700;
 }
-
-/* ============================= */
-/* Headings                      */
-/* ============================= */
-
-.disclaimer-container h1 {
-    font-size: 34px;
-    margin-bottom: 35px;
-    color: var(--text-heading);
-}
-
-.disclaimer-container h2 {
-    font-size: 20px;
-    margin-top: 40px;
-    margin-bottom: 15px;
-    color: var(--text-heading);
-}
-
-/* ============================= */
-/* Paragraphs & Lists            */
-/* ============================= */
-
-.disclaimer-container p {
-    margin-bottom: 18px;
-}
-
-.disclaimer-container ul {
-    padding-left: 22px;
-    margin-bottom: 20px;
-}
-
-.disclaimer-container li {
-    margin-bottom: 8px;
-}
-
-/* ============================= */
-/* Emphasis Section              */
-/* ============================= */
 
 .emphasis {
-    font-weight: 600;
-    color: var(--accent);
+    display: inline-flex;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(63, 124, 133, .12);
+    color: var(--pnw-navy);
+    font-weight: 800;
 }
 
 .closing {
-    margin-top: 25px;
-    font-weight: 500;
+    margin-top: 22px;
+    font-weight: 700;
 }
 
-/* ============================= */
-/* Back Link                     */
-/* ============================= */
-
 .back-link {
-    margin-top: 50px;
-    text-align: center;
+    margin-top: 14px;
 }
 
 .back-link a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: var(--pnw-evergreen);
+    color: white;
     text-decoration: none;
-    color: var(--accent);
-    font-weight: 600;
-    transition: opacity 0.2s ease;
+    font-weight: 800;
+    box-shadow: 0 12px 22px rgba(31, 77, 58, .16);
+    transition: transform .14s ease, box-shadow .16s ease, background .16s ease;
 }
 
 .back-link a:hover {
-    opacity: 0.75;
+    background: var(--pnw-river);
+    box-shadow: 0 16px 26px rgba(31, 77, 58, .20);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 760px) {
+    .disclaimer-shell {
+        padding: 28px 16px 56px;
+    }
+
+    .disclaimer-panel {
+        padding: 24px 20px;
+        border-radius: 20px;
+    }
+
+    .disclaimer-panel > p:first-of-type {
+        font-size: 16px;
+    }
+
+    .disclaimer-panel ul {
+        grid-template-columns: 1fr;
+    }
+
+    .back-link a {
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
 /* ============================= */
 /* Last Updated Timestamp        */
@@ -378,7 +447,7 @@ body {
     font-size: 14px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    color: var(--accent);
+    color: var(--pnw-river);
     margin-bottom: 30px;
     font-weight: 500;
 }

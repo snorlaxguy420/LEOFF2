@@ -143,6 +143,181 @@ body {
     flex-wrap: wrap;
 }
 
+.report-toc {
+    max-width: 1200px;
+    margin: 0 auto var(--space-lg);
+    padding: 26px;
+    border-radius: var(--radius-lg);
+    background:
+        radial-gradient(circle at top right, rgba(203,223,189,0.26), transparent 42%),
+        linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.54));
+    border: 1px solid rgba(255,255,255,0.50);
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(7px);
+}
+
+.report-toc-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 18px;
+}
+
+.report-toc h2 {
+    margin: 0 0 8px;
+    color: var(--pnw-navy);
+    font-size: 28px;
+    line-height: 1.1;
+}
+
+.report-toc p {
+    max-width: 680px;
+    margin: 0;
+    color: rgba(42,42,42,0.76);
+    line-height: 1.55;
+}
+
+.report-toc-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.report-toc-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.report-toc-list a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    min-height: 100%;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.64);
+    border: 1px solid rgba(31,77,58,0.10);
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.report-toc-list a:hover {
+    transform: translateY(-1px);
+    background: rgba(255,255,255,0.84);
+    border-color: rgba(31,77,58,0.22);
+}
+
+.report-toc-list span {
+    grid-row: span 2;
+    color: var(--pnw-river);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: .08em;
+}
+
+.report-toc-list strong {
+    color: var(--pnw-navy);
+}
+
+.report-toc-list small {
+    color: rgba(42,42,42,0.68);
+    line-height: 1.45;
+}
+
+.report-collapsible-section {
+    margin-bottom: var(--space-lg);
+    scroll-margin-top: 96px;
+}
+
+.report-section-toggle {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 0 0 14px;
+    padding: 18px 20px;
+    border: 1px solid rgba(31,77,58,0.12);
+    border-radius: 18px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.78), rgba(255,255,255,0.56)),
+        rgba(255,255,255,0.48);
+    color: var(--text-dark);
+    box-shadow: 0 10px 24px rgba(30,47,68,0.06);
+    cursor: pointer;
+    text-align: left;
+}
+
+.report-section-toggle:hover {
+    border-color: rgba(31,77,58,0.24);
+}
+
+.report-section-toggle-copy {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 14px;
+    align-items: center;
+}
+
+.report-section-number {
+    grid-row: span 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: rgba(31,77,58,0.10);
+    color: var(--pnw-evergreen);
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.report-section-toggle strong {
+    display: block;
+    color: var(--pnw-navy);
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.report-section-toggle small {
+    display: block;
+    margin-top: 4px;
+    color: rgba(42,42,42,0.70);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.report-section-state {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(31,77,58,0.10);
+    color: var(--pnw-evergreen);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.report-section-body {
+    display: grid;
+    gap: var(--space-lg);
+}
+
+.report-collapsible-section.is-collapsed {
+    margin-bottom: 14px;
+}
+
+.dashboard-bottom .report-collapsible-section {
+    margin-bottom: 0;
+}
+
 .report-action-primary,
 .report-action-secondary {
 
@@ -1875,6 +2050,36 @@ EDIT INPUT BUTTON
         box-sizing: border-box;
     }
 
+    .report-toc {
+        padding: 18px 16px;
+    }
+
+    .report-toc-head {
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .report-toc-actions,
+    .report-toc-actions > *,
+    .report-toc-list {
+        width: 100%;
+    }
+
+    .report-toc-list {
+        grid-template-columns: 1fr;
+    }
+
+    .report-section-toggle {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 12px;
+        padding: 15px 16px;
+    }
+
+    .report-section-state {
+        align-self: flex-start;
+    }
+
     .summary-panel,
     .score-panel,
     .timeline-panel,
@@ -2141,6 +2346,8 @@ EDIT INPUT BUTTON
     .site-header,
     .site-footer,
     .report-actions,
+    .report-toc-actions,
+    .report-section-toggle,
     .report-card-actions,
     #editInputsBtn,
     .retirement-slider,
@@ -2181,6 +2388,8 @@ EDIT INPUT BUTTON
     .dashboard-overview-card,
     .dashboard-recommendation-panel,
     .report-detail-panel,
+    .report-toc,
+    .report-collapsible-section,
     .summary-panel,
     .score-panel,
     .timeline-panel,
@@ -2193,6 +2402,25 @@ EDIT INPUT BUTTON
         backdrop-filter: none !important;
         break-inside: avoid;
         page-break-inside: avoid;
+    }
+
+    .report-collapsible-section {
+        margin-bottom: 16px;
+    }
+
+    .report-section-body[hidden] {
+        display: grid !important;
+    }
+
+    .report-toc {
+        padding: 0 0 16px;
+        border: none !important;
+        break-inside: auto;
+        page-break-inside: auto;
+    }
+
+    .report-toc-list {
+        grid-template-columns: 1fr 1fr;
     }
 
     .dashboard-overview-grid {

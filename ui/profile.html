@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile | LEOFF Helper</title>
+<meta name="description" content="Manage your LEOFF Helper account profile, password, retirement check-in emails, and premium subscription access.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://leoffhelper.com/profile">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LEOFF Helper">
+<meta property="og:title" content="Profile | LEOFF Helper">
+<meta property="og:description" content="Manage your LEOFF Helper account profile, password, retirement check-in emails, and premium subscription access.">
+<meta property="og:url" content="https://leoffhelper.com/profile">
+<meta property="og:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Profile | LEOFF Helper">
+<meta name="twitter:description" content="Manage your LEOFF Helper account profile and premium subscription access.">
+<meta name="twitter:image" content="https://leoffhelper.com/assets/illustrations/Header-logo.png">
+<link rel="icon" href="/assets/logo/Newlogo.png">
+<link rel="apple-touch-icon" href="/assets/logo/Newlogo.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/logo/Newlogo.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/logo/Newlogo.png">
+<link rel="stylesheet" href="/ui/homepage.css">
+<link rel="stylesheet" href="/ui/login.css">
+<link rel="stylesheet" href="/ui/profile.css">
+<script defer src="/ui/analytics.js"></script>
+</head>
+<body class="profile-page">
+
+<header class="site-header">
+<div class="logo-wrap">
+<a href="/ui/index.html">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+</a>
+</div>
+
+<nav class="nav">
+<a href="/ui/simulator.html">Full Planner</a>
+<a href="/ui/tools.html">Tools</a>
+<a href="/ui/articles.html">Guides</a>
+<a href="/ui/about.html">About</a>
+<a href="/ui/subscriptions.html">Subscribe</a>
+<a href="/ui/login.html" class="nav-login">Log In</a>
+</nav>
+</header>
+
+<main class="profile-shell">
+<section class="profile-hero">
+<div>
+<div class="profile-kicker">Account Profile</div>
+<h1>Your LEOFF Helper Account</h1>
+<p>
+Manage the account details that keep your saved retirement planning work,
+premium access, and check-in reminders organized.
+</p>
+</div>
+<div class="profile-hero-actions">
+<a href="/ui/retirementDashboard.html" class="profile-primary-link">Open Dashboard</a>
+<a href="/ui/full-retirement-report.html" class="profile-secondary-link">Open Full Report</a>
+</div>
+</section>
+
+<div class="profile-status" data-profile-status hidden></div>
+
+<section class="profile-grid" data-profile-content hidden>
+<article class="profile-card profile-card-wide">
+<div class="profile-card-kicker">Account Settings</div>
+<h2>Profile Details</h2>
+<div class="profile-meta">
+<div><strong>Email:</strong> <span data-auth-email></span></div>
+<div><strong>Plan tier:</strong> <span data-auth-plan-tier>Free</span></div>
+<div><strong>Premium modeling:</strong> <span data-auth-premium-access>Not active</span></div>
+<div><strong>Member since:</strong> <span data-auth-created-at></span></div>
+</div>
+
+<form class="login-settings-form" data-profile-form>
+<div class="login-form-grid">
+<label>
+First Name
+<input type="text" name="firstName" placeholder="First name" autocomplete="given-name">
+</label>
+
+<label>
+Last Name
+<input type="text" name="lastName" placeholder="Last name" autocomplete="family-name">
+</label>
+</div>
+
+<div class="login-form-grid">
+<label>
+IAFF Local #
+<input type="text" name="iaffLocalNumber" placeholder="Example: 27" inputmode="numeric">
+</label>
+
+<label>
+Birth Year
+<input type="number" name="birthYear" placeholder="Example: 1981" min="1900" max="2026" inputmode="numeric">
+</label>
+</div>
+
+<label>
+Preferred Name
+<input type="text" name="displayName" placeholder="How your name should appear">
+</label>
+
+<label>
+Retirement Check-In Emails
+<select name="retirementCheckInFrequency" data-profile-checkin-frequency>
+<option value="never">Never</option>
+<option value="monthly">Monthly</option>
+<option value="every_6_months">Every 6 Months</option>
+<option value="yearly">Every Year</option>
+</select>
+</label>
+
+<button type="submit" class="login-submit" data-profile-submit>Save Settings</button>
+</form>
+</article>
+
+<article class="profile-card">
+<div class="profile-card-kicker">Premium Subscription</div>
+<h2>Subscription</h2>
+<p class="profile-copy" data-premium-summary>
+Loading subscription status...
+</p>
+<div class="profile-meta">
+<div><strong>Access type:</strong> <span data-auth-premium-source>Not active</span></div>
+<div><strong>Renewal / expiry:</strong> <span data-auth-premium-expires>Not active</span></div>
+</div>
+<div class="profile-premium-benefits">
+<span>Monte Carlo Plus</span>
+<span>Scenario comparison</span>
+<span>Withdrawal-order optimizer</span>
+<span>Social Security optimizer</span>
+<span>Survivor-option optimizer</span>
+<span>Estate and tax detail views</span>
+</div>
+<div class="profile-actions">
+<a href="/ui/subscriptions.html" class="profile-primary-link" data-premium-buy>Buy Annual Subscription - $15/year</a>
+<button type="button" class="profile-danger-link" data-premium-cancel hidden>Cancel Premium</button>
+</div>
+<div class="profile-cancel-confirm" data-premium-cancel-confirm hidden>
+<p>
+Cancelling turns off premium tools for this account and moves the account back
+to the free tier.
+</p>
+<div class="profile-actions">
+<button type="button" class="profile-danger-link" data-premium-cancel-confirm-button>Confirm Cancellation</button>
+<button type="button" class="profile-secondary-link" data-premium-cancel-keep>Keep Premium</button>
+</div>
+</div>
+<p class="profile-small-note">
+Subscription purchases currently use manual email handling until the billing
+portal is connected. Cancellation is handled here in the account profile.
+</p>
+</article>
+
+<article class="profile-card">
+<div class="profile-card-kicker">Session</div>
+<h2>Security</h2>
+<p class="profile-copy">
+Your account signs out after 15 minutes of inactivity. Activity on the site
+refreshes the active session while you are using it.
+</p>
+<div class="profile-meta">
+<div><strong>Session status:</strong> <span data-session-status>Active</span></div>
+<div><strong>Current expiry:</strong> <span data-session-expiry>Refreshing...</span></div>
+</div>
+<div class="profile-actions">
+<button type="button" class="profile-secondary-link" data-session-refresh>Refresh Session</button>
+<button type="button" class="profile-danger-link" data-auth-logout>Log Out</button>
+</div>
+</article>
+
+<article class="profile-card profile-card-wide">
+<div class="profile-card-kicker">Password</div>
+<h2>Update Password</h2>
+<p class="profile-copy">
+Change your password here while signed in. If you ever lose access, use the
+Forgot Password flow from the login page.
+</p>
+<form class="login-settings-form" data-password-form>
+<label>
+Current Password
+<input type="password" name="currentPassword" placeholder="Enter current password" autocomplete="current-password">
+</label>
+<div class="login-form-grid">
+<label>
+New Password
+<input type="password" name="newPassword" placeholder="Enter new password" autocomplete="new-password" minlength="8">
+</label>
+<label>
+Confirm New Password
+<input type="password" name="confirmPassword" placeholder="Confirm new password" autocomplete="new-password" minlength="8">
+</label>
+</div>
+<button type="submit" class="login-submit" data-password-submit>Update Password</button>
+</form>
+</article>
+</section>
+</main>
+
+<footer class="site-footer">
+<div class="footer-grid">
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/simulator.html">Full Planner</a></li>
+<li><a href="/ui/tools.html">Tools</a></li>
+<li><a href="/ui/articles.html">Retirement Guides</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/retirement-age-comparison.html">Retirement Age Comparison</a></li>
+<li><a href="/ui/survivor-benefit-estimator.html">Survivor Benefit Estimator</a></li>
+<li><a href="/ui/lifetime-pension-value-calculator.html">Lifetime Pension Value</a></li>
+</ul>
+</div>
+
+<div class="footer-col">
+<ul class="footer-links">
+<li><a href="/ui/about.html">About LEOFF Helper</a></li>
+<li><a href="/ui/faq.html">FAQ</a></li>
+<li><a href="/ui/subscriptions.html">Subscriptions</a></li>
+<li><a href="/ui/contact.html">Contact Us</a></li>
+<li class="social-link-item"><a href="https://www.facebook.com/LEOFFHELPER/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><img src="/assets/illustrations/facebook2.png" alt="Facebook" width="20" height="20"></a></li>
+<li class="social-link-item"><a href="https://x.com/LEOFFHelper" target="_blank" rel="noopener noreferrer" aria-label="X"><img src="/assets/illustrations/twitter2.png" alt="X" width="20" height="20"></a></li>
+</ul>
+</div>
+
+<div class="footer-col footer-subscribe">
+<h4>Subscribe for Retirement Tips</h4>
+<div class="subscribe-row">
+<input type="email" placeholder="Email">
+<button>Subscribe</button>
+</div>
+</div>
+</div>
+
+<div class="footer-bottom">
+<p>&copy; 2026 LEOFF Helper - Educational use only</p>
+</div>
+</footer>
+
+<script type="module" src="/ui/authHeader.js"></script>
+<script type="module" src="/ui/profile.js"></script>
+</body>
+</html>

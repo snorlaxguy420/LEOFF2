@@ -472,3 +472,56 @@ export async function sendRetirementCheckInEmail({
         failureMessage: "Retirement check-in email could not be sent."
     });
 }
+
+function buildSubscriptionCancellationText({ userEmail, displayName, cancelledAt }) {
+    return [
+        "LEOFF Helper premium cancellation",
+        "",
+        `Account email: ${userEmail}`,
+        `Name: ${displayName || "(not set)"}`,
+        `Cancelled at: ${cancelledAt}`,
+        "",
+        "The account was moved to the free tier from the profile page."
+    ].join("\n");
+}
+
+function buildSubscriptionCancellationHtml({ userEmail, displayName, cancelledAt }) {
+    return `
+        <div style="font-family:Segoe UI,Arial,sans-serif;color:#1e2f44;line-height:1.6;">
+            <p><strong>LEOFF Helper premium cancellation</strong></p>
+            <p>
+                Account email: <strong>${escapeHtml(userEmail)}</strong><br>
+                Name: <strong>${escapeHtml(displayName || "(not set)")}</strong><br>
+                Cancelled at: <strong>${escapeHtml(cancelledAt)}</strong>
+            </p>
+            <p>The account was moved to the free tier from the profile page.</p>
+        </div>
+    `.trim();
+}
+
+export async function sendSubscriptionCancellationEmail({
+    userEmail,
+    displayName,
+    cancelledAt
+}) {
+    return sendConfiguredEmail({
+        toEmails: [config.supportEmail],
+        subject: `LEOFF Helper premium cancelled: ${userEmail}`,
+        text: buildSubscriptionCancellationText({
+            userEmail,
+            displayName,
+            cancelledAt
+        }),
+        html: buildSubscriptionCancellationHtml({
+            userEmail,
+            displayName,
+            cancelledAt
+        }),
+        missingConfigLogParts: [
+            "Subscription cancellation email delivery not configured.",
+            `Account email: ${userEmail}`,
+            `Cancelled at: ${cancelledAt}`
+        ],
+        failureMessage: "Subscription cancellation notification could not be sent."
+    });
+}

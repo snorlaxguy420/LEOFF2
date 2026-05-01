@@ -105,6 +105,15 @@ export async function changeAccountPassword(currentPassword, newPassword) {
     return payload || null;
 }
 
+export async function cancelPremiumSubscription() {
+    const payload = await request("/subscriptions/cancel", {
+        method: "POST",
+        body: JSON.stringify({})
+    });
+
+    return normalizeAccountContext(payload);
+}
+
 export async function requestPasswordReset(email) {
     const payload = await request("/auth/forgot-password", {
         method: "POST",

@@ -170,9 +170,9 @@ function renderAuthHeader() {
             const greeting = ensureGreeting(nav, link);
             greeting.hidden = false;
             greeting.textContent = `Welcome, ${formatDisplayName(currentUser)}`;
-            link.textContent = "LOG OUT";
-            link.href = "#";
-            link.dataset.authMode = "logout";
+            link.textContent = "PROFILE";
+            link.href = "/ui/profile.html";
+            link.dataset.authMode = "profile";
             return;
         }
 

@@ -2,6 +2,7 @@ import { config } from "./config.js";
 import {
     buildPasswordResetUrl,
     sendPasswordResetEmail,
+    sendSubscriptionCancellationEmail,
     sendWelcomeEmail
 } from "./lib/email.js";
 import {
@@ -1031,6 +1032,110 @@ async function handleChangePassword(req, res) {
     });
 }
 
+async function handleCancelPremiumSubscription(req, res) {
+    const sessionContext = await requireAuth(req, res);
+
+    if (!sessionContext) {
+        return;
+    }
+
+    const currentEntitlements = buildUserEntitlements(sessionContext.user);
+    const now = new Date().toISOString();
+    let updatedUser = null;
+
+    if (!currentEntitlements.premium) {
+        sendJson(res, 200, {
+            ...buildAccountContextPayload({
+                user: sessionContext.user,
+                session: sessionContext.session
+            }),
+            subscription: {
+                canceled: false,
+                message: "Premium is not active for this account."
+            }
+        });
+        return;
+    }
+
+    await withStore(store => ({
+        ...store,
+        users: store.users.map(user => {
+            if (user.id !== sessionContext.user.id) {
+                return user;
+            }
+
+            updatedUser = {
+                ...user,
+                planTier: "free",
+                premiumSource: null,
+                premiumGrantedAt: null,
+                premiumExpiresAt: now,
+                updatedAt: now
+            };
+
+            return updatedUser;
+        })
+    }));
+
+    if (!updatedUser) {
+        await recordAuditEvent({
+            req,
+            action: "account.subscription_cancel",
+            outcome: "failed",
+            actorUserId: sessionContext.user.id,
+            targetUserId: sessionContext.user.id,
+            metadata: {
+                reason: "user_not_found"
+            }
+        });
+        sendError(res, 404, "User not found.");
+        return;
+    }
+
+    await recordAuditEvent({
+        req,
+        action: "account.subscription_cancel",
+        outcome: "success",
+        actorUserId: sessionContext.user.id,
+        targetUserId: sessionContext.user.id,
+        email: sessionContext.user.email,
+        metadata: {
+            previousPremiumSource: currentEntitlements.premiumSource || "unknown",
+            hadPremiumExpiry: Boolean(currentEntitlements.premiumExpiresAt)
+        }
+    });
+
+    try {
+        await sendSubscriptionCancellationEmail({
+            userEmail: updatedUser.email,
+            displayName:
+                updatedUser.displayName ||
+                [updatedUser.firstName, updatedUser.lastName]
+                    .map(value => String(value || "").trim())
+                    .filter(Boolean)
+                    .join(" "),
+            cancelledAt: now
+        });
+    } catch (error) {
+        console.warn("Subscription cancellation notification failed.", {
+            email: updatedUser.email,
+            message: error?.message,
+            details: error?.details
+        });
+    }
+
+    sendJson(res, 200, {
+        ...buildAccountContextPayload({
+            user: updatedUser,
+            session: sessionContext.session
+        }),
+        subscription: {
+            canceled: true,
+            message: "Premium subscription cancelled."
+        }
+    });
+}
+
 async function handleForgotPassword(req, res) {
     const body = await readJsonBody(req);
     const email = normalizeEmail(body.email);
@@ -1704,6 +1809,11 @@ export async function handleRequest(req, res) {
 
         if (req.method === "POST" && pathname === "/auth/change-password") {
             await handleChangePassword(req, res);
+            return;
+        }
+
+        if (req.method === "POST" && pathname === "/subscriptions/cancel") {
+            await handleCancelPremiumSubscription(req, res);
             return;
         }
 

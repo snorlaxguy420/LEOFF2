@@ -50,6 +50,7 @@ let monteCarloTimeoutId = null;
 const FREE_MONTE_CARLO_ITERATIONS = 250;
 const PREMIUM_MONTE_CARLO_ITERATIONS = 1000;
 const MONTE_CARLO_BASE_SEED = 424242;
+const ACCOUNT_CONTEXT_TIMEOUT_MS = 3000;
 
 let monteCarloIterations = FREE_MONTE_CARLO_ITERATIONS;
 let monteCarloPlusEnabled = false;
@@ -110,7 +111,7 @@ function renderSharedPlanBanner(sharedPlan = null) {
         ? `Shared scenario: ${sharedPlan.name}`
         : "Shared scenario";
     summary.textContent =
-        "This dashboard was opened from a share link, so it is view-only and does not change the owner's saved scenario. You can review the report and print it without account access.";
+        "This planning view was opened from a share link, so it is view-only and does not change the owner's saved scenario. You can review the report and print it without account access.";
 
     if (editButton) {
         editButton.hidden = true;
@@ -1169,6 +1170,17 @@ function formatReadinessBreakdownValue(value, maxValue, fallback = "--") {
 }
 
 function renderReadinessBreakdown(readiness = null) {
+    if (
+        !document.getElementById("readinessCoverageScore") ||
+        !document.getElementById("readinessDeficitScore") ||
+        !document.getElementById("readinessLongevityScore") ||
+        !document.getElementById("readinessEarlyScore") ||
+        !document.getElementById("readinessStabilityScore") ||
+        !document.getElementById("readinessMonteCarloScore")
+    ) {
+        return;
+    }
+
     const breakdown = readiness?.breakdown || {};
     const maxScores = readiness?.maxScores || {};
 
@@ -1289,6 +1301,7 @@ function renderSpouseConversationSection({
     headline.textContent = content.headline;
     summary.textContent = content.summary;
     note.textContent = content.note;
+    note.hidden = !String(content.note || "").trim();
 
     snapshot.innerHTML =
         content.snapshot.length
@@ -1668,7 +1681,12 @@ function setMonteCarloLoadingState() {
 
 async function loadDashboardAccountContext() {
     try {
-        dashboardAccountContext = await getAccountContext();
+        dashboardAccountContext = await Promise.race([
+            getAccountContext(),
+            new Promise(resolve => {
+                window.setTimeout(() => resolve(null), ACCOUNT_CONTEXT_TIMEOUT_MS);
+            })
+        ]);
     } catch (error) {
         dashboardAccountContext = null;
     }

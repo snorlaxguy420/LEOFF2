@@ -36,6 +36,7 @@ const VIEW_TITLE = {
 };
 
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
+const PROFILE_PATH = "/ui/profile.html";
 const RETIREMENT_CHECK_IN_LABELS = {
     never: "Never",
     monthly: "Monthly",
@@ -754,10 +755,19 @@ function renderAuthenticatedState(accountContext = null) {
     setRecoveryPending(false);
 }
 
+function redirectAuthenticatedUser(accountContext) {
+    if (!accountContext?.user) {
+        return;
+    }
+
+    window.location.assign(PROFILE_PATH);
+}
+
 async function refreshAccountContext(statusMessage = "", tone = "success") {
     try {
         const accountContext = await getAccountContext();
         renderAuthenticatedState(accountContext);
+        redirectAuthenticatedUser(accountContext);
 
         if (statusMessage) {
             setStatus(statusMessage, tone);

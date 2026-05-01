@@ -128,34 +128,41 @@ function buildReadinessTimelineEntries({
     const entries = [];
 
     for (let retireAge = minimumRetirementAge; retireAge <= maximumRetirementAge; retireAge += 1) {
-        const {
-            currentInputs,
-            currentIncomeSources,
-            currentProjection
-        } = buildDashboardScenario({
-            baseInputs,
-            baseSources: baseSavedSources,
-            baseAssumptions,
-            retireAge
-        });
-        const analysis = analyzeRetirementPlan({
-            inputs: currentInputs,
-            incomeSources: currentIncomeSources,
-            projection: currentProjection
-        });
-        const summary = summarizeDashboardResults({
-            results: currentProjection?.results || [],
-            retireAge
-        });
+        try {
+            const {
+                currentInputs,
+                currentIncomeSources,
+                currentProjection
+            } = buildDashboardScenario({
+                baseInputs,
+                baseSources: baseSavedSources,
+                baseAssumptions,
+                retireAge
+            });
+            const analysis = analyzeRetirementPlan({
+                inputs: currentInputs,
+                incomeSources: currentIncomeSources,
+                projection: currentProjection
+            });
+            const summary = summarizeDashboardResults({
+                results: currentProjection?.results || [],
+                retireAge
+            });
 
-        entries.push({
-            retireAge,
-            readinessScore: analysis?.readinessScore || 0,
-            readinessBand: normalizeReadinessBand(analysis),
-            averageMargin: summary?.avgMargin || 0,
-            firstDeficitAge: analysis?.retirementFailureAge ?? null,
-            assetDepletionAge: analysis?.assetDepletionAge ?? null
-        });
+            entries.push({
+                retireAge,
+                readinessScore: analysis?.readinessScore || 0,
+                readinessBand: normalizeReadinessBand(analysis),
+                averageMargin: summary?.avgMargin || 0,
+                firstDeficitAge: analysis?.retirementFailureAge ?? null,
+                assetDepletionAge: analysis?.assetDepletionAge ?? null
+            });
+        } catch (error) {
+            console.warn(
+                `Skipping readiness timeline age ${retireAge}.`,
+                error
+            );
+        }
     }
 
     return entries;

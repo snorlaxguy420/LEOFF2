@@ -1,3 +1,5 @@
+import LEOFF2_CONSTANTS from "../pensions/LEOFF2/leoff2Constants.js";
+
 function totalPortfolio(result) {
     if (!result?.portfolios) {
         return 0;
@@ -38,8 +40,16 @@ export function getMinimumDashboardRetirementAge(inputs = {}) {
             0,
             Math.ceil(inputs?.profile?.currentAge || 0)
         );
+    const pensionSystem =
+        String(inputs?.pension?.system || "LEOFF2")
+            .trim()
+            .toUpperCase();
+    const pensionMinimumAge =
+        pensionSystem === "LEOFF2"
+            ? LEOFF2_CONSTANTS.EARLIEST_RETIREMENT_AGE
+            : 50;
 
-    return Math.max(50, currentAge);
+    return Math.max(pensionMinimumAge, currentAge);
 }
 
 export function getMaximumDashboardRetirementAge(inputs = {}) {
@@ -618,8 +628,7 @@ export function buildSpouseConversationSummary({
             }
         ],
         prompts,
-        note:
-            `Primary watch item: ${primaryRiskLabel}. Use this page to align on timing, survivor protection, and which fallback move the household would actually make first.`
+        note: ""
     };
 }
 

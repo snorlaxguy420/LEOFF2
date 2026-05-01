@@ -2246,6 +2246,43 @@ function testPreRetirementEmploymentIncomeProjection() {
     logResult("Pre-retirement employment income projection passed");
 }
 
+function testPreRetirementSurplusSavingsSweep() {
+    const projection = projectTotalRetirement({
+        incomeSources: [],
+        currentAge: 45,
+        currentAnnualPay: 100000,
+        expectedFinalAnnualPay: 100000,
+        retireAge: 47,
+        lifeExpectancy: 48,
+        baseExpenses: 60000,
+        inflation: 0,
+        preRetirementSurplusSweep: {
+            target: "taxable_brokerage",
+            sweepRate: 0.5,
+            growthRate: 0
+        }
+    });
+    const age45 = projection.results.find(result => result.age === 45);
+    const age46 = projection.results.find(result => result.age === 46);
+    const age47 = projection.results.find(result => result.age === 47);
+    const bucketName = "Pre-Retirement Surplus Taxable Brokerage";
+
+    assert(
+        Math.round(age45?.surplusSavingsContribution || 0) === 20000,
+        "First pre-retirement surplus sweep contribution should be recorded"
+    );
+    assert(
+        Math.round(age46?.portfolios?.[bucketName] || 0) === 40000,
+        "Pre-retirement surplus sweep should accumulate in the selected bucket"
+    );
+    assert(
+        Math.round(age47?.breakdown?.[bucketName] || 0) === 40000,
+        "Swept surplus bucket should become available to cover retirement-year spending"
+    );
+
+    logResult("Pre-retirement surplus savings sweep passed");
+}
+
 function testSpouseIncomeStopsAtSpouseRetirement() {
     const projection = projectTotalRetirement({
         incomeSources: [],
@@ -3645,10 +3682,22 @@ function testDashboardRetirementAgeBounds() {
                 currentAge: 57.2
             }
         });
-    const boundedToFloor =
+    const boundedToLeoffFloor =
         getMinimumDashboardRetirementAge({
             profile: {
                 currentAge: 44
+            },
+            pension: {
+                system: "LEOFF2"
+            }
+        });
+    const boundedToGenericFloor =
+        getMinimumDashboardRetirementAge({
+            profile: {
+                currentAge: 44
+            },
+            pension: {
+                system: "generic"
             }
         });
     const maximumWithHigherLifeExpectancy =
@@ -3671,8 +3720,12 @@ function testDashboardRetirementAgeBounds() {
         "Dashboard minimum retirement age should round current age up"
     );
     assert(
-        boundedToFloor === 50,
-        "Dashboard minimum retirement age should keep the 50-year floor"
+        boundedToLeoffFloor === 53,
+        "Dashboard minimum retirement age should respect the LEOFF 2 statutory floor"
+    );
+    assert(
+        boundedToGenericFloor === 50,
+        "Dashboard minimum retirement age should keep the generic 50-year floor"
     );
     assert(
         maximumWithHigherLifeExpectancy === 70,
@@ -4800,6 +4853,7 @@ async function runVerification() {
         testRetirementAccountContributionAccumulation();
         testSplitExpenseInflationProjection();
         testPreRetirementEmploymentIncomeProjection();
+        testPreRetirementSurplusSavingsSweep();
         testSpouseIncomeStopsAtSpouseRetirement();
         testRentalIncomeProjectionBreakdown();
         testRealEstateExtraPrincipalPayment();

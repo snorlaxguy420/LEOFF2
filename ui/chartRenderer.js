@@ -85,7 +85,21 @@ export function renderChart({
 }) {
 
     const canvas = document.getElementById(canvasId);
+    if (!canvas || !Array.isArray(results) || results.length === 0) {
+        const ctx = canvas?.getContext?.("2d");
+
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width || 0, canvas.height || 0);
+        }
+
+        return;
+    }
+
     const ctx = canvas.getContext("2d");
+    if (!ctx) {
+        return;
+    }
+
     const renderToken = (canvas.__chartRenderToken || 0) + 1;
     const tooltip = document.getElementById(tooltipId);
 
@@ -131,6 +145,11 @@ export function renderChart({
     });
 
     const yMax = maxMonthly * yScaleMultiplier;
+
+    if (!Number.isFinite(yMax) || yMax <= 0) {
+        ctx.clearRect(0, 0, width, height);
+        return;
+    }
 
     function scaleY(value) {
         return (value / yMax) * chartHeight;

@@ -1161,6 +1161,17 @@ function clearTimelineLegend() {
     }
 }
 
+function safeRenderProjectionChart(options) {
+    try {
+        renderProjectionChart(options);
+    } catch (error) {
+        console.error(
+            `Failed to render dashboard chart "${options?.canvasId || "unknown"}"`,
+            error
+        );
+    }
+}
+
 function formatReadinessBreakdownValue(value, maxValue, fallback = "--") {
     if (!Number.isFinite(value) || !Number.isFinite(maxValue)) {
         return fallback;
@@ -2073,7 +2084,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             clearTimelineLegend();
         }
 
-        renderProjectionChart({
+        safeRenderProjectionChart({
             canvasId: "comparisonChart",
             results,
             dataset: "incomeVsExpenses",
@@ -2088,7 +2099,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             legendId: "timelineLegend"
         });
 
-        renderProjectionChart({
+        safeRenderProjectionChart({
             canvasId: "printBarChart",
             results,
             dataset: "incomeVsExpenses",
@@ -2098,7 +2109,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             yScaleMultiplier: 1.25
         });
 
-        renderProjectionChart({
+        safeRenderProjectionChart({
             canvasId: "printLineChart",
             results,
             dataset: "incomeVsExpenses",

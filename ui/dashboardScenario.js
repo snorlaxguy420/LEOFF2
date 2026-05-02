@@ -10,11 +10,13 @@ export function buildDashboardScenario({
     baseInputs = {},
     baseSources = [],
     baseAssumptions = {},
-    retireAge
+    retireAge,
+    spouseRetirementAge = null
 }) {
     const currentInputs = buildDashboardAgeAdjustedInputs({
         baseInputs,
-        retireAge
+        retireAge,
+        spouseRetirementAge
     });
     const currentNonPensionSources =
         buildDashboardAgeAdjustedIncomeSources({

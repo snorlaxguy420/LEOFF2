@@ -1179,7 +1179,8 @@ export function buildMonteCarloProjectionChartContent(monteCarlo = {}) {
 
 export function buildDashboardAgeAdjustedInputs({
     baseInputs = {},
-    retireAge
+    retireAge,
+    spouseRetirementAge = null
 }) {
     const nextInputs = structuredClone(baseInputs || {});
     const currentAge = nextInputs?.profile?.currentAge ?? null;
@@ -1225,6 +1226,16 @@ export function buildDashboardAgeAdjustedInputs({
         serviceYears: adjustedServiceYears,
         finalAverageSalary: adjustedFinalAverageSalary
     };
+
+    if (
+        nextInputs.profile?.spouse &&
+        Number.isFinite(Number(spouseRetirementAge))
+    ) {
+        nextInputs.profile.spouse = {
+            ...nextInputs.profile.spouse,
+            retirementAge: Number(spouseRetirementAge)
+        };
+    }
 
     return nextInputs;
 }

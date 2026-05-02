@@ -176,6 +176,15 @@ function updateRetirementAgeLabel(retireAge) {
     }
 }
 
+function updateSpouseRetirementAgeLabel(spouseRetirementAge) {
+    const label = document.getElementById("spouseRetirementAgeSliderLabel");
+
+    if (label) {
+        label.innerHTML =
+            `Spouse Retirement Age: <strong>${spouseRetirementAge}</strong>`;
+    }
+}
+
 function buildReportDocumentTitle(retireAge) {
     const now = new Date();
     const stamp = [
@@ -2185,8 +2194,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             assumedInflationRate
     };
 
-    function renderDashboardForAge(retireAge) {
+    function renderDashboardForAge(retireAge, spouseRetirementAge = null) {
         updateRetirementAgeLabel(retireAge);
+
+        if (Number.isFinite(Number(spouseRetirementAge))) {
+            updateSpouseRetirementAgeLabel(Number(spouseRetirementAge));
+        }
 
         const {
             currentInputs,
@@ -2197,7 +2210,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             baseInputs,
             baseSources: baseSavedSources,
             baseAssumptions,
-            retireAge
+            retireAge,
+            spouseRetirementAge
         });
         const results = currentProjection.results;
         const analysis = analyzeRetirementPlan({
@@ -2452,6 +2466,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         baselineAnalysis.earliestRetirementAge ??
         baseInputs.retireAge;
     const slider = document.getElementById("retirementAgeSlider");
+    const spouseSlider =
+        document.getElementById("spouseRetirementAgeSlider");
+    const spouseSliderWrap =
+        document.getElementById("spouseRetirementAgeSliderWrap");
     const comparisonChartToggleBtn =
         document.getElementById("comparisonChartToggleBtn");
     const minimumRetirementAge =
@@ -2462,6 +2480,41 @@ document.addEventListener("DOMContentLoaded", async () => {
         Math.min(
             Math.max(initialRecommendedAge, minimumRetirementAge),
             maximumRetirementAge
+        );
+    const baseSpouse = baseInputs?.profile?.spouse || null;
+    const spouseSliderEnabled =
+        Boolean(
+            baseSpouse &&
+            (
+                Number(baseSpouse.annualIncome || 0) > 0 ||
+                Number.isFinite(Number(baseSpouse.retirementAge))
+            )
+        );
+    const spouseCurrentAge =
+        Number(baseSpouse?.currentAge ?? baseSpouse?.age);
+    const minimumSpouseRetirementAge =
+        Number.isFinite(spouseCurrentAge)
+            ? Math.max(18, Math.ceil(spouseCurrentAge))
+            : 18;
+    const maximumSpouseRetirementAge =
+        Math.max(
+            minimumSpouseRetirementAge,
+            Math.min(
+                Math.max(baseInputs?.lifeExpectancy || 70, 70) - 5,
+                75
+            )
+        );
+    const baseSpouseRetirementAge =
+        Number(baseSpouse?.retirementAge);
+    const initialSpouseRetirementAge =
+        Math.min(
+            Math.max(
+                Number.isFinite(baseSpouseRetirementAge)
+                    ? baseSpouseRetirementAge
+                    : maximumSpouseRetirementAge,
+                minimumSpouseRetirementAge
+            ),
+            maximumSpouseRetirementAge
         );
     const readinessTimelineEnabled =
         hasPremiumAccess(dashboardAccountContext, "readinessTimeline");
@@ -2488,7 +2541,36 @@ document.addEventListener("DOMContentLoaded", async () => {
         slider.addEventListener("input", () => {
             const retireAge =
                 parseInt(slider.value, 10) || initialSliderAge;
-            renderDashboardForAge(retireAge);
+            const spouseRetirementAge =
+                spouseSliderEnabled
+                    ? parseInt(
+                        spouseSlider?.value ||
+                        String(initialSpouseRetirementAge),
+                        10
+                    ) || initialSpouseRetirementAge
+                    : null;
+            renderDashboardForAge(retireAge, spouseRetirementAge);
+        });
+    }
+
+    if (spouseSliderWrap) {
+        spouseSliderWrap.hidden = !spouseSliderEnabled;
+    }
+
+    if (spouseSlider && spouseSliderEnabled) {
+        spouseSlider.min = String(minimumSpouseRetirementAge);
+        spouseSlider.max = String(maximumSpouseRetirementAge);
+        spouseSlider.value = String(initialSpouseRetirementAge);
+        updateSpouseRetirementAgeLabel(initialSpouseRetirementAge);
+        spouseSlider.addEventListener("input", () => {
+            const retireAge =
+                parseInt(slider?.value || String(initialSliderAge), 10) ||
+                initialSliderAge;
+            const spouseRetirementAge =
+                parseInt(spouseSlider.value, 10) ||
+                initialSpouseRetirementAge;
+
+            renderDashboardForAge(retireAge, spouseRetirementAge);
         });
     }
 
@@ -2505,11 +2587,22 @@ document.addEventListener("DOMContentLoaded", async () => {
             const retireAge =
                 parseInt(slider?.value || String(initialSliderAge), 10) ||
                 initialSliderAge;
+            const spouseRetirementAge =
+                spouseSliderEnabled
+                    ? parseInt(
+                        spouseSlider?.value ||
+                        String(initialSpouseRetirementAge),
+                        10
+                    ) || initialSpouseRetirementAge
+                    : null;
 
-            renderDashboardForAge(retireAge);
+            renderDashboardForAge(retireAge, spouseRetirementAge);
         });
     }
 
     initializeDetailToggles();
-    renderDashboardForAge(initialSliderAge);
+    renderDashboardForAge(
+        initialSliderAge,
+        spouseSliderEnabled ? initialSpouseRetirementAge : null
+    );
 });

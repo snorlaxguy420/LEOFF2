@@ -437,6 +437,7 @@ export function renderProjectionChart({
     expenseColor = "#DB2B39",
     yScaleMultiplier = 1.25,
     compactMobile = false,
+    retirementAge = null,
     tooltipId = "tooltip",
     legendId = "timelineLegend"
 }) {
@@ -479,6 +480,7 @@ export function renderProjectionChart({
             results: preparedDataset.results,
             incomeColors: resolvedIncomeColors,
             yScaleMultiplier,
+            retirementAge,
             tooltipId,
             legendId,
             ...preparedDataset.rendererOptions
@@ -493,6 +495,7 @@ export function renderProjectionChart({
         incomeColors: resolvedIncomeColors,
         expenseColor,
         yScaleMultiplier,
+        retirementAge,
         tooltipId,
         ...preparedDataset.rendererOptions
     });

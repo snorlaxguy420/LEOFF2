@@ -2243,6 +2243,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 comparisonChartModeForScreen === "line"
                     ? 1.15
                     : 1.25,
+            retirementAge: currentInputs.retireAge,
             tooltipId: "tooltip",
             legendId: "timelineLegend"
         });
@@ -2254,7 +2255,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             mode: "bar",
             incomeSources: currentIncomeSources,
             expenseColor: "#DB2B39",
-            yScaleMultiplier: 1.25
+            yScaleMultiplier: 1.25,
+            retirementAge: currentInputs.retireAge
         });
 
         safeRenderProjectionChart({
@@ -2264,7 +2266,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             mode: "line",
             incomeSources: currentIncomeSources,
             expenseColor: "#DB2B39",
-            yScaleMultiplier: 1.25
+            yScaleMultiplier: 1.25,
+            retirementAge: currentInputs.retireAge
         });
 
         document.getElementById("readinessScore").innerText =

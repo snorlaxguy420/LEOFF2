@@ -11,6 +11,7 @@ export function renderIncomeTimeline({
     showExpenseSeries = true,
     totalSeriesLabel = "Total Income",
     totalSeriesColor = "#1F4D3A",
+    retirementAge = null,
     tooltipId = "tooltip",
     legendId = "timelineLegend"
 }) {
@@ -200,7 +201,10 @@ export function renderIncomeTimeline({
 
     const scaleY = v => (v / yMax) * chartHeight;
     const scaleX = i => (i / (sampledResults.length - 1)) * chartWidth;
-    const retirementAge = sampledResults[0]?.age ?? null;
+    const markerRetirementAge =
+        Number.isFinite(Number(retirementAge))
+            ? Number(retirementAge)
+            : sampledResults[0]?.age ?? null;
     const assetDepletionAge = findAssetDepletionAge(results);
 
     // -----------------------------
@@ -347,7 +351,7 @@ export function renderIncomeTimeline({
 
     const markerConfigs = [
         {
-            age: retirementAge,
+            age: markerRetirementAge,
             label: "Retirement",
             color: "#1F4D3A"
         },
@@ -431,6 +435,7 @@ renderIncomeTimeline({
     showExpenseSeries,
     totalSeriesLabel,
     totalSeriesColor,
+    retirementAge: markerRetirementAge,
     tooltipId,
     legendId
 });
@@ -452,7 +457,7 @@ ctx.restore();
 
     let html = `<strong>Age ${r.age}</strong><br><br>`;
 
-    if (r.age === retirementAge) {
+    if (r.age === markerRetirementAge) {
         html += `Retirement marker<br>`;
     }
 
@@ -460,7 +465,7 @@ ctx.restore();
         html += `Asset depletion marker<br>`;
     }
 
-    if (r.age === retirementAge || r.age === assetDepletionAge) {
+    if (r.age === markerRetirementAge || r.age === assetDepletionAge) {
         html += `<br>`;
     }
 

@@ -81,6 +81,7 @@ export function renderChart({
     expenseColor = "#38220F",
     yScaleMultiplier = 1.25,
     showExpenseSeries = true,
+    retirementAge = null,
     tooltipId = "tooltip"
 }) {
 
@@ -155,7 +156,10 @@ export function renderChart({
         return (value / yMax) * chartHeight;
     }
 
-    const retirementAge = sampledResults[0]?.age ?? null;
+    const markerRetirementAge =
+        Number.isFinite(Number(retirementAge))
+            ? Number(retirementAge)
+            : sampledResults[0]?.age ?? null;
     const assetDepletionAge = findAssetDepletionAge(results);
 
     // ---------- AXES (DARKENED) ----------
@@ -318,7 +322,7 @@ export function renderChart({
 
     const markerConfigs = [
         {
-            age: retirementAge,
+            age: markerRetirementAge,
             label: "Retirement",
             color: "#1F4D3A"
         },
@@ -417,6 +421,7 @@ function processHover() {
         expenseColor,
         yScaleMultiplier,
         showExpenseSeries,
+        retirementAge: markerRetirementAge,
         tooltipId
     });
 
@@ -435,7 +440,7 @@ function processHover() {
 
     let html = `<strong>Age ${r.age}</strong><br><br>`;
 
-    if (r.age === retirementAge) {
+    if (r.age === markerRetirementAge) {
         html += `Retirement marker<br>`;
     }
 
@@ -443,7 +448,7 @@ function processHover() {
         html += `Asset depletion marker<br>`;
     }
 
-    if (r.age === retirementAge || r.age === assetDepletionAge) {
+    if (r.age === markerRetirementAge || r.age === assetDepletionAge) {
         html += `<br>`;
     }
 

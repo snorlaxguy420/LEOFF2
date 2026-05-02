@@ -29,7 +29,9 @@ const NAMED_INCOME_COLORS = {
     "LEOFF Lump Sum": "#B46A3C",
     "Rental Income": "#6B4F3A",
     "Portfolio Assets": "#1E2F44",
-    "Real Estate Value": "#6A8F6B"
+    "Real Estate Value": "#6A8F6B",
+    "Pre-Retirement Surplus Cash Reserve": "#6A8F6B",
+    "Pre-Retirement Surplus Taxable Brokerage": "#B46A3C"
 };
 
 const ACCOUNT_TYPE_COLOR_FAMILIES = {
@@ -289,8 +291,32 @@ function prepareIncomeVsExpenseLineResults(results, incomeSources = []) {
             !!source?.accountType &&
             !!source?.name
         );
+    const knownPortfolioNames =
+        new Set(retirementPortfolioSources.map(source => source.name));
 
     if (!retirementPortfolioSources.length) {
+        const hasSyntheticSurplusPortfolio =
+            (basePrepared.results || []).some(result =>
+                Object.keys(result?.portfolios || {}).some(name =>
+                    name.startsWith("Pre-Retirement Surplus ")
+                )
+            );
+
+        if (!hasSyntheticSurplusPortfolio) {
+            return basePrepared;
+        }
+    }
+
+    const syntheticSurplusPortfolioNames = new Set();
+    (basePrepared.results || []).forEach(result => {
+        Object.keys(result?.portfolios || {}).forEach(name => {
+            if (name.startsWith("Pre-Retirement Surplus ")) {
+                syntheticSurplusPortfolioNames.add(name);
+            }
+        });
+    });
+
+    if (!retirementPortfolioSources.length && !syntheticSurplusPortfolioNames.size) {
         return basePrepared;
     }
 
@@ -304,6 +330,12 @@ function prepareIncomeVsExpenseLineResults(results, incomeSources = []) {
             retirementPortfolioSources.forEach(source => {
                 nextBreakdown[source.name] =
                     portfolioBalances[source.name] || 0;
+            });
+
+            syntheticSurplusPortfolioNames.forEach(name => {
+                if (!knownPortfolioNames.has(name)) {
+                    nextBreakdown[name] = portfolioBalances[name] || 0;
+                }
             });
 
             return {

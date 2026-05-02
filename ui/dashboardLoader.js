@@ -422,6 +422,147 @@ function renderPlanningLeverSection({
     }
 }
 
+function getPreRetirementSurplusSourceName(target) {
+    if (target === "cash_reserve") {
+        return "Pre-Retirement Surplus Cash Reserve";
+    }
+
+    if (target === "taxable_brokerage") {
+        return "Pre-Retirement Surplus Taxable Brokerage";
+    }
+
+    return "";
+}
+
+function getPreRetirementSurplusTargetLabel(target) {
+    if (target === "cash_reserve") {
+        return "Cash reserve";
+    }
+
+    if (target === "taxable_brokerage") {
+        return "Taxable brokerage";
+    }
+
+    return "Not enabled";
+}
+
+function formatPercentValue(value) {
+    const numeric = Number(value);
+
+    if (!Number.isFinite(numeric)) {
+        return "--";
+    }
+
+    return `${Math.round(numeric * 100)}%`;
+}
+
+function buildPreRetirementSurplusSummary({
+    simulationState,
+    projection,
+    retireAge
+}) {
+    const config =
+        simulationState?.assumptions?.preRetirementSurplusSweep || {};
+    const target = config.target || "none";
+    const sourceName = getPreRetirementSurplusSourceName(target);
+    const results = projection?.results || [];
+
+    if (!sourceName) {
+        return {
+            enabled: false,
+            targetLabel: "Not enabled",
+            sweepRate: "--",
+            growthRate: "--",
+            totalSaved: "$0",
+            retirementBalance: "$0",
+            firstUse: "Not modeled",
+            peakBalance: "$0",
+            summary:
+                "No pre-retirement surplus savings sweep is enabled. Step 7 can optionally sweep positive household cash flow before retirement into a cash reserve or taxable brokerage account."
+        };
+    }
+
+    const preRetirementResults =
+        results.filter(result => Number(result?.age) < retireAge);
+    const totalContributions =
+        preRetirementResults.reduce(
+            (sum, result) => sum + (result?.surplusSavingsContribution || 0),
+            0
+        );
+    const balanceEntries =
+        results.map(result => ({
+            age: Number(result?.age),
+            balance: Number(result?.portfolios?.[sourceName] || 0),
+            withdrawal: Number(result?.breakdown?.[sourceName] || 0)
+        }));
+    const balanceNearRetirement =
+        [...balanceEntries]
+            .reverse()
+            .find(entry => entry.age < retireAge && entry.balance > 0)
+            ?.balance ??
+        balanceEntries.find(entry => entry.age === retireAge)?.balance ??
+        0;
+    const peakBalance =
+        balanceEntries.reduce(
+            (max, entry) => Math.max(max, entry.balance),
+            0
+        );
+    const firstUse =
+        balanceEntries.find(entry =>
+            entry.age >= retireAge &&
+            entry.withdrawal > 0
+        );
+    const targetLabel = getPreRetirementSurplusTargetLabel(target);
+    const firstUseText = firstUse
+        ? `Age ${firstUse.age} (${formatCurrency(firstUse.withdrawal)})`
+        : "Not used";
+    const summary = totalContributions > 0
+        ? `Step 7 is sweeping ${formatPercentValue(config.sweepRate)} of positive pre-retirement household surplus into ${targetLabel.toLowerCase()}. The model adds about ${formatCurrency(totalContributions)} before retirement, tracks the balance on the line chart, and uses it as an available retirement funding source if needed.`
+        : `The ${targetLabel.toLowerCase()} sweep is enabled, but this scenario does not currently show positive pre-retirement household surplus to save. If income exceeds expenses before retirement, the model will add the swept amount to this account.`;
+
+    return {
+        enabled: true,
+        targetLabel,
+        sweepRate: formatPercentValue(config.sweepRate),
+        growthRate: formatPercentValue(config.growthRate),
+        totalSaved: formatCurrency(totalContributions),
+        retirementBalance: formatCurrency(balanceNearRetirement),
+        firstUse: firstUseText,
+        peakBalance: formatCurrency(peakBalance),
+        summary
+    };
+}
+
+function renderPreRetirementSurplusSection({
+    simulationState,
+    projection,
+    retireAge
+}) {
+    const panel = document.getElementById("preRetirementSurplusPanel");
+
+    if (!panel) {
+        return;
+    }
+
+    const summary = buildPreRetirementSurplusSummary({
+        simulationState,
+        projection,
+        retireAge
+    });
+
+    setElementText("preRetirementSurplusSummary", summary.summary);
+    setElementText("preRetirementSurplusTargetLabel", summary.targetLabel);
+    setElementText("preRetirementSurplusSweepRate", summary.sweepRate);
+    setElementText("preRetirementSurplusGrowthRate", summary.growthRate);
+    setElementText("preRetirementSurplusTotalSaved", summary.totalSaved);
+    setElementText(
+        "preRetirementSurplusRetirementBalance",
+        summary.retirementBalance
+    );
+    setElementText("preRetirementSurplusFirstUse", summary.firstUse);
+    setElementText("preRetirementSurplusPeakBalance", summary.peakBalance);
+}
+
 function renderWithdrawalOptimizerSection({
     simulationState,
     projection
@@ -2209,6 +2350,11 @@ document.addEventListener("DOMContentLoaded", async () => {
             vulnerabilityAnalysis,
             avgMargin,
             retirementYear
+        });
+        renderPreRetirementSurplusSection({
+            simulationState: currentSimulationState,
+            projection: currentProjection,
+            retireAge
         });
         renderSpouseConversationSection({
             currentInputs,

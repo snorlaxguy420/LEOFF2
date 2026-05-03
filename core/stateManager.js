@@ -238,7 +238,12 @@ loadAll(){
                     inflationRate: 0,
                     goodsServicesInflationRate: 0,
                     housingInflationRate: 0,
-                    healthcareInflationRate: 0
+                    healthcareInflationRate: 0,
+                    preRetirementSurplusSweep: {
+                        target: "none",
+                        sweepRate: 1,
+                        growthRate: 0.05
+                    }
                 },
                 toggles: {
                     showReal: false,

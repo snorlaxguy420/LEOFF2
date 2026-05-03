@@ -96,6 +96,8 @@ export function runProjection(simulationState) {
             healthcarePath:
                 assumptions.healthcareInflationPath ?? null
         },
+        preRetirementSurplusSweep:
+            assumptions.preRetirementSurplusSweep ?? null,
         showReal: state.showReal ?? state.toggles?.showReal ?? false,
         marketFirst: state.marketFirst ?? state.toggles?.marketFirst ?? false
     });

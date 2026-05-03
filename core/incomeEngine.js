@@ -260,6 +260,43 @@ function orderIncomeSourcesForProjection(incomeSources) {
         .map(entry => entry.source);
 }
 
+function normalizePreRetirementSurplusSweep(config = {}) {
+    const allowedTargets =
+        new Set(["none", "cash_reserve", "taxable_brokerage"]);
+    const target =
+        allowedTargets.has(config?.target) ? config.target : "none";
+
+    if (target === "none") {
+        return {
+            target: "none",
+            sweepRate: 0,
+            growthRate: 0,
+            sourceName: null
+        };
+    }
+
+    const defaultGrowthRate =
+        target === "cash_reserve" ? 0.015 : 0.05;
+    const parsedSweepRate = Number(config?.sweepRate);
+    const parsedGrowthRate = Number(config?.growthRate);
+
+    return {
+        target,
+        sweepRate:
+            Number.isFinite(parsedSweepRate)
+                ? Math.max(0, Math.min(parsedSweepRate, 1))
+                : 1,
+        growthRate:
+            Number.isFinite(parsedGrowthRate)
+                ? parsedGrowthRate
+                : defaultGrowthRate,
+        sourceName:
+            target === "cash_reserve"
+                ? "Pre-Retirement Surplus Cash Reserve"
+                : "Pre-Retirement Surplus Taxable Brokerage"
+    };
+}
+
 function getRetirementAccountDistributionRules(source, currentAge) {
 
     const accountType = source.accountType || "generic_portfolio";
@@ -410,6 +447,7 @@ export function projectTotalRetirement({
     expenseModel = null,
     inflation,
     inflationModel = null,
+    preRetirementSurplusSweep = null,
     showReal = false,
     marketFirst = false
 }) {
@@ -638,8 +676,28 @@ export function projectTotalRetirement({
         };
     }
 
+    const surplusSweep =
+        normalizePreRetirementSurplusSweep(preRetirementSurplusSweep);
+    const surplusSweepSource =
+        surplusSweep.target !== "none"
+            ? {
+                name: surplusSweep.sourceName,
+                type: "portfolio",
+                accountType: surplusSweep.target,
+                balance: 0,
+                startAge: retireAge,
+                withdrawalType: "percent",
+                withdrawalRate: 1,
+                growthRate: surplusSweep.growthRate,
+                taxable: false
+            }
+            : null;
     const orderedIncomeSources =
-        orderIncomeSourcesForProjection(incomeSources);
+        orderIncomeSourcesForProjection(
+            surplusSweepSource
+                ? [...(incomeSources || []), surplusSweepSource]
+                : (incomeSources || [])
+        );
 
     function advancePortfolioBalance({
         balance,
@@ -1004,6 +1062,21 @@ if (source.type === "real_estate") {
         let adjustedExpenses =
             annualExpenseResult.total + supplementalExpenses;
 
+        const nominalSurplus = totalIncome - adjustedExpenses;
+        const surplusSavingsContribution =
+            currentAge < retireAge && nominalSurplus > 0
+                ? nominalSurplus * surplusSweep.sweepRate
+                : 0;
+
+        if (
+            surplusSweepSource &&
+            surplusSavingsContribution > 0
+        ) {
+            portfolioBalances[surplusSweepSource.name] =
+                (portfolioBalances[surplusSweepSource.name] || 0) +
+                surplusSavingsContribution;
+        }
+
         if (showReal) {
             const inflationFactor = inflationFactorSeries[year];
             totalIncome /= inflationFactor;
@@ -1011,6 +1084,10 @@ if (source.type === "real_estate") {
         }
 
         let surplus = totalIncome - adjustedExpenses;
+        const displayedSurplusSavingsContribution =
+            showReal
+                ? surplusSavingsContribution / inflationFactorSeries[year]
+                : surplusSavingsContribution;
 
         if (surplus < 0 && firstDeficitYear === null) {
             firstDeficitYear = currentAge;
@@ -1070,6 +1147,8 @@ let netWorth =
     taxableIncome: yearlyTaxableIncome,
     expenses: adjustedExpenses,
     surplus,
+    surplusSavingsContribution: displayedSurplusSavingsContribution,
+    surplusSavingsTarget: surplusSweep.target,
     breakdown: yearlyBreakdown,
     expenseBreakdown: displayedExpenseBreakdown,
     portfolios: yearlyPortfolios,

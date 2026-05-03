@@ -78,6 +78,8 @@ export function populateSimulatorInputs(inputs) {
             inputs.socialSecurity?.spouse?.benefitFRA ||
             inputs.socialSecurity?.spouse?.benefit70
         );
+    const preRetirementSurplusSweep =
+        inputs.assumptions?.preRetirementSurplusSweep || {};
 
     const valueMap = {
         retireAge: inputs.retireAge,
@@ -136,7 +138,13 @@ export function populateSimulatorInputs(inputs) {
         healthcareInflation:
             (inputs.assumptions?.healthcareInflationRate ||
              inputs.assumptions?.inflationRate ||
-             0) * 100
+             0) * 100,
+        preRetirementSurplusTarget:
+            preRetirementSurplusSweep.target || "none",
+        preRetirementSurplusSweepRate:
+            (preRetirementSurplusSweep.sweepRate ?? 1) * 100,
+        preRetirementSurplusGrowthRate:
+            (preRetirementSurplusSweep.growthRate ?? 0.05) * 100
     };
 
     Object.entries(valueMap).forEach(([id, value]) => {

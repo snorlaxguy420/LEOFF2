@@ -85,6 +85,9 @@ const schema = {
     goodsServicesInflation: "number",
     housingInflation: "number",
     healthcareInflation: "number",
+    preRetirementSurplusTarget: "text",
+    preRetirementSurplusSweepRate: "number",
+    preRetirementSurplusGrowthRate: "number",
 
     realToggle: "checkbox",
     marketFirstToggle: "checkbox"
@@ -242,7 +245,21 @@ export function collectInputs() {
             housingInflationRate:
                 (raw.housingInflation || 2.8) / 100,
             healthcareInflationRate:
-                (raw.healthcareInflation || 6) / 100
+                (raw.healthcareInflation || 6) / 100,
+            preRetirementSurplusSweep: {
+                target:
+                    raw.preRetirementSurplusTarget || "none",
+                sweepRate:
+                    Math.max(
+                        0,
+                        Math.min(
+                            raw.preRetirementSurplusSweepRate / 100,
+                            1
+                        )
+                    ),
+                growthRate:
+                    raw.preRetirementSurplusGrowthRate / 100
+            }
         },
 
         toggles: {

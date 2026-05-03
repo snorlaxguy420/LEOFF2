@@ -2282,7 +2282,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         healthcareInflationRate:
             baseInputs?.assumptions?.healthcareInflationRate ??
             savedSimulationState?.assumptions?.healthcareInflationRate ??
-            assumedInflationRate
+            assumedInflationRate,
+        preRetirementSurplusSweep:
+            baseInputs?.assumptions?.preRetirementSurplusSweep ??
+            savedSimulationState?.assumptions?.preRetirementSurplusSweep ??
+            {
+                target: "none",
+                sweepRate: 1,
+                growthRate: 0.05
+            }
     };
 
     function renderDashboardForAge(retireAge, spouseRetirementAge = null) {

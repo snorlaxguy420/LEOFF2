@@ -57,6 +57,8 @@ export function buildSimulationState({
     const healthcareInflationRate =
         mergedAssumptions.healthcareInflationRate ??
         inflationRate;
+    const preRetirementSurplusSweep =
+        mergedAssumptions.preRetirementSurplusSweep || {};
     const spouseCurrentAge =
         profile.spouse?.currentAge ??
         profile.spouse?.age ??
@@ -138,7 +140,15 @@ export function buildSimulationState({
             inflationRate,
             goodsServicesInflationRate,
             housingInflationRate,
-            healthcareInflationRate
+            healthcareInflationRate,
+            preRetirementSurplusSweep: {
+                target:
+                    preRetirementSurplusSweep.target || "none",
+                sweepRate:
+                    preRetirementSurplusSweep.sweepRate ?? 1,
+                growthRate:
+                    preRetirementSurplusSweep.growthRate ?? 0.05
+            }
         },
         toggles: {
             showReal: toggles.showReal ?? false,
@@ -258,7 +268,18 @@ export function simulationStateToInputs(simulationState = {}) {
             healthcareInflationRate:
                 state.assumptions?.healthcareInflationRate ??
                 state.assumptions?.inflationRate ??
-                0
+                0,
+            preRetirementSurplusSweep: {
+                target:
+                    state.assumptions?.preRetirementSurplusSweep?.target ??
+                    "none",
+                sweepRate:
+                    state.assumptions?.preRetirementSurplusSweep?.sweepRate ??
+                    1,
+                growthRate:
+                    state.assumptions?.preRetirementSurplusSweep?.growthRate ??
+                    0.05
+            }
         },
         toggles: {
             showReal: toggles.showReal ?? false,

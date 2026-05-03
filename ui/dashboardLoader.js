@@ -2245,17 +2245,23 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
-        const fallbackPayload = savedSimulationState ? {
-            projection: runProjection(savedSimulationState),
-            incomeSources: savedSimulationState.incomeSources || [],
-            inputs: simulationStateToInputs(savedSimulationState)
-        } : null;
+        const storedPayload = stored ? JSON.parse(stored) : null;
+        const activeSimulationState =
+            savedSimulationState ||
+            storedPayload?.simulationState ||
+            null;
 
-        ({
-            projection,
-            incomeSources,
-            inputs
-        } = stored ? JSON.parse(stored) : fallbackPayload);
+        if (activeSimulationState) {
+            projection = runProjection(activeSimulationState);
+            incomeSources = activeSimulationState.incomeSources || [];
+            inputs = simulationStateToInputs(activeSimulationState);
+        } else {
+            ({
+                projection,
+                incomeSources,
+                inputs
+            } = storedPayload);
+        }
     }
 
     const baseInputs = structuredClone(inputs);

@@ -2419,11 +2419,20 @@ SAVE STATE BEFORE DASHBOARD
 function setupReportButton(){
 
     const reportBtn = document.getElementById("fullReportBtn");
+    const reportLink = document.querySelector(".planner-report-link");
 
-    if(!reportBtn) return;
+    if (!reportBtn && !reportLink) return;
 
-    reportBtn.addEventListener("click", () => {
+    reportLink?.addEventListener("click", event => {
+        event.preventDefault();
+        runProjection();
+        StateManager.saveAll();
+        window.location.href = reportLink.href;
+    });
 
+    reportBtn?.addEventListener("click", () => {
+
+        runProjection();
         StateManager.saveAll();
 
     });

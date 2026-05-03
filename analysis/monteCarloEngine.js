@@ -173,6 +173,13 @@ function average(values = []) {
     return values.reduce((sum, value) => sum + (value || 0), 0) / values.length;
 }
 
+function averagePathCollection(paths = {}) {
+    const values = Object.values(paths)
+        .flatMap(path => Array.isArray(path) ? path : []);
+
+    return values.length ? average(values) : null;
+}
+
 function totalPortfolio(result) {
     if (!result?.portfolios) {
         return 0;
@@ -524,7 +531,11 @@ function summarizeTrial({
                 sampledRates.goodsServicesInflationRate,
             housingInflationRate: sampledRates.housingInflationRate,
             healthcareInflationRate:
-                sampledRates.healthcareInflationRate
+                sampledRates.healthcareInflationRate,
+            portfolioReturnRate:
+                averagePathCollection(sampledRates.portfolioReturnPaths),
+            realEstateReturnRate:
+                averagePathCollection(sampledRates.realEstateReturnPaths)
         }
     };
 }

@@ -1700,6 +1700,39 @@ function renderRiskList(vulnerabilityAnalysis) {
     });
 }
 
+function renderPrimaryRiskSection(vulnerabilityAnalysis) {
+    setElementText(
+        "largestVulnerability",
+        vulnerabilityAnalysis.primaryRisk?.label ?? "Low Vulnerability"
+    );
+    setElementText(
+        "vulnerabilityExplanation",
+        vulnerabilityAnalysis.primaryRisk?.explanation ??
+        "Current stress tests did not identify a single dominant retirement threat."
+    );
+    setElementText(
+        "vulnerabilityMitigation",
+        vulnerabilityAnalysis.primaryRisk?.mitigation ??
+        "Best mitigation: preserve margin and keep reducing dependence on stressed assumptions."
+    );
+    setElementText(
+        "primaryRiskSeverity",
+        vulnerabilityAnalysis.primaryRisk
+            ? `${vulnerabilityAnalysis.primaryRisk.severityTier} (${vulnerabilityAnalysis.primaryRisk.severityScore})`
+            : "Low"
+    );
+    setElementText(
+        "primaryRiskFailureAge",
+        vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.failureAge ?? "None"
+    );
+    setElementText(
+        "primaryRiskDepletionAge",
+        vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.assetDepletionAge ?? "None"
+    );
+
+    renderRiskList(vulnerabilityAnalysis);
+}
+
 function renderReadinessTimelineSection({
     entries,
     currentRetireAge,
@@ -1949,6 +1982,10 @@ function renderMonteCarloSection({
     inputs,
     incomeSources,
     projection,
+    analysis = null,
+    avgMargin = 0,
+    retirementYear = null,
+    assumedInflationRate = 0.0329,
     premiumStressTesting = null
 }) {
     monteCarloRenderToken += 1;
@@ -1989,6 +2026,11 @@ function renderMonteCarloSection({
         }
 
         const content = buildMonteCarloContent(monteCarlo);
+        let activeAnalysis = analysis || analyzeRetirementPlan({
+            inputs,
+            incomeSources,
+            projection
+        });
 
         setElementText("monteCarloHeadline", content.headline);
         setElementText("monteCarloSummary", content.summary);
@@ -2028,6 +2070,7 @@ function renderMonteCarloSection({
                     projection,
                     monteCarloSummary: monteCarlo
                 });
+            activeAnalysis = probabilityAdjustedAnalysis;
             const readinessBand =
                 normalizeReadinessBand(probabilityAdjustedAnalysis);
 
@@ -2080,6 +2123,48 @@ function renderMonteCarloSection({
                 );
             }
         }
+
+        const monteCarloVulnerabilityAnalysis =
+            runRetirementVulnerabilityAnalysis({
+                inputs,
+                incomeSources,
+                projection,
+                assumedInflationRate,
+                monteCarlo
+            });
+
+        renderPrimaryRiskSection(monteCarloVulnerabilityAnalysis);
+        renderRecommendationSection({
+            retireAge,
+            analysis: activeAnalysis,
+            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
+            results: projection?.results || []
+        });
+        renderPlanningLeverSection({
+            retireAge,
+            analysis: activeAnalysis,
+            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
+            avgMargin,
+            retirementYear
+        });
+        renderSpouseConversationSection({
+            currentInputs: inputs,
+            analysis: activeAnalysis,
+            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
+            projection
+        });
+        renderHouseholdDecisionBriefSection({
+            currentInputs: inputs,
+            analysis: activeAnalysis,
+            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
+            projection
+        });
+        renderProfessionalReviewSection({
+            currentInputs: inputs,
+            analysis: activeAnalysis,
+            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
+            projection
+        });
     }, 60);
 }
 
@@ -2314,33 +2399,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             formatMarginExtremeValue(marginExtremes?.highest)
         );
 
-        setElementText("largestVulnerability", vulnerabilityAnalysis.primaryRisk?.label ?? "Low Vulnerability");
-        setElementText(
-            "vulnerabilityExplanation",
-            vulnerabilityAnalysis.primaryRisk?.explanation ??
-            "Current stress tests did not identify a single dominant retirement threat."
-        );
-        setElementText(
-            "vulnerabilityMitigation",
-            vulnerabilityAnalysis.primaryRisk?.mitigation ??
-            "Best mitigation: preserve margin and keep reducing dependence on stressed assumptions."
-        );
-        setElementText(
-            "primaryRiskSeverity",
-            vulnerabilityAnalysis.primaryRisk
-                ? `${vulnerabilityAnalysis.primaryRisk.severityTier} (${vulnerabilityAnalysis.primaryRisk.severityScore})`
-                : "Low"
-        );
-        setElementText(
-            "primaryRiskFailureAge",
-            vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.failureAge ?? "None"
-        );
-        setElementText(
-            "primaryRiskDepletionAge",
-            vulnerabilityAnalysis.primaryRisk?.stressedMetrics?.assetDepletionAge ?? "None"
-        );
-
-        renderRiskList(vulnerabilityAnalysis);
+        renderPrimaryRiskSection(vulnerabilityAnalysis);
         setElementText(
             "recommendedAgeSummary",
             buildRecommendedAgeSummary({
@@ -2409,6 +2468,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             inputs: currentInputs,
             incomeSources: currentIncomeSources,
             projection: currentProjection,
+            analysis,
+            avgMargin,
+            retirementYear,
+            assumedInflationRate,
             premiumStressTesting:
                 workspaceState?.premiumStressTesting || null
         });

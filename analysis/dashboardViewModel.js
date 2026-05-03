@@ -291,7 +291,10 @@ export function buildPlanningLeverContent({
         };
     }
 
-    if (primaryRisk?.id === "early_retirement_bridge_risk") {
+    if (
+        primaryRisk?.id === "early_retirement_bridge_risk" ||
+        primaryRisk?.id === "bridge_risk"
+    ) {
         return {
             headline: "This scenario appears most sensitive to bridge years",
             narrative:
@@ -301,7 +304,8 @@ export function buildPlanningLeverContent({
 
     if (
         primaryRisk?.id === "early_retirement_recession_risk" ||
-        primaryRisk?.id === "recession_risk"
+        primaryRisk?.id === "recession_risk" ||
+        primaryRisk?.id === "monte_carlo_market_return_risk"
     ) {
         return {
             headline: "This scenario appears most sensitive to early market sequence",
@@ -323,6 +327,17 @@ export function buildPlanningLeverContent({
             headline: "This scenario appears most sensitive to housing concentration",
             narrative:
                 "Under the current assumptions, housing carries outsized weight in the plan. The projection would likely improve most if retirement cash flow were less concentrated in housing-related costs or housing-dependent assumptions."
+        };
+    }
+
+    if (
+        primaryRisk?.id === "monte_carlo_durability_risk" ||
+        primaryRisk?.id === "monte_carlo_real_estate_return_risk"
+    ) {
+        return {
+            headline: "This scenario appears most sensitive to Monte Carlo downside cases",
+            narrative:
+                "Under the current assumptions, the simulated weak cases are the clearest planning signal. The projection would likely improve most from more durable margin, less dependence on asset growth, or a retirement age that performs better across many trials."
         };
     }
 

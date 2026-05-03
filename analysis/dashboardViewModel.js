@@ -291,6 +291,30 @@ export function buildPlanningLeverContent({
         };
     }
 
+    if (primaryRisk?.id === "household_survivor_income_risk") {
+        return {
+            headline: "This scenario appears most sensitive to household income protection",
+            narrative:
+                "Under the current assumptions, spouse-income timing or survivor protection is the clearest household risk. The projection would improve most by confirming the surviving-spouse budget, survivor election, and income transition before treating the plan as secure."
+        };
+    }
+
+    if (primaryRisk?.id === "tax_drag_withdrawal_sequence_risk") {
+        return {
+            headline: "This scenario appears most sensitive to tax drag and withdrawal order",
+            narrative:
+                "Under the current assumptions, taxes and account sequencing are a meaningful drag on usable retirement income. The projection would likely improve from a cleaner withdrawal order, RMD-year tax planning, and intentional use of taxable, tax-deferred, and Roth assets."
+        };
+    }
+
+    if (primaryRisk?.id === "liquidity_bridge_asset_risk") {
+        return {
+            headline: "This scenario appears most sensitive to bridge liquidity",
+            narrative:
+                "Under the current assumptions, the key issue is not just whether income starts later, but whether safe and liquid assets are clearly available to fund the gap. The projection would improve most from earmarked bridge cash, taxable brokerage, or swept surplus savings."
+        };
+    }
+
     if (
         primaryRisk?.id === "early_retirement_bridge_risk" ||
         primaryRisk?.id === "bridge_risk"

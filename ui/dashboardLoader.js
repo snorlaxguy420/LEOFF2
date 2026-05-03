@@ -559,6 +559,12 @@ function renderPreRetirementSurplusSection({
         retireAge
     });
 
+    panel.hidden = !summary.enabled;
+
+    if (!summary.enabled) {
+        return;
+    }
+
     setElementText("preRetirementSurplusSummary", summary.summary);
     setElementText("preRetirementSurplusTargetLabel", summary.targetLabel);
     setElementText("preRetirementSurplusSweepRate", summary.sweepRate);

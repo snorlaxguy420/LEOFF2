@@ -79,8 +79,23 @@
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/survivor-options-spouses-and-household-income</loc>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/survivor-options-tradeoff-scale.png</image:loc>
+      <image:title>Survivor option income tradeoff</image:title>
+      <image:caption>Infographic showing the survivor option tradeoff between current pension income and survivor protection.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/survivor-options-income-continuity.png</image:loc>
+      <image:title>Survivor option income continuity</image:title>
+      <image:caption>Infographic showing household income continuity before and after the retiree dies.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/survivor-options-checklist.png</image:loc>
+      <image:title>Survivor option decision checklist</image:title>
+      <image:caption>Checklist infographic for choosing a survivor pension option based on household resilience.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/recession-right-before-retirement-sequence-risk</loc>

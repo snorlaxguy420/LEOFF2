@@ -662,6 +662,7 @@ function initializeBirthYearInput() {
 
 function bindEvents() {
     elements.profileForm?.addEventListener("submit", handleProfileSubmit);
+    elements.profileSubmit?.addEventListener("click", handleProfileSubmit);
     elements.passwordForm?.addEventListener("submit", handlePasswordSubmit);
     elements.logoutButton?.addEventListener("click", handleLogout);
     elements.premiumCancel?.addEventListener("click", showCancellationConfirm);

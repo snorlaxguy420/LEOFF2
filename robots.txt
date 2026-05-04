@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /ui/verification.html
+Disallow: /ui/articles/article-template.html
+
+Sitemap: https://leoffhelper.com/sitemap.xml

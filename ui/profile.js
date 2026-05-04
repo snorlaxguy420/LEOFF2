@@ -187,6 +187,25 @@ function buildEditableProfileValues(user = {}) {
     };
 }
 
+function mergeSubmittedProfile(accountContext, profile, frequency) {
+    if (!accountContext?.user) {
+        return accountContext;
+    }
+
+    return {
+        ...accountContext,
+        user: {
+            ...accountContext.user,
+            firstName: profile.firstName,
+            lastName: profile.lastName,
+            iaffLocalNumber: profile.iaffLocalNumber,
+            birthYear: profile.birthYear,
+            displayName: profile.displayName,
+            retirementCheckInFrequency: frequency
+        }
+    };
+}
+
 function readAccountProfileFields() {
     return {
         firstName: elements.firstNameInput?.value?.trim() || "",
@@ -494,18 +513,25 @@ async function handleProfileSubmit(event) {
     setStatus("Saving account settings...", "neutral");
 
     try {
+        const retirementCheckInFrequency =
+            elements.retirementCheckInFrequencySelect?.value || "never";
         const accountContext = await updateAccountProfile({
             firstName: profile.firstName,
             lastName: profile.lastName,
             iaffLocalNumber: profile.iaffLocalNumber,
             birthYear: profile.birthYear,
-            displayName: elements.displayNameInput?.value?.trim() || "",
-            retirementCheckInFrequency:
-                elements.retirementCheckInFrequencySelect?.value || "never"
+            displayName: profile.displayName,
+            retirementCheckInFrequency
         });
-        renderAccount(accountContext);
+        const mergedAccountContext = mergeSubmittedProfile(
+            accountContext,
+            profile,
+            retirementCheckInFrequency
+        );
+
+        renderAccount(mergedAccountContext);
         setStatus("Account settings updated.", "success");
-        broadcastAuthChange("profile", accountContext?.user || null);
+        broadcastAuthChange("profile", mergedAccountContext?.user || null);
     } catch (error) {
         setProfilePending(false);
         setStatus(error.message || "Account settings could not be saved.", "error");

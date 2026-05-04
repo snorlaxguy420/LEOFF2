@@ -362,49 +362,6 @@ Collapse All
       </p>
   </section>
 
-  <section class="dashboard-recommendation-panel household-decision-panel">
-      <div class="dashboard-card-header">
-          <div>
-              <div class="dashboard-card-kicker">Household Decision Brief</div>
-              <h2 id="householdDecisionBriefHeadline">Household decision brief</h2>
-          </div>
-          <div class="report-card-actions">
-              <button
-                  id="householdDecisionBriefCopyBtn"
-                  class="report-action-secondary"
-                  type="button"
-              >
-                  Copy Brief
-              </button>
-              <button
-                  id="householdDecisionBriefDownloadBtn"
-                  class="report-action-secondary"
-                  type="button"
-              >
-                  Download Brief
-              </button>
-          </div>
-      </div>
-      <p id="householdDecisionBriefSummary" class="dashboard-card-summary">
-          A plain-English household brief will appear here once the dashboard finishes loading.
-      </p>
-      <div id="householdDecisionBriefCards" class="report-highlight-grid">
-          <div class="report-highlight-card">
-              <div class="report-highlight-label">Loading</div>
-              <div class="report-highlight-value report-highlight-value-note">Household brief highlights will appear here once the dashboard finishes loading.</div>
-          </div>
-      </div>
-      <div id="householdDecisionBriefPoints" class="optimizer-sequence-list">
-          <div class="optimizer-sequence-item">
-              <h3>Preparing brief points</h3>
-              <p>The dashboard will condense the current retirement decision into a shorter household-facing brief.</p>
-          </div>
-      </div>
-      <p id="householdDecisionBriefNote" class="report-inline-note">
-          Use this section when you want one plain-English summary of retirement timing, household protection, and fallback decisions.
-      </p>
-  </section>
-
   <section class="dashboard-recommendation-panel professional-review-panel">
       <div class="dashboard-card-header">
           <div>
@@ -999,13 +956,6 @@ function initializeFullReportNavigation() {
             title: "Spouse conversation summary",
             summary: "Conversation prompts for timing, survivor protection, and fallback decisions.",
             selector: ".spouse-conversation-panel",
-            open: false
-        },
-        {
-            id: "report-section-decision-brief",
-            title: "Household decision brief",
-            summary: "A plain-English summary you can use for household planning conversations.",
-            selector: ".household-decision-panel",
             open: false
         },
         {

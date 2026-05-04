@@ -166,7 +166,6 @@ const SMOKE_TEST_PAGES = [
             "#reportCumulativeShortfall",
             "#survivorOptionOptimizerHeadline",
             "#taxDetailHeadline",
-            "#householdDecisionBriefDownloadBtn",
             "#professionalReviewDownloadBtn"
         ]
     },

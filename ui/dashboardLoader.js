@@ -22,7 +22,6 @@ import {
     buildMonteCarloTrustContent,
     buildMonteCarloProjectionChartContent,
     buildExpenseBreakdownSummary,
-    buildHouseholdDecisionBrief,
     buildMarginOverviewText,
     buildPlanningLeverContent,
     buildProfessionalReviewSummary,
@@ -1509,76 +1508,6 @@ function renderSpouseConversationSection({
             `;
 }
 
-function renderHouseholdDecisionBriefSection({
-    currentInputs,
-    analysis,
-    vulnerabilityAnalysis,
-    projection
-}) {
-    const headline = document.getElementById("householdDecisionBriefHeadline");
-    const summary = document.getElementById("householdDecisionBriefSummary");
-    const cards = document.getElementById("householdDecisionBriefCards");
-    const points = document.getElementById("householdDecisionBriefPoints");
-    const note = document.getElementById("householdDecisionBriefNote");
-    const copyButton = document.getElementById("householdDecisionBriefCopyBtn");
-    const downloadButton =
-        document.getElementById("householdDecisionBriefDownloadBtn");
-
-    if (
-        !headline ||
-        !summary ||
-        !cards ||
-        !points ||
-        !note ||
-        !copyButton ||
-        !downloadButton
-    ) {
-        return;
-    }
-
-    const content = buildHouseholdDecisionBrief({
-        currentInputs,
-        analysis,
-        vulnerabilityAnalysis,
-        projection
-    });
-
-    headline.textContent = content.headline;
-    summary.textContent = content.summary;
-    note.textContent = content.note;
-    cards.innerHTML = content.cards.map(card => `
-        <div class="report-highlight-card">
-            <div class="report-highlight-label">${card.label}</div>
-            <div class="report-highlight-value">${card.value}</div>
-        </div>
-    `).join("");
-    points.innerHTML = content.talkingPoints.map((point, index) => `
-        <div class="optimizer-sequence-item">
-            <div class="optimizer-sequence-eyebrow">Brief Point ${index + 1}</div>
-            <p>${point}</p>
-        </div>
-    `).join("");
-    copyButton.disabled = false;
-    copyButton.dataset.defaultLabel = "Copy Brief";
-    copyButton.textContent = "Copy Brief";
-    copyButton.onclick = () => {
-        copyReportPacket(copyButton, content.exportText);
-    };
-    downloadButton.disabled = false;
-    downloadButton.dataset.defaultLabel = "Download Brief";
-    downloadButton.textContent = "Download Brief";
-    downloadButton.onclick = () => {
-        downloadReportPacket(
-            downloadButton,
-            content.exportText,
-            buildTextDownloadFileName(
-                "LEOFF-Helper-Household-Decision-Brief",
-                currentInputs?.retireAge
-            )
-        );
-    };
-}
-
 function renderProfessionalReviewSection({
     currentInputs,
     analysis,
@@ -2159,12 +2088,6 @@ function renderMonteCarloSection({
             vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
             projection
         });
-        renderHouseholdDecisionBriefSection({
-            currentInputs: inputs,
-            analysis: activeAnalysis,
-            vulnerabilityAnalysis: monteCarloVulnerabilityAnalysis,
-            projection
-        });
         renderProfessionalReviewSection({
             currentInputs: inputs,
             analysis: activeAnalysis,
@@ -2453,12 +2376,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             retireAge
         });
         renderSpouseConversationSection({
-            currentInputs,
-            analysis,
-            vulnerabilityAnalysis,
-            projection: currentProjection
-        });
-        renderHouseholdDecisionBriefSection({
             currentInputs,
             analysis,
             vulnerabilityAnalysis,

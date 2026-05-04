@@ -11,6 +11,7 @@ import {
 } from "./accountEntitlements.js";
 
 const AUTH_SYNC_KEY = "leoffHelperAuthSync";
+const WORKSPACE_STATE_KEY = "leoffSimulationState";
 const RETIREMENT_CHECK_IN_LABELS = {
     never: "Never",
     monthly: "Monthly",
@@ -101,12 +102,98 @@ function normalizeBirthYearInput(value) {
     return parsed;
 }
 
+function getSavedPlannerProfileFallback() {
+    try {
+        const raw = localStorage.getItem(WORKSPACE_STATE_KEY);
+        const workspaceState = raw ? JSON.parse(raw) : null;
+        const profile =
+            workspaceState?.simulationState?.profile ||
+            workspaceState?.profile ||
+            {};
+        const displayName = String(profile?.name || "").trim();
+        const nameParts = displayName.split(/\s+/).filter(Boolean);
+
+        return {
+            firstName: nameParts[0] || "",
+            lastName:
+                nameParts.length > 1
+                    ? nameParts.slice(1).join(" ")
+                    : "",
+            birthYear: profile?.birthYear || "",
+            displayName
+        };
+    } catch (error) {
+        return {};
+    }
+}
+
+function firstNonEmpty(...values) {
+    const value = values.find(entry => {
+        return entry !== undefined &&
+            entry !== null &&
+            String(entry).trim() !== "";
+    });
+
+    return value === undefined || value === null
+        ? ""
+        : String(value).trim();
+}
+
+function setInputValue(input, value) {
+    if (!input) {
+        return;
+    }
+
+    const normalizedValue =
+        value === undefined || value === null
+            ? ""
+            : String(value);
+
+    if (normalizedValue || !input.value) {
+        input.value = normalizedValue;
+    }
+}
+
+function buildEditableProfileValues(user = {}) {
+    const plannerProfile = getSavedPlannerProfileFallback();
+    const firstName = firstNonEmpty(
+        user.firstName,
+        plannerProfile.firstName
+    );
+    const lastName = firstNonEmpty(
+        user.lastName,
+        plannerProfile.lastName
+    );
+    const displayName = firstNonEmpty(
+        user.displayName,
+        plannerProfile.displayName,
+        [firstName, lastName].filter(Boolean).join(" ")
+    );
+
+    return {
+        firstName,
+        lastName,
+        iaffLocalNumber: firstNonEmpty(user.iaffLocalNumber),
+        birthYear: firstNonEmpty(
+            user.birthYear,
+            plannerProfile.birthYear
+        ),
+        displayName,
+        retirementCheckInFrequency:
+            firstNonEmpty(
+                user.retirementCheckInFrequency,
+                "never"
+            )
+    };
+}
+
 function readAccountProfileFields() {
     return {
         firstName: elements.firstNameInput?.value?.trim() || "",
         lastName: elements.lastNameInput?.value?.trim() || "",
         iaffLocalNumber: elements.iaffLocalInput?.value?.trim() || "",
-        birthYear: normalizeBirthYearInput(elements.birthYearInput?.value)
+        birthYear: normalizeBirthYearInput(elements.birthYearInput?.value),
+        displayName: elements.displayNameInput?.value?.trim() || ""
     };
 }
 
@@ -349,28 +436,18 @@ function renderAccount(accountContext) {
         elements.sessionExpiry.textContent = formatTimestamp(accountContext.session?.expiresAt);
     }
 
-    if (elements.firstNameInput) {
-        elements.firstNameInput.value = user.firstName || "";
-    }
+    const profileValues = buildEditableProfileValues(user);
 
-    if (elements.lastNameInput) {
-        elements.lastNameInput.value = user.lastName || "";
-    }
-
-    if (elements.iaffLocalInput) {
-        elements.iaffLocalInput.value = user.iaffLocalNumber || "";
-    }
-
-    if (elements.birthYearInput) {
-        elements.birthYearInput.value = user.birthYear || "";
-    }
-
-    if (elements.displayNameInput) {
-        elements.displayNameInput.value = user.displayName || "";
-    }
+    setInputValue(elements.firstNameInput, profileValues.firstName);
+    setInputValue(elements.lastNameInput, profileValues.lastName);
+    setInputValue(elements.iaffLocalInput, profileValues.iaffLocalNumber);
+    setInputValue(elements.birthYearInput, profileValues.birthYear);
+    setInputValue(elements.displayNameInput, profileValues.displayName);
 
     if (elements.retirementCheckInFrequencySelect) {
-        const frequency = String(user.retirementCheckInFrequency || "never")
+        const frequency = String(
+            profileValues.retirementCheckInFrequency || "never"
+        )
             .trim()
             .toLowerCase();
         elements.retirementCheckInFrequencySelect.value =

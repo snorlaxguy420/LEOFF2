@@ -797,7 +797,10 @@ async function handleUpdateMe(req, res) {
     }
 
     const body = await readJsonBody(req);
-    const nextDisplayName = String(body.displayName || "").trim();
+    const nextDisplayName =
+        body.displayName !== undefined
+            ? String(body.displayName || "").trim()
+            : undefined;
     const nextFirstName =
         body.firstName !== undefined
             ? normalizeProfileText(body.firstName)
@@ -823,7 +826,7 @@ async function handleUpdateMe(req, res) {
     const disclaimerAccepted = body.disclaimerAccepted === true;
     let updatedUser = null;
 
-    if (nextDisplayName.length > 80) {
+    if (nextDisplayName !== undefined && nextDisplayName.length > 80) {
         sendError(res, 400, "Display name must be 80 characters or fewer.");
         return;
     }
@@ -864,7 +867,9 @@ async function handleUpdateMe(req, res) {
                 nextRetirementCheckInFrequency !== normalizedExistingFrequency;
             updatedUser = {
                 ...user,
-                displayName: nextDisplayName,
+                ...(nextDisplayName !== undefined
+                    ? { displayName: nextDisplayName }
+                    : {}),
                 ...(nextFirstName !== undefined
                     ? { firstName: nextFirstName }
                     : {}),

@@ -114,8 +114,23 @@
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/retirement-withdrawal-order</loc>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/withdrawal-order-sequence.png</image:loc>
+      <image:title>Retirement withdrawal order sequence</image:title>
+      <image:caption>Infographic showing a retirement withdrawal sequence through bridge years while preserving later flexibility.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/withdrawal-order-dollar-jobs.png</image:loc>
+      <image:title>Retirement account buckets matched to withdrawal jobs</image:title>
+      <image:caption>Infographic showing how cash, taxable, tax-deferred, and Roth accounts solve different withdrawal planning jobs.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/withdrawal-order-checklist.png</image:loc>
+      <image:title>Withdrawal order planning checklist</image:title>
+      <image:caption>Checklist infographic for testing annual gaps, bridge years, tax impact, and late-life reserves.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/when-to-get-professional-financial-help</loc>

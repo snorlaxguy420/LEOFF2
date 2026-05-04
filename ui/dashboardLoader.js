@@ -1,7 +1,11 @@
 import { renderProjectionChart } from "./projectionChart.js";
 import { renderMonteCarloProjectionChart } from "./monteCarloProjectionChart.js";
 import { getAccountContext, getSharedPlan } from "./apiClient.js";
-import { hasPremiumAccess } from "./accountEntitlements.js";
+import {
+    getPotentialPremiumFeatureLabel,
+    hasPremiumAccess,
+    isBetaPremiumFeatureUnlockEnabled
+} from "./accountEntitlements.js";
 import {
     analyzeRetirementPlan
 } from "../analysis/retirementAnalysis.js";
@@ -83,6 +87,23 @@ function buildPremiumLockedMessage({
     }
 
     return signedOutMessage;
+}
+
+function renderPotentialPremiumFeatureFlag(element) {
+    if (!element) {
+        return false;
+    }
+
+    if (!isBetaPremiumFeatureUnlockEnabled()) {
+        element.hidden = true;
+        element.classList.remove("potential-premium-feature");
+        return false;
+    }
+
+    element.hidden = false;
+    element.textContent = getPotentialPremiumFeatureLabel();
+    element.classList.add("potential-premium-feature");
+    return true;
 }
 
 function renderSharedPlanBanner(sharedPlan = null) {
@@ -662,7 +683,7 @@ function renderWithdrawalOptimizerSection({
         return;
     }
 
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
 
     headline.textContent = optimization.headline;
     summary.textContent = optimization.summary;
@@ -817,7 +838,7 @@ function renderSocialSecurityOptimizerSection({
         return;
     }
 
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
 
     const optimization =
         buildSocialSecurityOptimization({
@@ -978,7 +999,7 @@ function renderSurvivorOptionOptimizerSection({
         return;
     }
 
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
 
     const optimization =
         buildSurvivorOptionOptimization({
@@ -1130,7 +1151,7 @@ function renderEstateProjectionSection({
         return;
     }
 
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
 
     const estateProjection =
         buildEstateProjectionSummary({
@@ -1223,7 +1244,7 @@ function renderTaxDetailViewSection({
         return;
     }
 
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
 
     const taxDetail = buildTaxDetailView({
         simulationState,
@@ -1515,7 +1536,7 @@ function renderProfessionalReviewSection({
     projection
 }) {
     const premiumEnabled =
-        hasPremiumAccess(dashboardAccountContext, "premium");
+        hasPremiumAccess(dashboardAccountContext, "premiumScenarioComparison");
     const headline = document.getElementById("professionalReviewHeadline");
     const summary = document.getElementById("professionalReviewSummary");
     const premiumNote =
@@ -1583,7 +1604,7 @@ function renderProfessionalReviewSection({
 
     headline.textContent = content.headline;
     summary.textContent = content.summary;
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
     cards.hidden = false;
     cards.innerHTML = content.cards.map(card => `
         <div class="report-highlight-card">
@@ -1717,7 +1738,7 @@ function renderReadinessTimelineSection({
 
     headline.textContent = "How the score changes by retirement age";
     summary.textContent = content.summary;
-    premiumNote.hidden = true;
+    renderPotentialPremiumFeatureFlag(premiumNote);
     body.innerHTML =
         content.rows.length
             ? content.rows.map(row => {
@@ -1842,15 +1863,17 @@ function applyMonteCarloEntitlementState(accountContext = null) {
     const rangePanel = document.getElementById("monteCarloRangePanel");
 
     if (premiumNote) {
-        premiumNote.hidden = monteCarloPlusEnabled;
-        premiumNote.textContent = buildPremiumLockedMessage({
-            signedInMessage:
-                "Monte Carlo Plus path ranges and deeper trial runs are reserved for premium accounts. This account is currently on the free tier.",
-            signedOutMessage:
-                "Sign in with a premium account to unlock Monte Carlo Plus path ranges and deeper trial runs.",
-            sharedMessage:
-                "This shared scenario was created from a free-tier plan, so Monte Carlo Plus path ranges and deeper trial runs are not included in this link."
-        });
+        if (!renderPotentialPremiumFeatureFlag(premiumNote)) {
+            premiumNote.hidden = monteCarloPlusEnabled;
+            premiumNote.textContent = buildPremiumLockedMessage({
+                signedInMessage:
+                    "Monte Carlo Plus path ranges and deeper trial runs are reserved for premium accounts. This account is currently on the free tier.",
+                signedOutMessage:
+                    "Sign in with a premium account to unlock Monte Carlo Plus path ranges and deeper trial runs.",
+                sharedMessage:
+                    "This shared scenario was created from a free-tier plan, so Monte Carlo Plus path ranges and deeper trial runs are not included in this link."
+            });
+        }
     }
 
     if (rangePanel) {

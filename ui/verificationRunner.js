@@ -74,6 +74,7 @@ import {
 import {
     getPlanTierLabel,
     hasPremiumAccess,
+    isBetaPremiumFeatureUnlockEnabled,
     normalizeAccountContext
 } from "./accountEntitlements.js";
 import {
@@ -4019,17 +4020,20 @@ function testAccountEntitlements() {
     );
     assert(
         getPlanTierLabel(expiredContext) === "Free" &&
-        hasPremiumAccess(expiredContext, "monteCarloPlus") === false,
+        hasPremiumAccess(expiredContext, "premium") === false,
         "Expired premium access should normalize back to the free tier"
     );
     assert(
-        hasPremiumAccess(expiredContext, "readinessTimeline") === false,
-        "Expired premium access should remove readiness timeline access"
+        hasPremiumAccess(expiredContext, "readinessTimeline") ===
+            isBetaPremiumFeatureUnlockEnabled(),
+        "Beta premium feature unlock should make readiness timeline available without changing account tier"
     );
     assert(
-        hasPremiumAccess(expiredContext, "survivorOptionOptimizer") === false &&
-        hasPremiumAccess(expiredContext, "taxDetailViews") === false,
-        "Expired premium access should remove survivor and tax detail access"
+        hasPremiumAccess(expiredContext, "survivorOptionOptimizer") ===
+            isBetaPremiumFeatureUnlockEnabled() &&
+        hasPremiumAccess(expiredContext, "taxDetailViews") ===
+            isBetaPremiumFeatureUnlockEnabled(),
+        "Beta premium feature unlock should make survivor and tax detail tools available without changing account tier"
     );
 
     logResult("Account entitlement helper passed");

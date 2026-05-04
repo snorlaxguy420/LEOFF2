@@ -757,6 +757,18 @@ SCORE PANEL
     line-height: 1.55;
 }
 
+.monte-carlo-premium-note.potential-premium-feature {
+    display: inline-block;
+    width: fit-content;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: #b42318;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
 .monte-carlo-stress-note {
     margin-top: 14px;
     padding: 14px 16px;

@@ -33,7 +33,11 @@ import {
     updateAccountProfile,
     updatePlan as updateAccountPlan
 } from "./apiClient.js";
-import { hasPremiumAccess } from "./accountEntitlements.js";
+import {
+    getPotentialPremiumFeatureLabel,
+    hasPremiumAccess,
+    isBetaPremiumFeatureUnlockEnabled
+} from "./accountEntitlements.js";
 import {
     applyPremiumStressPreset,
     DEFAULT_PREMIUM_STRESS_TESTING,
@@ -191,6 +195,22 @@ let currentAccountUser = null;
 let currentAccountContext = null;
 let currentAccountPlans = [];
 let currentScenarioComparisonPlans = [];
+
+function renderPotentialPremiumFeatureFlag(element) {
+    if (!element) {
+        return false;
+    }
+
+    if (!isBetaPremiumFeatureUnlockEnabled()) {
+        element.classList.remove("potential-premium-feature");
+        return false;
+    }
+
+    element.hidden = false;
+    element.textContent = getPotentialPremiumFeatureLabel();
+    element.classList.add("potential-premium-feature");
+    return true;
+}
 
 function getSimulatorTabMeta(tabId) {
     return SIMULATOR_TAB_META[tabId] || SIMULATOR_TAB_META.profile;
@@ -545,9 +565,11 @@ function syncPremiumStressTestingUi() {
     }
 
     card.classList.toggle("is-disabled", !premiumEnabled);
-    badge.textContent = premiumEnabled
-        ? "Premium Active"
-        : "Premium Only";
+    if (!renderPotentialPremiumFeatureFlag(badge)) {
+        badge.textContent = premiumEnabled
+            ? "Premium Active"
+            : "Premium Only";
+    }
     toggle.disabled = !premiumEnabled;
 
     stressFields.forEach(field => {
@@ -711,7 +733,7 @@ function getScenarioComparisonSummaryText() {
     }
 
     const premiumComparisonEnabled =
-        hasPremiumAccess(currentAccountContext, "premium");
+        hasPremiumAccess(currentAccountContext, "premiumScenarioComparison");
     const selectedCount =
         getScenarioComparisonState().planIds.length;
 
@@ -775,7 +797,7 @@ function renderScenarioComparisonList() {
     const premiumNoteEl =
         document.getElementById("accountComparisonPremiumNote");
     const premiumComparisonEnabled =
-        hasPremiumAccess(currentAccountContext, "premium");
+        hasPremiumAccess(currentAccountContext, "premiumScenarioComparison");
 
     if (!listEl) {
         return;
@@ -787,7 +809,9 @@ function renderScenarioComparisonList() {
     }
 
     if (premiumNoteEl) {
-        premiumNoteEl.hidden = premiumComparisonEnabled;
+        if (!renderPotentialPremiumFeatureFlag(premiumNoteEl)) {
+            premiumNoteEl.hidden = premiumComparisonEnabled;
+        }
     }
 
     if (!currentAccountUser) {
@@ -840,9 +864,13 @@ function renderScenarioComparisonList() {
                     plan.simulationState ||
                     null,
                 updatedAt: plan.updatedAt,
-                badgeText: premiumComparisonEnabled
-                    ? "Premium Compare"
-                    : "Synced",
+                badgeText:
+                    premiumComparisonEnabled &&
+                    isBetaPremiumFeatureUnlockEnabled()
+                        ? getPotentialPremiumFeatureLabel()
+                        : premiumComparisonEnabled
+                            ? "Premium Compare"
+                            : "Synced",
                 premium: premiumComparisonEnabled
             })
         )
@@ -875,7 +903,7 @@ function renderScenarioComparisonList() {
                     </p>
                 </div>
                 ${card.badgeText
-                    ? `<span class="account-plan-badge ${card.isCurrentWorkspace ? "" : "is-secondary"}">${escapeHtml(card.badgeText)}</span>`
+                    ? `<span class="account-plan-badge ${card.isCurrentWorkspace ? "" : "is-secondary"} ${card.badgeText === getPotentialPremiumFeatureLabel() ? "potential-premium-feature" : ""}">${escapeHtml(card.badgeText)}</span>`
                     : ""}
             </div>
             ${card.sections.map(section => `

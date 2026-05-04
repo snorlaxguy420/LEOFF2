@@ -971,6 +971,20 @@ line-height:1.5;
 color:rgba(23,61,47,.86);
 }
 
+.account-comparison-premium-note.potential-premium-feature,
+.premium-stress-badge.potential-premium-feature,
+.account-plan-badge.potential-premium-feature{
+display:inline-block;
+width:fit-content;
+padding:0;
+background:transparent;
+border:0;
+color:#b42318;
+font-weight:800;
+letter-spacing:.04em;
+text-transform:uppercase;
+}
+
 .account-comparison-actions{
 display:flex;
 justify-content:flex-end;

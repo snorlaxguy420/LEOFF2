@@ -1,3 +1,6 @@
+const BETA_PREMIUM_FEATURES_UNLOCKED = true;
+const POTENTIAL_PREMIUM_FEATURE_LABEL = "Potential Premium Feature";
+
 function normalizePlanTier(value) {
     return String(value || "").toLowerCase() === "premium"
         ? "premium"
@@ -95,11 +98,23 @@ export function hasPremiumAccess(subject, feature = "premium") {
         subject?.entitlements || subject
     );
 
+    if (BETA_PREMIUM_FEATURES_UNLOCKED && feature !== "premium") {
+        return true;
+    }
+
     if (feature === "premium") {
         return entitlements.premium;
     }
 
     return Boolean(entitlements.features?.[feature]);
+}
+
+export function isBetaPremiumFeatureUnlockEnabled() {
+    return BETA_PREMIUM_FEATURES_UNLOCKED;
+}
+
+export function getPotentialPremiumFeatureLabel() {
+    return POTENTIAL_PREMIUM_FEATURE_LABEL;
 }
 
 export function getPlanTierLabel(subject) {

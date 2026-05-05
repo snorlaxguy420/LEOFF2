@@ -109,8 +109,23 @@
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/retirement-scenario-comparison</loc>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-05-04</lastmod>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/scenario-comparison-cards.png</image:loc>
+      <image:title>Retirement scenario comparison cards</image:title>
+      <image:caption>Infographic showing three retirement scenarios compared by timing, margin, downside, and tradeoff.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/scenario-comparison-four-signals.png</image:loc>
+      <image:title>Four retirement scenario comparison signals</image:title>
+      <image:caption>Infographic showing retirement timing, readiness margin, downside durability, and tradeoff cost.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/scenario-comparison-checklist.png</image:loc>
+      <image:title>Retirement scenario set checklist</image:title>
+      <image:caption>Checklist infographic for building a useful retirement scenario set.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/retirement-withdrawal-order</loc>

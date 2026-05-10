@@ -164,8 +164,23 @@
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/when-to-get-professional-financial-help</loc>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-05-09</lastmod>
     <priority>0.7</priority>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/professional-help-decision-path.png</image:loc>
+      <image:title>When to get professional financial help</image:title>
+      <image:caption>Infographic showing when DIY retirement planning may need professional help for taxes, portfolio risk, and retirement timing.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/professional-help-cpa-vs-fiduciary.png</image:loc>
+      <image:title>CPA vs fiduciary retirement planning roles</image:title>
+      <image:caption>Comparison infographic showing how CPAs and fiduciary financial professionals support different retirement-planning decisions.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/professional-help-vetting-checklist.png</image:loc>
+      <image:title>Financial professional vetting checklist</image:title>
+      <image:caption>Checklist infographic showing questions to ask before hiring a financial professional.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://leoffhelper.com/trusted-assumptions</loc>

@@ -49,8 +49,23 @@
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/how-leoff-2-pensions-work</loc>
-    <lastmod>2026-04-25</lastmod>
+    <lastmod>2026-05-09</lastmod>
     <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/leoff2-pension-formula.png</image:loc>
+      <image:title>LEOFF 2 pension formula infographic</image:title>
+      <image:caption>Infographic explaining the LEOFF 2 pension formula: service credit, final average salary, and the 2% multiplier.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/leoff2-eligibility-milestones.png</image:loc>
+      <image:title>LEOFF 2 eligibility milestones infographic</image:title>
+      <image:caption>Timeline infographic showing LEOFF 2 vesting, age 53 full benefit eligibility, and lifetime monthly benefit.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://leoffhelper.com/assets/illustrations/leoff2-pension-drivers.png</image:loc>
+      <image:title>What drives your LEOFF 2 pension</image:title>
+      <image:caption>Checklist infographic showing service years, final average salary, retirement age, and survivor choice as key pension drivers.</image:caption>
+    </image:image>
   </url>
   <url>
     <loc>https://leoffhelper.com/articles/leoff-2-tiered-multiplier-vs-lump-sum</loc>

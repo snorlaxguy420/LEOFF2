@@ -49,6 +49,11 @@ const schema = {
     trs2Afc: "number",
     trs2StartAge: "number",
     trs2HireDate: "text",
+    hasSpouseDefinedBenefitPension: "checkbox",
+    spousePensionName: "text",
+    spousePensionStartAge: "number",
+    spousePensionMonthlyAmount: "number",
+    spousePensionCola: "number",
 
     /* =========================
        SOCIAL SECURITY INPUTS
@@ -173,6 +178,20 @@ export function collectInputs() {
             averageFinalCompensation: raw.trs2Afc,
             retirementAge: raw.trs2StartAge,
             hireDate: raw.trs2HireDate || null
+        });
+    }
+
+    if (raw.hasSpouseDefinedBenefitPension) {
+        additionalPensions.push({
+            system: "SPOUSE_DEFINED_BENEFIT",
+            enabled: true,
+            owner: "spouse",
+            name: raw.spousePensionName || "Spouse Pension",
+            spouseStartAge: raw.spousePensionStartAge,
+            monthlyAmount: raw.spousePensionMonthlyAmount,
+            annualAmount: raw.spousePensionMonthlyAmount * 12,
+            cola: raw.spousePensionCola / 100,
+            taxable: true
         });
     }
 

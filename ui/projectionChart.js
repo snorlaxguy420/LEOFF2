@@ -24,6 +24,7 @@ const BASE_COLOR_BANK = [
 const NAMED_INCOME_COLORS = {
     "LEOFF Pension": "#1F4D3A",
     "PERS Plan 2 Pension": "#2E5F49",
+    "Spouse Pension": "#87677B",
     "Social Security": "#3F7C85",
     "Spouse Social Security": "#5C7C8A",
     "LEOFF Lump Sum": "#B46A3C",

@@ -1604,6 +1604,14 @@ function testProjectionChartDatasets() {
 
 function testSharedSimulatorHelpers() {
     const inputs = {
+        profile: {
+            currentAge: 45,
+            maritalStatus: "married",
+            spouse: {
+                currentAge: 42,
+                age: 42
+            }
+        },
         retireAge: 53,
         pension: {
             serviceYears: 25,
@@ -1629,6 +1637,16 @@ function testSharedSimulatorHelpers() {
                 averageFinalCompensation: 5100,
                 retirementAge: 65,
                 hireDate: "2009-09-01"
+            },
+            {
+                system: "SPOUSE_DEFINED_BENEFIT",
+                enabled: true,
+                owner: "spouse",
+                name: "Spouse Pension",
+                spouseStartAge: 62,
+                monthlyAmount: 1800,
+                annualAmount: 21600,
+                cola: 0.015
             }
         ],
         socialSecurity: {
@@ -1671,7 +1689,7 @@ function testSharedSimulatorHelpers() {
         normalizeLeoffSurvivorOption("50%") === "JOINT_50",
         "Survivor option normalization failed"
     );
-    assert(incomeSources.length === 7, "Income source assembly failed");
+    assert(incomeSources.length === 8, "Income source assembly failed");
     assert(
         incomeSources.some(source => source.name === "LEOFF Pension"),
         "LEOFF pension source missing"
@@ -1691,6 +1709,16 @@ function testSharedSimulatorHelpers() {
     assert(
         incomeSources.some(source => source.name === "Spouse Social Security"),
         "Spouse Social Security source missing"
+    );
+    const spousePensionSource =
+        incomeSources.find(source => source.name === "Spouse Pension");
+    assert(
+        spousePensionSource,
+        "Spouse defined benefit pension source missing"
+    );
+    assert(
+        spousePensionSource.startAge === 65,
+        "Spouse pension start age was not converted to primary timeline age"
     );
 
     logResult("Shared simulator income helper passed");

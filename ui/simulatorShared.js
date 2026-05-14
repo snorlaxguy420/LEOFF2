@@ -19,6 +19,27 @@ export function normalizeLeoffSurvivorOption(option) {
     return survivorMap[option] || "SINGLE";
 }
 
+function primaryAgeWhenSpouseReachesAge(profile = {}, spouseTargetAge = null) {
+    const targetAge = Number(spouseTargetAge);
+    const primaryCurrentAge = Number(profile.currentAge);
+    const spouseCurrentAge = Number(
+        profile.spouse?.currentAge ??
+        profile.spouse?.age
+    );
+
+    if (
+        Number.isFinite(targetAge) &&
+        targetAge > 0 &&
+        Number.isFinite(primaryCurrentAge) &&
+        Number.isFinite(spouseCurrentAge) &&
+        spouseCurrentAge > 0
+    ) {
+        return primaryCurrentAge + (targetAge - spouseCurrentAge);
+    }
+
+    return targetAge;
+}
+
 export function buildSimulationIncomeSources({
     inputs,
     assetRegistry
@@ -109,6 +130,44 @@ export function buildPensionIncomeSources({
 
     (inputs.additionalPensions || []).forEach(additionalPension => {
         if (!additionalPension?.enabled) return;
+
+        if (additionalPension.system === "SPOUSE_DEFINED_BENEFIT") {
+            const annualAmount =
+                Number(additionalPension.annualAmount) ||
+                (Number(additionalPension.monthlyAmount) * 12) ||
+                0;
+            const spouseStartAge =
+                Number(additionalPension.spouseStartAge) ||
+                Number(additionalPension.retirementAge) ||
+                Number(additionalPension.startAge) ||
+                0;
+            const startAge =
+                primaryAgeWhenSpouseReachesAge(
+                    inputs.profile,
+                    spouseStartAge
+                );
+
+            if (annualAmount <= 0 || !Number.isFinite(startAge)) {
+                return;
+            }
+
+            incomeSources.push({
+                type: "fixed",
+                name: additionalPension.name || "Spouse Pension",
+                annualAmount,
+                startAge,
+                growthRate: additionalPension.cola || 0,
+                taxable: additionalPension.taxable !== false,
+                taxCategory: "ordinary_income",
+                metadata: {
+                    owner: "spouse",
+                    system: "SPOUSE_DEFINED_BENEFIT",
+                    spouseStartAge
+                }
+            });
+
+            return;
+        }
 
         if (
             additionalPension.system === "PERS2" &&

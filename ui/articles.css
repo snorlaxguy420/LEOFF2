@@ -29,6 +29,8 @@ body {
 
 .logo-wrap img {
     height: 120px;
+    width: auto;
+    max-width: min(220px, 45vw);
 }
 
 .nav {
@@ -230,6 +232,8 @@ body {
 
     .logo-wrap img {
         height: 68px;
+        width: auto;
+        max-width: 180px;
     }
 
     .nav {
@@ -292,6 +296,8 @@ body {
 
     .logo-wrap img {
         height: 56px;
+        width: auto;
+        max-width: 150px;
     }
 
     .logo-wrap::after {

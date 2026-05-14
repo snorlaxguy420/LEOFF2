@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: April 23, 2026
+Last updated: May 9, 2026
 
 This document is split into two parts:
 
@@ -8,6 +8,12 @@ This document is split into two parts:
 - Pending Roadmap: only work that still needs implementation, verification, or follow-up.
 
 ## Pending Roadmap
+
+### Next Low-Dependency Work Queue
+
+- Complete a focused technical SEO pass on non-article public pages, including titles, descriptions, canonical URLs, Open Graph/Twitter metadata, structured data, and internal links where the intent is already clear.
+- Run the responsive/browser QA harness across homepage, tools, simulator, dashboard, report, account, contact, verification, and article pages, then fix obvious overflow, spacing, touch-target, chart, and navigation issues.
+- Add an article image performance pass for the current infographic library, including compression checks, consistent dimensions, lazy-loading review, hero-image priority review, and sitemap/image metadata verification.
 
 ### Security, Operations, and Launch Readiness
 
@@ -28,7 +34,7 @@ This document is split into two parts:
 ### Asset, Cash Flow, and Withdrawal Modeling
 
 - Deepen retirement-account withdrawal realism around year-by-year tax-aware bridge strategy and later premium tax-detail views.
-- Add explicit pre-retirement surplus savings modeling so excess earned income can flow into cash, savings, or taxable brokerage instead of disappearing after annual expenses, with user-controlled sweep behavior and clear chart/report treatment.
+- Add clearer chart/report treatment for pre-retirement surplus savings so swept cash-flow is easy to explain in dashboard and report outputs.
 
 ### Dashboard, Reports, and Tools
 
@@ -107,6 +113,7 @@ This document is split into two parts:
 - Canonical simulation state creation, save/restore, and dashboard fallback restore behavior are in place.
 - Shared simulator, simulator UI, and simulator bootstrap helpers reduce duplicate page logic.
 - Projection modeling includes current annual pay, final salary assumptions, retirement-account accumulation, split inflation, and differentiated retirement-account tax treatment.
+- Projection modeling can sweep pre-retirement household surplus into a cash-reserve or taxable-brokerage bucket with user-controlled sweep rate and growth assumptions.
 - Restore/input-prefill now preserves birth month, birth year, marital status, spouse visibility, Social Security optimize state, and survivor-option visibility.
 
 ### Analysis Engine
@@ -166,6 +173,7 @@ This document is split into two parts:
 - Article SEO system, reusable article template, canonical tags, keyword metadata, Open Graph/Twitter metadata, JSON-LD article schema, related-guide sidebars, and main public-page metadata/schema are implemented.
 - Homepage links, article library links, tool links, and internal links connect guides, tools, dashboard premium sections, and the trusted assumptions library.
 - Published long-form guides include LEOFF pension basics, professional financial help, Monte Carlo modeling, withdrawal sequencing, scenario comparison, recession planning, survivor options, and related retirement guides.
+- Current article library pages have article-specific infographic support, including bridge-year planning, survivor options, withdrawal order, scenario comparison, LEOFF 2 pension basics, and professional-help decision guidance.
 - Tools directory has metadata, schema, internal linking, and simplified navigation-hub treatment.
 - Trusted assumptions library exists as a public reference page for model defaults, boundaries, and methodology.
 

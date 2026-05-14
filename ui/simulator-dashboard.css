@@ -69,6 +69,8 @@ text-transform:uppercase;
 
 .logo-wrap img{
 height:72px;
+width:auto;
+max-width:min(180px,42vw);
 filter:none;
 filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));
 }
@@ -1550,6 +1552,8 @@ gap:16px;
 
 .logo-wrap img{
  height:62px;
+ width:auto;
+ max-width:170px;
 }
 
 .logo-wrap::after{
@@ -1657,6 +1661,8 @@ font-size:28px;
 
 .logo-wrap img{
  height:52px;
+ width:auto;
+ max-width:145px;
 }
 
 .logo-wrap::after{

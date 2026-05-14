@@ -290,6 +290,8 @@ select:focus {
 
 .disclaimer-page .site-header img {
     height: 120px;
+    width: auto;
+    max-width: min(220px, 45vw);
     display: block;
     filter: drop-shadow(0 6px 10px rgba(0,0,0,.25));
 }
@@ -476,6 +478,8 @@ select:focus {
 
     .disclaimer-page .logo-wrap img {
         height: 56px;
+        width: auto;
+        max-width: 150px;
     }
 
     .disclaimer-page .logo-wrap::after {

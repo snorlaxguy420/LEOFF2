@@ -2199,6 +2199,10 @@ function setupAdditionalPensionUi() {
     const pers2Section = document.getElementById("pers2Section");
     const hasTrs2 = document.getElementById("hasTrs2");
     const trs2Section = document.getElementById("trs2Section");
+    const hasSpouseDefinedBenefitPension =
+        document.getElementById("hasSpouseDefinedBenefitPension");
+    const spouseDefinedBenefitPensionSection =
+        document.getElementById("spouseDefinedBenefitPensionSection");
 
     const toggleAdditionalPensionSection = (toggle, section) => {
         if (!toggle || !section) {
@@ -2212,10 +2216,18 @@ function setupAdditionalPensionUi() {
     const syncAdditionalPensionSections = () => {
         toggleAdditionalPensionSection(hasPers2, pers2Section);
         toggleAdditionalPensionSection(hasTrs2, trs2Section);
+        toggleAdditionalPensionSection(
+            hasSpouseDefinedBenefitPension,
+            spouseDefinedBenefitPensionSection
+        );
     };
 
     hasPers2?.addEventListener("change", syncAdditionalPensionSections);
     hasTrs2?.addEventListener("change", syncAdditionalPensionSections);
+    hasSpouseDefinedBenefitPension?.addEventListener(
+        "change",
+        syncAdditionalPensionSections
+    );
     syncAdditionalPensionSections();
 }
 

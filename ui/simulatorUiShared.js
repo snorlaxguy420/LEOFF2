@@ -60,6 +60,10 @@ export function populateSimulatorInputs(inputs) {
     const trs2 =
         (inputs.additionalPensions || [])
             .find(pension => pension.system === "TRS2") || null;
+    const spouseDefinedBenefitPension =
+        (inputs.additionalPensions || [])
+            .find(pension => pension.system === "SPOUSE_DEFINED_BENEFIT") ||
+        null;
     const socialSecurityMode =
         inputs.socialSecurity?.mode === "benefitFRA"
             ? "fraBenefit"
@@ -100,6 +104,18 @@ export function populateSimulatorInputs(inputs) {
         trs2Afc: trs2?.averageFinalCompensation,
         trs2StartAge: trs2?.retirementAge,
         trs2HireDate: trs2?.hireDate,
+        spousePensionName:
+            spouseDefinedBenefitPension?.name || "Spouse Pension",
+        spousePensionStartAge:
+            spouseDefinedBenefitPension?.spouseStartAge ??
+            spouseDefinedBenefitPension?.retirementAge ??
+            spouseDefinedBenefitPension?.startAge,
+        spousePensionMonthlyAmount:
+            Number(spouseDefinedBenefitPension?.monthlyAmount) > 0
+                ? spouseDefinedBenefitPension.monthlyAmount
+                : ((spouseDefinedBenefitPension?.annualAmount || 0) / 12),
+        spousePensionCola:
+            (spouseDefinedBenefitPension?.cola || 0) * 100,
         ssBirthYear: inputs.socialSecurity?.birthYear,
         ssClaimAge: inputs.socialSecurity?.claimAge,
         ssCola: (inputs.socialSecurity?.cola || 0) * 100,
@@ -156,6 +172,8 @@ export function populateSimulatorInputs(inputs) {
     const toggleMap = {
         hasPers2: Boolean(pers2?.enabled),
         hasTrs2: Boolean(trs2?.enabled),
+        hasSpouseDefinedBenefitPension:
+            Boolean(spouseDefinedBenefitPension?.enabled),
         ssOptimize: inputs.socialSecurity?.optimize,
         includeSpouseSocialSecurity: spouseSocialSecurityEnabled,
         realToggle: inputs.toggles?.showReal,
@@ -171,6 +189,10 @@ export function populateSimulatorInputs(inputs) {
     const hasPers2 = document.getElementById("hasPers2");
     const trs2Section = document.getElementById("trs2Section");
     const hasTrs2 = document.getElementById("hasTrs2");
+    const spouseDefinedBenefitPensionSection =
+        document.getElementById("spouseDefinedBenefitPensionSection");
+    const hasSpouseDefinedBenefitPension =
+        document.getElementById("hasSpouseDefinedBenefitPension");
 
     if (pers2Section && hasPers2) {
         pers2Section.style.display =
@@ -180,6 +202,14 @@ export function populateSimulatorInputs(inputs) {
     if (trs2Section && hasTrs2) {
         trs2Section.style.display =
             hasTrs2.checked ? "grid" : "none";
+    }
+
+    if (
+        spouseDefinedBenefitPensionSection &&
+        hasSpouseDefinedBenefitPension
+    ) {
+        spouseDefinedBenefitPensionSection.style.display =
+            hasSpouseDefinedBenefitPension.checked ? "grid" : "none";
     }
 
     const survivorOption = document.getElementById("survivorOption");

@@ -48,7 +48,7 @@
 
 <div class="logo-wrap">
 <a href="/ui/index.html">
-<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper">
+<img src="/assets/logo/LEOFFHELPERBANNER.png" alt="LEOFF Helper" width="1536" height="1024" decoding="async">
 </a>
 </div>
 
@@ -214,6 +214,41 @@ Start Drawing TRS Age
 <label>
 TRS 2 Hire Date
 <input id="trs2HireDate" type="date">
+</label>
+
+</div>
+
+<label class="secondary-pension-toggle">
+<input id="hasSpouseDefinedBenefitPension" type="checkbox">
+Also add spouse defined benefit pension
+</label>
+
+<div id="spouseDefinedBenefitPensionSection" class="form-grid" style="display:none;margin-top:18px;">
+
+<p class="module-helper-text" style="grid-column:1 / -1;">
+Use this when a spouse has a pension outside your LEOFF benefit. Enter the
+monthly benefit in today's dollars, the spouse age when it starts, and any
+annual COLA.
+</p>
+
+<label>
+Spouse Pension Name
+<input id="spousePensionName" type="text" value="Spouse Pension">
+</label>
+
+<label>
+Spouse Pension Start Age
+<input id="spousePensionStartAge" type="number" value="65">
+</label>
+
+<label>
+Spouse Monthly Pension Benefit
+<input id="spousePensionMonthlyAmount" type="number" value="0">
+</label>
+
+<label>
+Spouse Pension COLA %
+<input id="spousePensionCola" type="number" value="0">
 </label>
 
 </div>

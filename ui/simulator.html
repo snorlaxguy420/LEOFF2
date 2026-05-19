@@ -160,12 +160,28 @@ Benefit Enhancement
 
 <div class="secondary-pension-card">
 
+<div class="secondary-pension-head">
+<div class="secondary-pension-kicker">Additional Pension Income</div>
+<h3>Other household pensions</h3>
+<p>
+Add another defined-benefit pension only if it should be part of the household
+retirement income picture. Leave these off if the LEOFF pension is the only
+pension you want modeled.
+</p>
+</div>
+
+<div class="secondary-pension-options">
+
+<section class="secondary-pension-option">
 <label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>PERS Plan 2</strong>
+<small>Add a Washington PERS 2 pension with service years, average final compensation, and start age.</small>
+</span>
 <input id="hasPers2" type="checkbox">
-Also add PERS Plan 2
 </label>
 
-<div id="pers2Section" class="form-grid" style="display:none;margin-top:18px;">
+<div id="pers2Section" class="form-grid secondary-pension-fields" style="display:none;">
 
 <label>
 PERS 2 Service Years
@@ -188,13 +204,18 @@ PERS 2 Hire Date
 </label>
 
 </div>
+</section>
 
+<section class="secondary-pension-option">
 <label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>TRS Plan 2</strong>
+<small>Add a Washington TRS 2 pension when teacher retirement benefits are part of the household plan.</small>
+</span>
 <input id="hasTrs2" type="checkbox">
-Also add TRS Plan 2
 </label>
 
-<div id="trs2Section" class="form-grid" style="display:none;margin-top:18px;">
+<div id="trs2Section" class="form-grid secondary-pension-fields" style="display:none;">
 
 <label>
 TRS 2 Service Years
@@ -217,13 +238,18 @@ TRS 2 Hire Date
 </label>
 
 </div>
+</section>
 
+<section class="secondary-pension-option">
 <label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>Spouse defined benefit</strong>
+<small>Use this for a spouse pension outside your LEOFF benefit, including non-DRS defined pensions.</small>
+</span>
 <input id="hasSpouseDefinedBenefitPension" type="checkbox">
-Also add spouse defined benefit pension
 </label>
 
-<div id="spouseDefinedBenefitPensionSection" class="form-grid" style="display:none;margin-top:18px;">
+<div id="spouseDefinedBenefitPensionSection" class="form-grid secondary-pension-fields" style="display:none;">
 
 <p class="module-helper-text" style="grid-column:1 / -1;">
 Use this when a spouse has a pension outside your LEOFF benefit. Enter the
@@ -250,6 +276,9 @@ Spouse Monthly Pension Benefit
 Spouse Pension COLA %
 <input id="spousePensionCola" type="number" value="0">
 </label>
+
+</div>
+</section>
 
 </div>
 

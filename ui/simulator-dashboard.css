@@ -581,17 +581,22 @@ opacity:1;
 .secondary-pension-card{
 margin-top:24px;
 display:grid;
-gap:14px;
-padding:18px 20px;
-border-radius:16px;
-background:rgba(255,255,255,.58);
-border:1px solid rgba(30,47,68,.10);
-box-shadow:0 10px 24px rgba(30,47,68,.05);
+gap:18px;
+padding:22px;
+border-radius:22px;
+background:
+linear-gradient(145deg, rgba(255,255,255,.72), rgba(244,241,234,.58)),
+radial-gradient(circle at top right, rgba(63,124,133,.14), transparent 34%);
+border:1px solid rgba(255,255,255,.56);
+box-shadow:
+0 16px 34px rgba(30,47,68,.08),
+inset 0 1px 0 rgba(255,255,255,.7);
 }
 
 .secondary-pension-head{
 display:grid;
 gap:8px;
+padding-bottom:4px;
 }
 
 .secondary-pension-kicker{
@@ -625,21 +630,51 @@ line-height:1.58;
 color:rgba(42,42,42,.74);
 }
 
+.secondary-pension-options{
+display:grid;
+grid-template-columns:repeat(3, minmax(0, 1fr));
+gap:14px;
+align-items:start;
+}
+
 .secondary-pension-option{
 display:grid;
 gap:12px;
-padding:14px;
-border-radius:16px;
-background:rgba(255,255,255,.44);
-border:1px solid rgba(31,77,58,.10);
-box-shadow:inset 0 1px 0 rgba(255,255,255,.45);
+padding:16px;
+border-radius:18px;
+background:
+linear-gradient(180deg, rgba(255,255,255,.80), rgba(255,255,255,.52));
+border:1px solid rgba(30,47,68,.11);
+box-shadow:
+0 10px 22px rgba(30,47,68,.05),
+inset 0 1px 0 rgba(255,255,255,.64);
+transition:border-color .18s ease, box-shadow .18s ease, transform .16s ease, background .18s ease;
+}
+
+.secondary-pension-option:hover{
+transform:translateY(-1px);
+border-color:rgba(31,77,58,.22);
+box-shadow:
+0 14px 26px rgba(30,47,68,.08),
+inset 0 1px 0 rgba(255,255,255,.72);
+}
+
+.secondary-pension-option:has(.secondary-pension-toggle input:checked){
+background:
+linear-gradient(180deg, rgba(255,255,255,.92), rgba(240,236,229,.78)),
+linear-gradient(135deg, rgba(31,77,58,.12), rgba(63,124,133,.10));
+border-color:rgba(31,77,58,.34);
+box-shadow:
+0 16px 30px rgba(31,77,58,.10),
+inset 0 1px 0 rgba(255,255,255,.82);
 }
 
 .secondary-pension-toggle{
 display:flex;
-justify-content:space-between;
+flex-direction:row-reverse;
+justify-content:flex-end;
 align-items:flex-start;
-gap:16px;
+gap:12px;
 font-weight:600;
 color:var(--pnw-evergreen);
 cursor:pointer;
@@ -647,9 +682,9 @@ cursor:pointer;
 
 .secondary-pension-toggle input{
 flex:0 0 auto;
-width:20px;
-height:20px;
-margin:0;
+width:22px;
+height:22px;
+margin:1px 0 0;
 accent-color:var(--pnw-evergreen);
 }
 
@@ -668,6 +703,14 @@ color:var(--pnw-evergreen);
 font-size:13px;
 line-height:1.5;
 color:rgba(42,42,42,.72);
+}
+
+.secondary-pension-fields{
+grid-template-columns:1fr;
+gap:14px;
+margin-top:6px;
+padding-top:14px;
+border-top:1px solid rgba(31,77,58,.12);
 }
 
 .card-action-row{
@@ -1509,6 +1552,10 @@ grid-template-columns:repeat(3, minmax(0, 1fr));
 .planner-grid{
 grid-template-columns:1fr;
 gap:20px;
+}
+
+.secondary-pension-options{
+grid-template-columns:1fr;
 }
 
 .planner-sidebar{

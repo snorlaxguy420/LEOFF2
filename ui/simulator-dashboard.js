@@ -2199,6 +2199,24 @@ function setupAdditionalPensionUi() {
     const pers2Section = document.getElementById("pers2Section");
     const hasTrs2 = document.getElementById("hasTrs2");
     const trs2Section = document.getElementById("trs2Section");
+    const hasSers2 = document.getElementById("hasSers2");
+    const sers2Section = document.getElementById("sers2Section");
+    const hasPsers2 = document.getElementById("hasPsers2");
+    const psers2Section = document.getElementById("psers2Section");
+    const hasWsprs2 = document.getElementById("hasWsprs2");
+    const wsprs2Section = document.getElementById("wsprs2Section");
+    const hasMilitaryRetiredPay =
+        document.getElementById("hasMilitaryRetiredPay");
+    const militaryRetiredPaySection =
+        document.getElementById("militaryRetiredPaySection");
+    const hasMilitaryDisabilityPay =
+        document.getElementById("hasMilitaryDisabilityPay");
+    const militaryDisabilityPaySection =
+        document.getElementById("militaryDisabilityPaySection");
+    const hasOtherStableIncome =
+        document.getElementById("hasOtherStableIncome");
+    const otherStableIncomeSection =
+        document.getElementById("otherStableIncomeSection");
     const hasSpouseDefinedBenefitPension =
         document.getElementById("hasSpouseDefinedBenefitPension");
     const spouseDefinedBenefitPensionSection =
@@ -2216,6 +2234,21 @@ function setupAdditionalPensionUi() {
     const syncAdditionalPensionSections = () => {
         toggleAdditionalPensionSection(hasPers2, pers2Section);
         toggleAdditionalPensionSection(hasTrs2, trs2Section);
+        toggleAdditionalPensionSection(hasSers2, sers2Section);
+        toggleAdditionalPensionSection(hasPsers2, psers2Section);
+        toggleAdditionalPensionSection(hasWsprs2, wsprs2Section);
+        toggleAdditionalPensionSection(
+            hasMilitaryRetiredPay,
+            militaryRetiredPaySection
+        );
+        toggleAdditionalPensionSection(
+            hasMilitaryDisabilityPay,
+            militaryDisabilityPaySection
+        );
+        toggleAdditionalPensionSection(
+            hasOtherStableIncome,
+            otherStableIncomeSection
+        );
         toggleAdditionalPensionSection(
             hasSpouseDefinedBenefitPension,
             spouseDefinedBenefitPensionSection
@@ -2224,6 +2257,21 @@ function setupAdditionalPensionUi() {
 
     hasPers2?.addEventListener("change", syncAdditionalPensionSections);
     hasTrs2?.addEventListener("change", syncAdditionalPensionSections);
+    hasSers2?.addEventListener("change", syncAdditionalPensionSections);
+    hasPsers2?.addEventListener("change", syncAdditionalPensionSections);
+    hasWsprs2?.addEventListener("change", syncAdditionalPensionSections);
+    hasMilitaryRetiredPay?.addEventListener(
+        "change",
+        syncAdditionalPensionSections
+    );
+    hasMilitaryDisabilityPay?.addEventListener(
+        "change",
+        syncAdditionalPensionSections
+    );
+    hasOtherStableIncome?.addEventListener(
+        "change",
+        syncAdditionalPensionSections
+    );
     hasSpouseDefinedBenefitPension?.addEventListener(
         "change",
         syncAdditionalPensionSections

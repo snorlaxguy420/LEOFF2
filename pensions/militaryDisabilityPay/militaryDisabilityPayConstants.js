@@ -1,0 +1,12 @@
+const MILITARY_DISABILITY_PAY_CONSTANTS = Object.freeze({
+    PAY_TYPES: Object.freeze({
+        VA_DISABILITY: "va_disability",
+        DOD_DISABILITY_RETIREMENT: "dod_disability_retirement"
+    }),
+    LEGACY_MULTIPLIER_PER_YEAR: 0.025,
+    BRS_MULTIPLIER_PER_YEAR: 0.02,
+    MAX_DISABILITY_MULTIPLIER: 0.75,
+    DEFAULT_COLA: 0.025
+});
+
+export default MILITARY_DISABILITY_PAY_CONSTANTS;

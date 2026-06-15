@@ -1,6 +1,6 @@
 # LEOFF Helper Project Roadmap
 
-Last updated: May 9, 2026
+Last updated: June 14, 2026
 
 This document is split into two parts:
 
@@ -24,6 +24,9 @@ This document is split into two parts:
 
 ### Pension and Deterministic Accuracy
 
+- Deepen SERS2, PSERS2, and WSPRS2 pension support with additional edge-case validation, plan-specific explanatory text, official-estimate comparison examples, and browser QA across simulator, dashboard, and report surfaces.
+- Deepen Military Disability Pay support with rate-table helper guidance, CRDP/CRSC interaction notes, taxable-edge-case guidance, and clearer DoD-versus-VA explanatory copy.
+- Add FERS support for federal civilian pensions, including official OPM formula variants, survivor options, and Special Retirement Supplement treatment if feasible.
 - Add additional pension-system engines later through the pension registry pattern.
 - Continue expanding multi-pension UI support beyond the current LEOFF2 + optional PERS2 + optional TRS2 flow.
 - Continue deepening edge-case pension-rule accuracy across LEOFF2, PERS2, TRS2, and future systems.
@@ -106,6 +109,10 @@ This document is split into two parts:
 - LEOFF2 supports DRS optional tiered multiplier versus `2% pension + lump sum` election modeling.
 - Pension registry routing lets the dashboard and simulator call dedicated pension engines instead of inline pension math.
 - Simulator support includes optional PERS2 and TRS2 inputs alongside the main LEOFF2 flow.
+- First-pass simulator support includes optional WA SERS2, PSERS2, and WSPRS2 pension engines, registry routing, saved-input restore, chart labels, and verification coverage without modifying the isolated LEOFF2 engine.
+- First-pass Military Retired Pay support covers Final Pay, High-36, REDUX, and Blended Retirement System formulas with a user-entered monthly retired-pay base, creditable service years, COLA, registry routing, simulator inputs, saved-input restore, chart labeling, and verification coverage.
+- First-pass Military Disability Pay support covers VA disability compensation and DoD disability retirement as a separate income source from longevity retired pay, with registry routing, simulator inputs, saved-input restore, chart labeling, and verification coverage.
+- Optional PERS2, TRS2, SERS2, PSERS2, WSPRS2, Military Retired Pay, Military Disability Pay, and generic defined-benefit pension sources can be assigned to either the user or spouse, with spouse-owned start ages converted onto the household projection timeline.
 
 ### Projection Engine
 

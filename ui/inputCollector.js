@@ -22,6 +22,18 @@ function readValue(id, type) {
 
 }
 
+function getStableIncomeTypeLabel(type) {
+    const labels = {
+        annuity: "Annuity",
+        military_pension: "Military Pension",
+        out_of_state_pension: "Out-of-State Pension",
+        trust_payment: "Trust Payment",
+        other: "Stable Income"
+    };
+
+    return labels[type] || labels.other;
+}
+
 /* =========================================================
    INPUT SCHEMA
 ========================================================= */
@@ -41,15 +53,75 @@ const schema = {
     survivorAge: "int",
     hasPers2: "checkbox",
     hasTrs2: "checkbox",
+    hasSers2: "checkbox",
+    hasPsers2: "checkbox",
+    hasWsprs2: "checkbox",
+    hasMilitaryRetiredPay: "checkbox",
+    hasMilitaryDisabilityPay: "checkbox",
+    hasOtherStableIncome: "checkbox",
+    pers2Owner: "text",
     pers2ServiceYears: "number",
     pers2Afc: "number",
     pers2StartAge: "number",
     pers2HireDate: "text",
+    trs2Owner: "text",
     trs2ServiceYears: "number",
     trs2Afc: "number",
     trs2StartAge: "number",
     trs2HireDate: "text",
+    sers2Owner: "text",
+    sers2ServiceYears: "number",
+    sers2Afc: "number",
+    sers2StartAge: "number",
+    sers2HireDate: "text",
+    psers2Owner: "text",
+    psers2ServiceYears: "number",
+    psers2Afc: "number",
+    psers2StartAge: "number",
+    wsprs2Owner: "text",
+    wsprs2ServiceYears: "number",
+    wsprs2Afs: "number",
+    wsprs2StartAge: "number",
+    wsprs2MemberStatus: "text",
+    militaryRetiredPayOwner: "text",
+    militaryRetiredPayPlan: "text",
+    militaryRetiredPayServiceYears: "number",
+    militaryRetiredPayBase: "number",
+    militaryRetiredPayStartAge: "number",
+    militaryRetiredPayCola: "number",
+    militaryDisabilityPayOwner: "text",
+    militaryDisabilityPayType: "text",
+    militaryDisabilityRetirementPlan: "text",
+    militaryDisabilityPayMonthlyAmount: "number",
+    militaryDisabilityPayBase: "number",
+    militaryDisabilityPayPercent: "number",
+    militaryDisabilityPayServiceYears: "number",
+    militaryDisabilityPayStartAge: "number",
+    militaryDisabilityPayCola: "number",
+    militaryDisabilityPayTaxable: "checkbox",
+    otherStableIncome1Type: "text",
+    otherStableIncome1Name: "text",
+    otherStableIncome1MonthlyAmount: "number",
+    otherStableIncome1StartAge: "number",
+    otherStableIncome1EndAge: "number",
+    otherStableIncome1Cola: "number",
+    otherStableIncome1Taxable: "checkbox",
+    otherStableIncome2Type: "text",
+    otherStableIncome2Name: "text",
+    otherStableIncome2MonthlyAmount: "number",
+    otherStableIncome2StartAge: "number",
+    otherStableIncome2EndAge: "number",
+    otherStableIncome2Cola: "number",
+    otherStableIncome2Taxable: "checkbox",
+    otherStableIncome3Type: "text",
+    otherStableIncome3Name: "text",
+    otherStableIncome3MonthlyAmount: "number",
+    otherStableIncome3StartAge: "number",
+    otherStableIncome3EndAge: "number",
+    otherStableIncome3Cola: "number",
+    otherStableIncome3Taxable: "checkbox",
     hasSpouseDefinedBenefitPension: "checkbox",
+    spousePensionOwner: "text",
     spousePensionName: "text",
     spousePensionStartAge: "number",
     spousePensionMonthlyAmount: "number",
@@ -163,6 +235,7 @@ export function collectInputs() {
         additionalPensions.push({
             system: "PERS2",
             enabled: true,
+            owner: raw.pers2Owner || "primary",
             serviceYears: raw.pers2ServiceYears,
             averageFinalCompensation: raw.pers2Afc,
             retirementAge: raw.pers2StartAge,
@@ -174,6 +247,7 @@ export function collectInputs() {
         additionalPensions.push({
             system: "TRS2",
             enabled: true,
+            owner: raw.trs2Owner || "primary",
             serviceYears: raw.trs2ServiceYears,
             averageFinalCompensation: raw.trs2Afc,
             retirementAge: raw.trs2StartAge,
@@ -181,13 +255,112 @@ export function collectInputs() {
         });
     }
 
+    if (raw.hasSers2) {
+        additionalPensions.push({
+            system: "SERS2",
+            enabled: true,
+            owner: raw.sers2Owner || "primary",
+            serviceYears: raw.sers2ServiceYears,
+            averageFinalCompensation: raw.sers2Afc,
+            retirementAge: raw.sers2StartAge,
+            hireDate: raw.sers2HireDate || null
+        });
+    }
+
+    if (raw.hasPsers2) {
+        additionalPensions.push({
+            system: "PSERS2",
+            enabled: true,
+            owner: raw.psers2Owner || "primary",
+            serviceYears: raw.psers2ServiceYears,
+            averageFinalCompensation: raw.psers2Afc,
+            retirementAge: raw.psers2StartAge
+        });
+    }
+
+    if (raw.hasWsprs2) {
+        additionalPensions.push({
+            system: "WSPRS2",
+            enabled: true,
+            owner: raw.wsprs2Owner || "primary",
+            serviceYears: raw.wsprs2ServiceYears,
+            averageFinalSalary: raw.wsprs2Afs,
+            retirementAge: raw.wsprs2StartAge,
+            memberStatus: raw.wsprs2MemberStatus || "active"
+        });
+    }
+
+    if (raw.hasMilitaryRetiredPay) {
+        additionalPensions.push({
+            system: "MILITARY_RETIRED_PAY",
+            enabled: true,
+            owner: raw.militaryRetiredPayOwner || "primary",
+            retirementPlan: raw.militaryRetiredPayPlan || "high36",
+            serviceYears: raw.militaryRetiredPayServiceYears,
+            retiredPayBase: raw.militaryRetiredPayBase,
+            retirementAge: raw.militaryRetiredPayStartAge,
+            cola: raw.militaryRetiredPayCola / 100,
+            taxable: true
+        });
+    }
+
+    if (raw.hasMilitaryDisabilityPay) {
+        additionalPensions.push({
+            system: "MILITARY_DISABILITY_PAY",
+            enabled: true,
+            owner: raw.militaryDisabilityPayOwner || "primary",
+            payType:
+                raw.militaryDisabilityPayType || "va_disability",
+            retirementPlan:
+                raw.militaryDisabilityRetirementPlan || "legacy",
+            monthlyAmount: raw.militaryDisabilityPayMonthlyAmount,
+            retiredPayBase: raw.militaryDisabilityPayBase,
+            disabilityPercent: raw.militaryDisabilityPayPercent,
+            serviceYears: raw.militaryDisabilityPayServiceYears,
+            retirementAge: raw.militaryDisabilityPayStartAge,
+            cola: raw.militaryDisabilityPayCola / 100,
+            taxable: Boolean(raw.militaryDisabilityPayTaxable)
+        });
+    }
+
+    if (raw.hasOtherStableIncome) {
+        [1, 2, 3].forEach(slot => {
+            const type =
+                raw[`otherStableIncome${slot}Type`] || "other";
+            const monthlyAmount =
+                raw[`otherStableIncome${slot}MonthlyAmount`];
+
+            if (monthlyAmount <= 0) {
+                return;
+            }
+
+            additionalPensions.push({
+                system: "OTHER_STABLE_INCOME",
+                enabled: true,
+                incomeType: type,
+                name:
+                    raw[`otherStableIncome${slot}Name`] ||
+                    getStableIncomeTypeLabel(type),
+                startAge: raw[`otherStableIncome${slot}StartAge`],
+                endAge:
+                    raw[`otherStableIncome${slot}EndAge`] || null,
+                monthlyAmount,
+                annualAmount: monthlyAmount * 12,
+                cola: raw[`otherStableIncome${slot}Cola`] / 100,
+                taxable:
+                    Boolean(raw[`otherStableIncome${slot}Taxable`])
+            });
+        });
+    }
+
     if (raw.hasSpouseDefinedBenefitPension) {
         additionalPensions.push({
             system: "SPOUSE_DEFINED_BENEFIT",
             enabled: true,
-            owner: "spouse",
-            name: raw.spousePensionName || "Spouse Pension",
+            owner: raw.spousePensionOwner || "primary",
+            name: raw.spousePensionName || "Defined Benefit Pension",
             spouseStartAge: raw.spousePensionStartAge,
+            retirementAge: raw.spousePensionStartAge,
             monthlyAmount: raw.spousePensionMonthlyAmount,
             annualAmount: raw.spousePensionMonthlyAmount * 12,
             cola: raw.spousePensionCola / 100,

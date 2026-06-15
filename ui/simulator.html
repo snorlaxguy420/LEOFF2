@@ -161,12 +161,12 @@ Benefit Enhancement
 <div class="secondary-pension-card">
 
 <div class="secondary-pension-head">
-<div class="secondary-pension-kicker">Additional Pension Income</div>
-<h3>Other household pensions</h3>
+<div class="secondary-pension-kicker">Stable Income Sources</div>
+<h3>Other household income</h3>
 <p>
-Add another defined-benefit pension only if it should be part of the household
-retirement income picture. Leave these off if the LEOFF pension is the only
-pension you want modeled.
+Add predictable income sources only when they should be part of the household
+retirement income picture. Leave these off if your LEOFF pension and Social
+Security are the only stable income streams you want modeled.
 </p>
 </div>
 
@@ -182,6 +182,14 @@ pension you want modeled.
 </label>
 
 <div id="pers2Section" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="pers2Owner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
 
 <label>
 PERS 2 Service Years
@@ -209,6 +217,255 @@ PERS 2 Hire Date
 <section class="secondary-pension-option">
 <label class="secondary-pension-toggle">
 <span class="secondary-pension-toggle-copy">
+<strong>Military Retired Pay</strong>
+<small>Estimate regular or non-regular military retired pay using Final Pay, High-36, REDUX, or BRS formulas.</small>
+</span>
+<input id="hasMilitaryRetiredPay" type="checkbox">
+</label>
+
+<div id="militaryRetiredPaySection" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="militaryRetiredPayOwner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
+
+<label>
+Military Retirement Plan
+<select id="militaryRetiredPayPlan">
+<option value="high36">High-36 / High-3</option>
+<option value="brs">Blended Retirement System (BRS)</option>
+<option value="final_pay">Final Pay</option>
+<option value="redux">REDUX / CSB</option>
+</select>
+</label>
+
+<label>
+Creditable Service Years
+<input id="militaryRetiredPayServiceYears" type="number" value="20">
+</label>
+
+<label>
+Monthly Retired-Pay Base
+<input id="militaryRetiredPayBase" type="number" value="0">
+</label>
+
+<label>
+Start Age
+<input id="militaryRetiredPayStartAge" type="number" value="60">
+</label>
+
+<label>
+Annual COLA %
+<input id="militaryRetiredPayCola" type="number" value="2.5">
+</label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>Military Disability Pay</strong>
+<small>Add VA disability compensation or DoD disability retirement as a separate military income source.</small>
+</span>
+<input id="hasMilitaryDisabilityPay" type="checkbox">
+</label>
+
+<div id="militaryDisabilityPaySection" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="militaryDisabilityPayOwner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
+
+<label>
+Disability Pay Type
+<select id="militaryDisabilityPayType">
+<option value="va_disability">VA Disability Compensation</option>
+<option value="dod_disability_retirement">DoD Disability Retirement</option>
+</select>
+</label>
+
+<label>
+DoD Retirement Plan
+<select id="militaryDisabilityRetirementPlan">
+<option value="legacy">Legacy / High-36</option>
+<option value="brs">Blended Retirement System (BRS)</option>
+</select>
+</label>
+
+<label>
+Monthly VA Disability Amount
+<input id="militaryDisabilityPayMonthlyAmount" type="number" value="0">
+</label>
+
+<label>
+Monthly Retired-Pay Base
+<input id="militaryDisabilityPayBase" type="number" value="0">
+</label>
+
+<label>
+DoD Disability %
+<input id="militaryDisabilityPayPercent" type="number" value="0">
+</label>
+
+<label>
+Creditable Service Years
+<input id="militaryDisabilityPayServiceYears" type="number" value="0">
+</label>
+
+<label>
+Start Age
+<input id="militaryDisabilityPayStartAge" type="number" value="45">
+</label>
+
+<label>
+Annual COLA %
+<input id="militaryDisabilityPayCola" type="number" value="2.5">
+</label>
+
+<label class="stable-income-taxable-toggle">
+<input id="militaryDisabilityPayTaxable" type="checkbox">
+Taxable income
+</label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>SERS Plan 2</strong>
+<small>Add a Washington school employee pension with Plan 2 service, monthly AFC, start age, and hire date.</small>
+</span>
+<input id="hasSers2" type="checkbox">
+</label>
+
+<div id="sers2Section" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="sers2Owner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
+
+<label>
+SERS 2 Service Years
+<input id="sers2ServiceYears" type="number" value="0">
+</label>
+
+<label>
+SERS 2 Monthly Average Final Compensation
+<input id="sers2Afc" type="number" value="0">
+</label>
+
+<label>
+Start Drawing SERS Age
+<input id="sers2StartAge" type="number" value="65">
+</label>
+
+<label>
+SERS 2 Hire Date
+<input id="sers2HireDate" type="date">
+</label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>PSERS Plan 2</strong>
+<small>Add a Washington public safety employee pension with PSERS service, monthly AFC, and start age.</small>
+</span>
+<input id="hasPsers2" type="checkbox">
+</label>
+
+<div id="psers2Section" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="psers2Owner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
+
+<label>
+PSERS 2 Service Years
+<input id="psers2ServiceYears" type="number" value="0">
+</label>
+
+<label>
+PSERS 2 Monthly Average Final Compensation
+<input id="psers2Afc" type="number" value="0">
+</label>
+
+<label>
+Start Drawing PSERS Age
+<input id="psers2StartAge" type="number" value="60">
+</label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>WSPRS Plan 2</strong>
+<small>Add a Washington State Patrol pension with active/inactive retirement status, monthly AFS, and AFS cap handling.</small>
+</span>
+<input id="hasWsprs2" type="checkbox">
+</label>
+
+<div id="wsprs2Section" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="wsprs2Owner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
+
+<label>
+WSPRS 2 Service Years
+<input id="wsprs2ServiceYears" type="number" value="0">
+</label>
+
+<label>
+WSPRS 2 Monthly Average Final Salary
+<input id="wsprs2Afs" type="number" value="0">
+</label>
+
+<label>
+Start Drawing WSPRS Age
+<input id="wsprs2StartAge" type="number" value="55">
+</label>
+
+<label>
+WSPRS Member Status
+<select id="wsprs2MemberStatus">
+<option value="active">Active - retiring from employment</option>
+<option value="inactive">Inactive - separated before retirement</option>
+</select>
+</label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
 <strong>TRS Plan 2</strong>
 <small>Add a Washington TRS 2 pension when teacher retirement benefits are part of the household plan.</small>
 </span>
@@ -216,6 +473,14 @@ PERS 2 Hire Date
 </label>
 
 <div id="trs2Section" class="form-grid secondary-pension-fields" style="display:none;">
+
+<label>
+Owner
+<select id="trs2Owner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
+</label>
 
 <label>
 TRS 2 Service Years
@@ -243,8 +508,8 @@ TRS 2 Hire Date
 <section class="secondary-pension-option">
 <label class="secondary-pension-toggle">
 <span class="secondary-pension-toggle-copy">
-<strong>Spouse defined benefit</strong>
-<small>Use this for a spouse pension outside your LEOFF benefit, including non-DRS defined pensions.</small>
+<strong>Defined benefit pension</strong>
+<small>Use this for a user or spouse pension outside the listed pension systems.</small>
 </span>
 <input id="hasSpouseDefinedBenefitPension" type="checkbox">
 </label>
@@ -252,30 +517,195 @@ TRS 2 Hire Date
 <div id="spouseDefinedBenefitPensionSection" class="form-grid secondary-pension-fields" style="display:none;">
 
 <p class="module-helper-text" style="grid-column:1 / -1;">
-Use this when a spouse has a pension outside your LEOFF benefit. Enter the
-monthly benefit in today's dollars, the spouse age when it starts, and any
-annual COLA.
+Use this when either household member has a pension outside the listed systems.
+Enter the monthly benefit in today's dollars, the pension holder age when it
+starts, and any annual COLA.
 </p>
 
 <label>
-Spouse Pension Name
-<input id="spousePensionName" type="text" value="Spouse Pension">
+Owner
+<select id="spousePensionOwner">
+<option value="primary">You</option>
+<option value="spouse">Spouse</option>
+</select>
 </label>
 
 <label>
-Spouse Pension Start Age
+Pension Name
+<input id="spousePensionName" type="text" value="Defined Benefit Pension">
+</label>
+
+<label>
+Pension Holder Start Age
 <input id="spousePensionStartAge" type="number" value="65">
 </label>
 
 <label>
-Spouse Monthly Pension Benefit
+Monthly Pension Benefit
 <input id="spousePensionMonthlyAmount" type="number" value="0">
 </label>
 
 <label>
-Spouse Pension COLA %
+Pension COLA %
 <input id="spousePensionCola" type="number" value="0">
 </label>
+
+</div>
+</section>
+
+<section class="secondary-pension-option stable-income-option">
+<label class="secondary-pension-toggle">
+<span class="secondary-pension-toggle-copy">
+<strong>Other stable income</strong>
+<small>Add annuities, military pensions, trust payments, out-of-state pensions, or similar reliable income.</small>
+</span>
+<input id="hasOtherStableIncome" type="checkbox">
+</label>
+
+<div id="otherStableIncomeSection" class="secondary-pension-fields stable-income-fields" style="display:none;">
+
+<p class="module-helper-text">
+Use these slots for predictable monthly income that is not already captured
+elsewhere. Leave unused source amounts at $0.
+</p>
+
+<section class="stable-income-entry">
+<h4>Income Source 1</h4>
+<div class="form-grid">
+<label>
+Income Type
+<select id="otherStableIncome1Type">
+<option value="annuity">Annuity</option>
+<option value="military_pension">Military pension</option>
+<option value="out_of_state_pension">Out-of-state pension</option>
+<option value="trust_payment">Trust payment</option>
+<option value="other">Other stable income</option>
+</select>
+</label>
+
+<label>
+Source Name
+<input id="otherStableIncome1Name" type="text" value="Annuity">
+</label>
+
+<label>
+Monthly Amount
+<input id="otherStableIncome1MonthlyAmount" type="number" value="0">
+</label>
+
+<label>
+Start Age
+<input id="otherStableIncome1StartAge" type="number" value="65">
+</label>
+
+<label>
+End Age
+<input id="otherStableIncome1EndAge" type="number" placeholder="Leave blank for lifetime">
+</label>
+
+<label>
+Annual COLA %
+<input id="otherStableIncome1Cola" type="number" value="0">
+</label>
+
+<label class="stable-income-taxable-toggle">
+<input id="otherStableIncome1Taxable" type="checkbox" checked>
+Taxable income
+</label>
+</div>
+</section>
+
+<section class="stable-income-entry">
+<h4>Income Source 2</h4>
+<div class="form-grid">
+<label>
+Income Type
+<select id="otherStableIncome2Type">
+<option value="annuity">Annuity</option>
+<option value="military_pension">Military pension</option>
+<option value="out_of_state_pension">Out-of-state pension</option>
+<option value="trust_payment">Trust payment</option>
+<option value="other">Other stable income</option>
+</select>
+</label>
+
+<label>
+Source Name
+<input id="otherStableIncome2Name" type="text" value="Military Pension">
+</label>
+
+<label>
+Monthly Amount
+<input id="otherStableIncome2MonthlyAmount" type="number" value="0">
+</label>
+
+<label>
+Start Age
+<input id="otherStableIncome2StartAge" type="number" value="60">
+</label>
+
+<label>
+End Age
+<input id="otherStableIncome2EndAge" type="number" placeholder="Leave blank for lifetime">
+</label>
+
+<label>
+Annual COLA %
+<input id="otherStableIncome2Cola" type="number" value="0">
+</label>
+
+<label class="stable-income-taxable-toggle">
+<input id="otherStableIncome2Taxable" type="checkbox" checked>
+Taxable income
+</label>
+</div>
+</section>
+
+<section class="stable-income-entry">
+<h4>Income Source 3</h4>
+<div class="form-grid">
+<label>
+Income Type
+<select id="otherStableIncome3Type">
+<option value="annuity">Annuity</option>
+<option value="military_pension">Military pension</option>
+<option value="out_of_state_pension">Out-of-state pension</option>
+<option value="trust_payment">Trust payment</option>
+<option value="other">Other stable income</option>
+</select>
+</label>
+
+<label>
+Source Name
+<input id="otherStableIncome3Name" type="text" value="Trust Payment">
+</label>
+
+<label>
+Monthly Amount
+<input id="otherStableIncome3MonthlyAmount" type="number" value="0">
+</label>
+
+<label>
+Start Age
+<input id="otherStableIncome3StartAge" type="number" value="65">
+</label>
+
+<label>
+End Age
+<input id="otherStableIncome3EndAge" type="number" placeholder="Leave blank for lifetime">
+</label>
+
+<label>
+Annual COLA %
+<input id="otherStableIncome3Cola" type="number" value="0">
+</label>
+
+<label class="stable-income-taxable-toggle">
+<input id="otherStableIncome3Taxable" type="checkbox" checked>
+Taxable income
+</label>
+</div>
+</section>
 
 </div>
 </section>

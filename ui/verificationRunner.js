@@ -1639,6 +1639,60 @@ function testSharedSimulatorHelpers() {
                 hireDate: "2009-09-01"
             },
             {
+                system: "SERS2",
+                enabled: true,
+                serviceYears: 23,
+                averageFinalCompensation: 5400,
+                retirementAge: 65,
+                hireDate: "2012-09-01"
+            },
+            {
+                system: "PSERS2",
+                enabled: true,
+                serviceYears: 23,
+                averageFinalCompensation: 5400,
+                retirementAge: 65
+            },
+            {
+                system: "WSPRS2",
+                enabled: true,
+                serviceYears: 25,
+                averageFinalSalary: 6500,
+                retirementAge: 56,
+                memberStatus: "active"
+            },
+            {
+                system: "MILITARY_RETIRED_PAY",
+                enabled: true,
+                retirementPlan: "high36",
+                serviceYears: 20,
+                retiredPayBase: 6000,
+                retirementAge: 60,
+                cola: 0.025,
+                taxable: true
+            },
+            {
+                system: "MILITARY_DISABILITY_PAY",
+                enabled: true,
+                owner: "spouse",
+                payType: "va_disability",
+                monthlyAmount: 1200,
+                retirementAge: 50,
+                cola: 0.025,
+                taxable: false
+            },
+            {
+                system: "OTHER_STABLE_INCOME",
+                enabled: true,
+                incomeType: "annuity",
+                name: "Annuity",
+                startAge: 60,
+                monthlyAmount: 1200,
+                annualAmount: 14400,
+                cola: 0.02,
+                taxable: true
+            },
+            {
                 system: "SPOUSE_DEFINED_BENEFIT",
                 enabled: true,
                 owner: "spouse",
@@ -1689,7 +1743,7 @@ function testSharedSimulatorHelpers() {
         normalizeLeoffSurvivorOption("50%") === "JOINT_50",
         "Survivor option normalization failed"
     );
-    assert(incomeSources.length === 8, "Income source assembly failed");
+    assert(incomeSources.length === 14, "Income source assembly failed");
     assert(
         incomeSources.some(source => source.name === "LEOFF Pension"),
         "LEOFF pension source missing"
@@ -1705,6 +1759,70 @@ function testSharedSimulatorHelpers() {
     assert(
         incomeSources.some(source => source.name === "TRS Plan 2 Pension"),
         "TRS2 pension source missing"
+    );
+    assert(
+        incomeSources.some(source => source.name === "SERS Plan 2 Pension"),
+        "SERS2 pension source missing"
+    );
+    const sers2PensionSource =
+        incomeSources.find(source => source.name === "SERS Plan 2 Pension");
+    assert(
+        Math.round(sers2PensionSource.annualAmount) === 29808,
+        "SERS2 DRS example calculation failed"
+    );
+    assert(
+        incomeSources.some(source => source.name === "PSERS Plan 2 Pension"),
+        "PSERS2 pension source missing"
+    );
+    const psers2PensionSource =
+        incomeSources.find(source => source.name === "PSERS Plan 2 Pension");
+    assert(
+        Math.round(psers2PensionSource.annualAmount) === 29808,
+        "PSERS2 DRS example calculation failed"
+    );
+    assert(
+        incomeSources.some(source => source.name === "WSPRS Plan 2 Pension"),
+        "WSPRS2 pension source missing"
+    );
+    const wsprs2PensionSource =
+        incomeSources.find(source => source.name === "WSPRS Plan 2 Pension");
+    assert(
+        Math.round(wsprs2PensionSource.annualAmount) === 39000,
+        "WSPRS2 DRS example calculation failed"
+    );
+    assert(
+        incomeSources.some(source => source.name === "Military Retired Pay"),
+        "Military retired pay source missing"
+    );
+    const militaryRetiredPaySource =
+        incomeSources.find(source => source.name === "Military Retired Pay");
+    assert(
+        Math.round(militaryRetiredPaySource.annualAmount) === 36000,
+        "Military retired pay High-36 calculation failed"
+    );
+    const spouseMilitaryDisabilityPaySource =
+        incomeSources.find(
+            source => source.name === "Spouse Military Disability Pay"
+        );
+    assert(
+        spouseMilitaryDisabilityPaySource,
+        "Spouse military disability pay source missing"
+    );
+    assert(
+        Math.round(spouseMilitaryDisabilityPaySource.annualAmount) === 14400,
+        "VA disability monthly amount was not annualized correctly"
+    );
+    assert(
+        spouseMilitaryDisabilityPaySource.startAge === 53,
+        "Spouse military disability pay start age was not converted to primary timeline age"
+    );
+    assert(
+        spouseMilitaryDisabilityPaySource.taxable === false,
+        "VA disability pay should remain non-taxable by default"
+    );
+    assert(
+        incomeSources.some(source => source.name === "Annuity"),
+        "Other stable income source missing"
     );
     assert(
         incomeSources.some(source => source.name === "Spouse Social Security"),

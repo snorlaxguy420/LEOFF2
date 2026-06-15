@@ -40,6 +40,57 @@ function primaryAgeWhenSpouseReachesAge(profile = {}, spouseTargetAge = null) {
     return targetAge;
 }
 
+function normalizeIncomeOwner(owner) {
+    return owner === "spouse" ? "spouse" : "primary";
+}
+
+function startAgeForOwner({
+    owner,
+    profile,
+    startAge
+}) {
+    return normalizeIncomeOwner(owner) === "spouse"
+        ? primaryAgeWhenSpouseReachesAge(profile, startAge)
+        : Number(startAge);
+}
+
+const ADDITIONAL_DEFINED_BENEFIT_PENSION_SYSTEMS = Object.freeze({
+    PERS2: Object.freeze({
+        name: "PERS Plan 2 Pension",
+        compensationField: "averageFinalCompensation"
+    }),
+    TRS2: Object.freeze({
+        name: "TRS Plan 2 Pension",
+        compensationField: "averageFinalCompensation"
+    }),
+    SERS2: Object.freeze({
+        name: "SERS Plan 2 Pension",
+        compensationField: "averageFinalCompensation"
+    }),
+    PSERS2: Object.freeze({
+        name: "PSERS Plan 2 Pension",
+        compensationField: "averageFinalCompensation"
+    }),
+    WSPRS2: Object.freeze({
+        name: "WSPRS Plan 2 Pension",
+        compensationField: "averageFinalSalary"
+    }),
+    MILITARY_RETIRED_PAY: Object.freeze({
+        name: "Military Retired Pay",
+        compensationField: "retiredPayBase"
+    })
+});
+
+function normalizeStableIncomeEndAge(endAge) {
+    const parsedEndAge = Number(endAge);
+
+    if (!Number.isFinite(parsedEndAge) || parsedEndAge <= 0) {
+        return undefined;
+    }
+
+    return parsedEndAge;
+}
+
 export function buildSimulationIncomeSources({
     inputs,
     assetRegistry
@@ -136,16 +187,21 @@ export function buildPensionIncomeSources({
                 Number(additionalPension.annualAmount) ||
                 (Number(additionalPension.monthlyAmount) * 12) ||
                 0;
-            const spouseStartAge =
+            const pensionHolderStartAge =
                 Number(additionalPension.spouseStartAge) ||
                 Number(additionalPension.retirementAge) ||
                 Number(additionalPension.startAge) ||
                 0;
+            const owner =
+                additionalPension.owner === undefined
+                    ? "spouse"
+                    : normalizeIncomeOwner(additionalPension.owner);
             const startAge =
-                primaryAgeWhenSpouseReachesAge(
-                    inputs.profile,
-                    spouseStartAge
-                );
+                startAgeForOwner({
+                    owner,
+                    profile: inputs.profile,
+                    startAge: pensionHolderStartAge
+                });
 
             if (annualAmount <= 0 || !Number.isFinite(startAge)) {
                 return;
@@ -153,71 +209,182 @@ export function buildPensionIncomeSources({
 
             incomeSources.push({
                 type: "fixed",
-                name: additionalPension.name || "Spouse Pension",
+                name:
+                    additionalPension.name ||
+                    (
+                        owner === "spouse"
+                            ? "Spouse Pension"
+                            : "Defined Benefit Pension"
+                    ),
                 annualAmount,
                 startAge,
                 growthRate: additionalPension.cola || 0,
                 taxable: additionalPension.taxable !== false,
                 taxCategory: "ordinary_income",
                 metadata: {
-                    owner: "spouse",
+                    owner,
                     system: "SPOUSE_DEFINED_BENEFIT",
-                    spouseStartAge
+                    pensionHolderStartAge
                 }
             });
 
             return;
         }
 
-        if (
-            additionalPension.system === "PERS2" &&
-            additionalPension.serviceYears > 0 &&
-            additionalPension.averageFinalCompensation > 0 &&
-            additionalPension.retirementAge > 0
-        ) {
-            const pensionCalculator = getPensionCalculator("PERS2");
-            const pensionResult = pensionCalculator({
-                serviceYears: additionalPension.serviceYears,
-                retirementAge: additionalPension.retirementAge,
-                averageFinalCompensation:
-                    additionalPension.averageFinalCompensation,
-                hireDate: additionalPension.hireDate
-            });
+        if (additionalPension.system === "OTHER_STABLE_INCOME") {
+            const annualAmount =
+                Number(additionalPension.annualAmount) ||
+                (Number(additionalPension.monthlyAmount) * 12) ||
+                0;
+            const startAge = Number(additionalPension.startAge) || 0;
+
+            if (annualAmount <= 0 || startAge <= 0) {
+                return;
+            }
 
             incomeSources.push({
                 type: "fixed",
-                name: "PERS Plan 2 Pension",
-                annualAmount: pensionResult.annualBenefit,
-                startAge: pensionResult.startAge,
-                growthRate: 0,
-                taxable: true,
-                taxCategory: "ordinary_income"
+                name: additionalPension.name || "Stable Income",
+                annualAmount,
+                startAge,
+                endAge:
+                    normalizeStableIncomeEndAge(additionalPension.endAge),
+                growthRate: Number(additionalPension.cola) || 0,
+                taxable: additionalPension.taxable !== false,
+                taxCategory: "ordinary_income",
+                metadata: {
+                    system: "OTHER_STABLE_INCOME",
+                    incomeType: additionalPension.incomeType || "other"
+                }
             });
+
+            return;
         }
 
-        if (
-            additionalPension.system === "TRS2" &&
-            additionalPension.serviceYears > 0 &&
-            additionalPension.averageFinalCompensation > 0 &&
-            additionalPension.retirementAge > 0
-        ) {
-            const pensionCalculator = getPensionCalculator("TRS2");
+        if (additionalPension.system === "MILITARY_DISABILITY_PAY") {
+            const memberStartAge = Number(
+                additionalPension.retirementAge ??
+                additionalPension.startAge
+            );
+            const sourceStartAge =
+                startAgeForOwner({
+                    owner: additionalPension.owner,
+                    profile: inputs.profile,
+                    startAge: memberStartAge
+                });
+
+            if (
+                !Number.isFinite(memberStartAge) ||
+                memberStartAge <= 0 ||
+                !Number.isFinite(sourceStartAge) ||
+                sourceStartAge <= 0
+            ) {
+                return;
+            }
+
+            const pensionCalculator =
+                getPensionCalculator(additionalPension.system);
             const pensionResult = pensionCalculator({
+                payType: additionalPension.payType,
+                monthlyAmount: additionalPension.monthlyAmount,
+                retiredPayBase: additionalPension.retiredPayBase,
+                disabilityPercent: additionalPension.disabilityPercent,
                 serviceYears: additionalPension.serviceYears,
-                retirementAge: additionalPension.retirementAge,
-                averageFinalCompensation:
-                    additionalPension.averageFinalCompensation,
-                hireDate: additionalPension.hireDate
+                retirementAge: memberStartAge,
+                retirementPlan: additionalPension.retirementPlan,
+                cola: additionalPension.cola,
+                taxable: additionalPension.taxable
             });
 
             incomeSources.push({
                 type: "fixed",
-                name: "TRS Plan 2 Pension",
+                name:
+                    normalizeIncomeOwner(additionalPension.owner) === "spouse"
+                        ? "Spouse Military Disability Pay"
+                        : "Military Disability Pay",
                 annualAmount: pensionResult.annualBenefit,
-                startAge: pensionResult.startAge,
-                growthRate: 0,
-                taxable: true,
-                taxCategory: "ordinary_income"
+                startAge: sourceStartAge,
+                growthRate: pensionResult.cola || 0,
+                taxable: pensionResult.taxable === true,
+                taxCategory: "ordinary_income",
+                metadata: {
+                    system: additionalPension.system,
+                    owner: normalizeIncomeOwner(additionalPension.owner),
+                    payType: pensionResult.metadata?.payType,
+                    disabilityMultiplier:
+                        pensionResult.disabilityMultiplier
+                }
+            });
+
+            return;
+        }
+
+        const definedBenefitSystem =
+            ADDITIONAL_DEFINED_BENEFIT_PENSION_SYSTEMS[
+                additionalPension.system
+            ];
+
+        if (!definedBenefitSystem) {
+            return;
+        }
+
+        const compensation =
+            Number(
+                additionalPension[definedBenefitSystem.compensationField] ??
+                additionalPension.averageFinalCompensation ??
+                additionalPension.averageFinalSalary
+            ) || 0;
+
+        const memberRetirementAge =
+            Number(additionalPension.retirementAge);
+        const sourceStartAge =
+            startAgeForOwner({
+                owner: additionalPension.owner,
+                profile: inputs.profile,
+                startAge: memberRetirementAge
+            });
+
+        if (
+            additionalPension.serviceYears > 0 &&
+            compensation > 0 &&
+            memberRetirementAge > 0 &&
+            sourceStartAge > 0
+        ) {
+            const pensionCalculator =
+                getPensionCalculator(additionalPension.system);
+            const pensionResult = pensionCalculator({
+                serviceYears: additionalPension.serviceYears,
+                retirementAge: memberRetirementAge,
+                averageFinalCompensation: compensation,
+                averageFinalSalary: compensation,
+                retiredPayBase: compensation,
+                retirementPlan: additionalPension.retirementPlan,
+                hireDate: additionalPension.hireDate,
+                memberStatus: additionalPension.memberStatus,
+                cola: additionalPension.cola
+            });
+
+            incomeSources.push({
+                type: "fixed",
+                name:
+                    normalizeIncomeOwner(additionalPension.owner) === "spouse"
+                        ? `Spouse ${definedBenefitSystem.name}`
+                        : definedBenefitSystem.name,
+                annualAmount: pensionResult.annualBenefit,
+                startAge: sourceStartAge,
+                growthRate: pensionResult.cola || 0,
+                taxable: additionalPension.taxable !== false,
+                taxCategory: "ordinary_income",
+                metadata: {
+                    system: additionalPension.system,
+                    owner: normalizeIncomeOwner(additionalPension.owner),
+                    earlyRetirementFactor:
+                        pensionResult.earlyRetirementFactor,
+                    retiredPayMultiplier:
+                        pensionResult.retiredPayMultiplier,
+                    retirementPlan:
+                        pensionResult.metadata?.retirementPlan
+                }
             });
         }
     });

@@ -40,6 +40,11 @@
 import { calculateLEOFF2 } from "./LEOFF2/leoff2Engine.js";
 import { calculatePERS2 } from "./pers2/pers2Engine.js";
 import { calculateTRS2 } from "./trs2/trs2Engine.js";
+import { calculateSERS2 } from "./sers2/sers2Engine.js";
+import { calculatePSERS2 } from "./psers2/psers2Engine.js";
+import { calculateWSPRS2 } from "./wsprs2/wsprs2Engine.js";
+import { calculateMilitaryRetiredPay } from "./militaryRetiredPay/militaryRetiredPayEngine.js";
+import { calculateMilitaryDisabilityPay } from "./militaryDisabilityPay/militaryDisabilityPayEngine.js";
 
 /*
  * Generic Pension Engine
@@ -93,6 +98,36 @@ const pensionSystems = Object.freeze({
      * Washington State Teachers' Retirement System Plan 2.
      */
     TRS2: calculateTRS2,
+
+    /**
+     * SERS2
+     * Washington State School Employees' Retirement System Plan 2.
+     */
+    SERS2: calculateSERS2,
+
+    /**
+     * PSERS2
+     * Washington State Public Safety Employees' Retirement System Plan 2.
+     */
+    PSERS2: calculatePSERS2,
+
+    /**
+     * WSPRS2
+     * Washington State Patrol Retirement System Plan 2.
+     */
+    WSPRS2: calculateWSPRS2,
+
+    /**
+     * MILITARY_RETIRED_PAY
+     * United States military retired pay under Final Pay, High-36, REDUX, or BRS.
+     */
+    MILITARY_RETIRED_PAY: calculateMilitaryRetiredPay,
+
+    /**
+     * MILITARY_DISABILITY_PAY
+     * VA disability compensation or DoD disability retirement.
+     */
+    MILITARY_DISABILITY_PAY: calculateMilitaryDisabilityPay,
 
     /**
      * GENERIC

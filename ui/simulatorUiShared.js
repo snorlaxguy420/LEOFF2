@@ -60,6 +60,31 @@ export function populateSimulatorInputs(inputs) {
     const trs2 =
         (inputs.additionalPensions || [])
             .find(pension => pension.system === "TRS2") || null;
+    const sers2 =
+        (inputs.additionalPensions || [])
+            .find(pension => pension.system === "SERS2") || null;
+    const psers2 =
+        (inputs.additionalPensions || [])
+            .find(pension => pension.system === "PSERS2") || null;
+    const wsprs2 =
+        (inputs.additionalPensions || [])
+            .find(pension => pension.system === "WSPRS2") || null;
+    const militaryRetiredPay =
+        (inputs.additionalPensions || [])
+            .find(
+                pension => pension.system === "MILITARY_RETIRED_PAY"
+            ) || null;
+    const militaryDisabilityPay =
+        (inputs.additionalPensions || [])
+            .find(
+                pension => pension.system === "MILITARY_DISABILITY_PAY"
+            ) || null;
+    const otherStableIncomeSources =
+        (inputs.additionalPensions || [])
+            .filter(
+                pension => pension.system === "OTHER_STABLE_INCOME"
+            )
+            .slice(0, 3);
     const spouseDefinedBenefitPension =
         (inputs.additionalPensions || [])
             .find(pension => pension.system === "SPOUSE_DEFINED_BENEFIT") ||
@@ -96,16 +121,114 @@ export function populateSimulatorInputs(inputs) {
             inputs.pension?.benefitEnhancement || "tiered_multiplier",
         survivorOption: inputs.pension?.survivorOption,
         survivorAge: inputs.pension?.survivorAge,
+        pers2Owner: pers2?.owner || "primary",
         pers2ServiceYears: pers2?.serviceYears,
         pers2Afc: pers2?.averageFinalCompensation,
         pers2StartAge: pers2?.retirementAge,
         pers2HireDate: pers2?.hireDate,
+        trs2Owner: trs2?.owner || "primary",
         trs2ServiceYears: trs2?.serviceYears,
         trs2Afc: trs2?.averageFinalCompensation,
         trs2StartAge: trs2?.retirementAge,
         trs2HireDate: trs2?.hireDate,
+        sers2Owner: sers2?.owner || "primary",
+        sers2ServiceYears: sers2?.serviceYears,
+        sers2Afc: sers2?.averageFinalCompensation,
+        sers2StartAge: sers2?.retirementAge,
+        sers2HireDate: sers2?.hireDate,
+        psers2Owner: psers2?.owner || "primary",
+        psers2ServiceYears: psers2?.serviceYears,
+        psers2Afc: psers2?.averageFinalCompensation,
+        psers2StartAge: psers2?.retirementAge,
+        wsprs2Owner: wsprs2?.owner || "primary",
+        wsprs2ServiceYears: wsprs2?.serviceYears,
+        wsprs2Afs:
+            wsprs2?.averageFinalSalary ??
+            wsprs2?.averageFinalCompensation,
+        wsprs2StartAge: wsprs2?.retirementAge,
+        wsprs2MemberStatus: wsprs2?.memberStatus || "active",
+        militaryRetiredPayOwner:
+            militaryRetiredPay?.owner || "primary",
+        militaryRetiredPayPlan:
+            militaryRetiredPay?.retirementPlan || "high36",
+        militaryRetiredPayServiceYears:
+            militaryRetiredPay?.serviceYears,
+        militaryRetiredPayBase:
+            militaryRetiredPay?.retiredPayBase ??
+            militaryRetiredPay?.monthlyRetiredPayBase,
+        militaryRetiredPayStartAge:
+            militaryRetiredPay?.retirementAge,
+        militaryRetiredPayCola:
+            (militaryRetiredPay?.cola ?? 0.025) * 100,
+        militaryDisabilityPayOwner:
+            militaryDisabilityPay?.owner || "primary",
+        militaryDisabilityPayType:
+            militaryDisabilityPay?.payType || "va_disability",
+        militaryDisabilityRetirementPlan:
+            militaryDisabilityPay?.retirementPlan || "legacy",
+        militaryDisabilityPayMonthlyAmount:
+            militaryDisabilityPay?.monthlyAmount,
+        militaryDisabilityPayBase:
+            militaryDisabilityPay?.retiredPayBase ??
+            militaryDisabilityPay?.monthlyRetiredPayBase,
+        militaryDisabilityPayPercent:
+            militaryDisabilityPay?.disabilityPercent,
+        militaryDisabilityPayServiceYears:
+            militaryDisabilityPay?.serviceYears,
+        militaryDisabilityPayStartAge:
+            militaryDisabilityPay?.retirementAge ??
+            militaryDisabilityPay?.startAge,
+        militaryDisabilityPayCola:
+            (militaryDisabilityPay?.cola ?? 0.025) * 100,
+        otherStableIncome1Type:
+            otherStableIncomeSources[0]?.incomeType || "annuity",
+        otherStableIncome1Name:
+            otherStableIncomeSources[0]?.name || "Annuity",
+        otherStableIncome1MonthlyAmount:
+            Number(otherStableIncomeSources[0]?.monthlyAmount) > 0
+                ? otherStableIncomeSources[0].monthlyAmount
+                : ((otherStableIncomeSources[0]?.annualAmount || 0) / 12),
+        otherStableIncome1StartAge:
+            otherStableIncomeSources[0]?.startAge,
+        otherStableIncome1EndAge:
+            otherStableIncomeSources[0]?.endAge,
+        otherStableIncome1Cola:
+            (otherStableIncomeSources[0]?.cola || 0) * 100,
+        otherStableIncome2Type:
+            otherStableIncomeSources[1]?.incomeType || "military_pension",
+        otherStableIncome2Name:
+            otherStableIncomeSources[1]?.name || "Military Pension",
+        otherStableIncome2MonthlyAmount:
+            Number(otherStableIncomeSources[1]?.monthlyAmount) > 0
+                ? otherStableIncomeSources[1].monthlyAmount
+                : ((otherStableIncomeSources[1]?.annualAmount || 0) / 12),
+        otherStableIncome2StartAge:
+            otherStableIncomeSources[1]?.startAge,
+        otherStableIncome2EndAge:
+            otherStableIncomeSources[1]?.endAge,
+        otherStableIncome2Cola:
+            (otherStableIncomeSources[1]?.cola || 0) * 100,
+        otherStableIncome3Type:
+            otherStableIncomeSources[2]?.incomeType || "trust_payment",
+        otherStableIncome3Name:
+            otherStableIncomeSources[2]?.name || "Trust Payment",
+        otherStableIncome3MonthlyAmount:
+            Number(otherStableIncomeSources[2]?.monthlyAmount) > 0
+                ? otherStableIncomeSources[2].monthlyAmount
+                : ((otherStableIncomeSources[2]?.annualAmount || 0) / 12),
+        otherStableIncome3StartAge:
+            otherStableIncomeSources[2]?.startAge,
+        otherStableIncome3EndAge:
+            otherStableIncomeSources[2]?.endAge,
+        otherStableIncome3Cola:
+            (otherStableIncomeSources[2]?.cola || 0) * 100,
+        spousePensionOwner:
+            spouseDefinedBenefitPension
+                ? spouseDefinedBenefitPension.owner || "spouse"
+                : "primary",
         spousePensionName:
-            spouseDefinedBenefitPension?.name || "Spouse Pension",
+            spouseDefinedBenefitPension?.name ||
+            "Defined Benefit Pension",
         spousePensionStartAge:
             spouseDefinedBenefitPension?.spouseStartAge ??
             spouseDefinedBenefitPension?.retirementAge ??
@@ -172,6 +295,22 @@ export function populateSimulatorInputs(inputs) {
     const toggleMap = {
         hasPers2: Boolean(pers2?.enabled),
         hasTrs2: Boolean(trs2?.enabled),
+        hasSers2: Boolean(sers2?.enabled),
+        hasPsers2: Boolean(psers2?.enabled),
+        hasWsprs2: Boolean(wsprs2?.enabled),
+        hasMilitaryRetiredPay: Boolean(militaryRetiredPay?.enabled),
+        hasMilitaryDisabilityPay:
+            Boolean(militaryDisabilityPay?.enabled),
+        militaryDisabilityPayTaxable:
+            Boolean(militaryDisabilityPay?.taxable),
+        hasOtherStableIncome:
+            otherStableIncomeSources.some(pension => pension?.enabled),
+        otherStableIncome1Taxable:
+            otherStableIncomeSources[0]?.taxable !== false,
+        otherStableIncome2Taxable:
+            otherStableIncomeSources[1]?.taxable !== false,
+        otherStableIncome3Taxable:
+            otherStableIncomeSources[2]?.taxable !== false,
         hasSpouseDefinedBenefitPension:
             Boolean(spouseDefinedBenefitPension?.enabled),
         ssOptimize: inputs.socialSecurity?.optimize,
@@ -189,6 +328,24 @@ export function populateSimulatorInputs(inputs) {
     const hasPers2 = document.getElementById("hasPers2");
     const trs2Section = document.getElementById("trs2Section");
     const hasTrs2 = document.getElementById("hasTrs2");
+    const sers2Section = document.getElementById("sers2Section");
+    const hasSers2 = document.getElementById("hasSers2");
+    const psers2Section = document.getElementById("psers2Section");
+    const hasPsers2 = document.getElementById("hasPsers2");
+    const wsprs2Section = document.getElementById("wsprs2Section");
+    const hasWsprs2 = document.getElementById("hasWsprs2");
+    const militaryRetiredPaySection =
+        document.getElementById("militaryRetiredPaySection");
+    const hasMilitaryRetiredPay =
+        document.getElementById("hasMilitaryRetiredPay");
+    const militaryDisabilityPaySection =
+        document.getElementById("militaryDisabilityPaySection");
+    const hasMilitaryDisabilityPay =
+        document.getElementById("hasMilitaryDisabilityPay");
+    const otherStableIncomeSection =
+        document.getElementById("otherStableIncomeSection");
+    const hasOtherStableIncome =
+        document.getElementById("hasOtherStableIncome");
     const spouseDefinedBenefitPensionSection =
         document.getElementById("spouseDefinedBenefitPensionSection");
     const hasSpouseDefinedBenefitPension =
@@ -202,6 +359,36 @@ export function populateSimulatorInputs(inputs) {
     if (trs2Section && hasTrs2) {
         trs2Section.style.display =
             hasTrs2.checked ? "grid" : "none";
+    }
+
+    if (sers2Section && hasSers2) {
+        sers2Section.style.display =
+            hasSers2.checked ? "grid" : "none";
+    }
+
+    if (psers2Section && hasPsers2) {
+        psers2Section.style.display =
+            hasPsers2.checked ? "grid" : "none";
+    }
+
+    if (wsprs2Section && hasWsprs2) {
+        wsprs2Section.style.display =
+            hasWsprs2.checked ? "grid" : "none";
+    }
+
+    if (militaryRetiredPaySection && hasMilitaryRetiredPay) {
+        militaryRetiredPaySection.style.display =
+            hasMilitaryRetiredPay.checked ? "grid" : "none";
+    }
+
+    if (militaryDisabilityPaySection && hasMilitaryDisabilityPay) {
+        militaryDisabilityPaySection.style.display =
+            hasMilitaryDisabilityPay.checked ? "grid" : "none";
+    }
+
+    if (otherStableIncomeSection && hasOtherStableIncome) {
+        otherStableIncomeSection.style.display =
+            hasOtherStableIncome.checked ? "grid" : "none";
     }
 
     if (
